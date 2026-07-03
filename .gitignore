@@ -1,0 +1,46 @@
+# Database
+db/*.db
+
+# Raw PDFs (large, re-downloadable)
+data/raw/pdfs/*.pdf
+
+# Intermediate parsed data (large, regenerable via scripts/parse_cutoffs.py)
+data/processed/cutoffs.json
+
+# College campus photos (large, re-downloadable via scripts/download_college_images.py)
+data/images/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+*.code-workspace
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Env files — NEVER commit keys
+.env
+.env.local
+.env.*.local
+
+# Personal Claude overrides
+CLAUDE.local.md
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
+
+# Session/scrape artifacts
+SESSION_TRANSCRIPT.md
+bing_raw.html
+
+# Playwright artifactsgit add .
+git commit -m "Initial commit"
+web/test-results/
+web/playwright-report/

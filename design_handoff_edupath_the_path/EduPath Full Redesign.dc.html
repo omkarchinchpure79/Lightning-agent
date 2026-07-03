@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  body{margin:0;background:#E7E3DA;font-family:"Public Sans",system-ui,sans-serif}
+  .dv-turn{padding:44px 48px 60px}
+  .dv-thd{display:flex;align-items:baseline;gap:12px;margin:0 0 8px}
+  .dv-tid{font:600 10px "IBM Plex Mono",monospace;padding:4px 8px;background:#14213A;color:#fff;border-radius:5px;text-decoration:none}
+  .dv-tname{font:500 14px/1.3 "Public Sans",sans-serif;color:#14213A}
+  .dv-intro{max-width:840px;font:400 14px/1.7 "Public Sans",sans-serif;color:#6A6456;margin:0 0 8px}
+  .dv-flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:18px 0 40px;font:500 12px "IBM Plex Mono",monospace;color:#8A867B}
+  .dv-flow a{display:inline-flex;align-items:center;gap:7px;padding:7px 13px;background:#FBFAF6;border:1px solid #DCD6C8;border-radius:999px;color:#14213A;text-decoration:none}
+  .dv-flow .ar{color:#B7B1A2}
+  .dv-screens{display:flex;flex-direction:column;gap:52px}
+  .dv-row{display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start}
+  .dv-scr{display:flex;flex-direction:column;gap:13px;scroll-margin-top:20px}
+  .dv-lab{display:flex;align-items:center;gap:10px}
+  .dv-oid{font:600 11px "IBM Plex Mono",monospace;padding:5px 9px;background:rgba(20,33,58,.09);color:#14213A;border-radius:7px;text-decoration:none}
+  .dv-scr:target .dv-oid{background:#1E4D8C;color:#fff}
+  .dv-nm{font:500 15px "Public Sans",sans-serif;color:#14213A}
+  .dv-rt{font:400 12.5px "Public Sans",sans-serif;color:#8A867B}
+  .dv-frame{border-radius:15px;overflow:hidden;box-shadow:0 34px 80px -34px rgba(20,33,58,.4),0 2px 8px rgba(20,33,58,.07);border:1px solid rgba(20,33,58,.1);background:#F4F1EA}
+  .dv-chrome{display:flex;align-items:center;gap:7px;padding:11px 16px;background:#E7E2D6;border-bottom:1px solid rgba(20,33,58,.07)}
+  .dv-dot{width:11px;height:11px;border-radius:50%}
+  .dv-url{margin-left:14px;font:500 11px "IBM Plex Mono",monospace;color:rgba(20,33,58,.5);background:#F4F1EA;padding:4px 12px;border-radius:6px}
+</style>
+</helmet>
+
+<section class="dv-turn" id="t2">
+  <div class="dv-thd">
+    <a class="dv-tid" href="#t2">2</a>
+    <span class="dv-tname">EduPath — the full product, rebuilt in “The Path” style</span>
+  </div>
+  <p class="dv-intro">Every real screen from your codebase, redesigned in the direction you picked (1c): warm paper, Instrument&nbsp;Serif display, the bezier/anchor logo motif, editorial rows instead of image cards, real icons instead of emoji, and the green→amber→red signal system. Follow the flow below — the order a counsellor actually moves through.</p>
+  <div class="dv-flow">
+    <a href="#2a">Log in</a><span class="ar">→</span>
+    <a href="#2c">Discover</a><span class="ar">→</span>
+    <a href="#2d">College</a><span class="ar">→</span>
+    <a href="#2e">Branch</a><span class="ar">→</span>
+    <a href="#2f">Dashboard</a><span class="ar">→</span>
+    <a href="#2g">New student</a><span class="ar">→</span>
+    <a href="#2h">Predictions</a><span class="ar">→</span>
+    <a href="#2i">Shortlist</a>
+  </div>
+
+  <div class="dv-screens">
+
+    <!-- ═══════════════ AUTH ROW: LOGIN + SIGNUP ═══════════════ -->
+    <div class="dv-row">
+
+      <!-- 2a LOGIN -->
+      <div class="dv-scr" id="2a">
+        <div class="dv-lab"><a class="dv-oid" href="#2a">2a</a><span class="dv-nm">Log in</span><span class="dv-rt">· entry point when signed out</span></div>
+        <div class="dv-frame" style="width:600px">
+          <div class="dv-chrome"><span class="dv-dot" style="background:#E6857E"></span><span class="dv-dot" style="background:#E7C26B"></span><span class="dv-dot" style="background:#7FB98A"></span><span class="dv-url">edupath.in / login</span></div>
+          <div style="position:relative;padding:56px 64px 60px;overflow:hidden">
+            <svg viewBox="0 0 600 520" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"><path d="M-20 470 C 80 180, 360 120, 640 150" fill="none" stroke="#DED8CA" stroke-width="2" stroke-dasharray="2 9" stroke-linecap="round"/></svg>
+            <div style="position:relative">
+              <div style="display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:34px">
+                <svg width="42" height="42" viewBox="0 0 40 40" fill="none" style="margin-bottom:14px"><path d="M9 33 C 9 16, 16 10, 31 10" stroke="#1E4D8C" stroke-width="3.4" stroke-linecap="round"/><circle cx="9" cy="33" r="4.6" fill="#2EB870"/><circle cx="31" cy="10" r="4.4" fill="#F4F1EA" stroke="#1E4D8C" stroke-width="3"/></svg>
+                <div style="font:400 30px 'Instrument Serif',serif;color:#14213A;line-height:1">EduPath</div>
+                <div style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:.14em;color:#9A968B;text-transform:uppercase;margin-top:10px">MHT&nbsp;CET Counsellor Portal</div>
+              </div>
+              <div style="background:#FBFAF6;border:1px solid #E4DFD2;border-radius:16px;padding:30px 28px">
+                <div style="margin-bottom:16px">
+                  <div style="font:500 12px 'Public Sans',sans-serif;color:#3E4757;margin-bottom:7px">Email</div>
+                  <div style="background:#F4F1EA;border:1px solid #DCD6C8;border-radius:10px;padding:12px 15px;font:400 14px 'Public Sans',sans-serif;color:#14213A">priya.deshmukh@edupath.in</div>
+                </div>
+                <div style="margin-bottom:22px">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px"><span style="font:500 12px 'Public Sans',sans-serif;color:#3E4757">Password</span><span style="font:500 12px 'Public Sans',sans-serif;color:#1E4D8C">Forgot?</span></div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;background:#F4F1EA;border:1px solid #DCD6C8;border-radius:10px;padding:12px 15px"><span style="font:400 14px 'IBM Plex Mono',monospace;color:#14213A;letter-spacing:.1em">••••••••••</span><svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="#9A968B" stroke-width="1.5"><path d="M1 9s3-6 8-6 8 6 8 6-3 6-8 6-8-6-8-6z"/><circle cx="9" cy="9" r="2.5"/></svg></div>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:center;gap:9px;background:#1E4D8C;color:#fff;border-radius:10px;padding:13px;font:600 14px 'Public Sans',sans-serif">Log in<svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h9M8 4l4 4-4 4"/></svg></div>
+              </div>
+              <div style="text-align:center;margin-top:22px;font:400 13px 'Public Sans',sans-serif;color:#8A867B">No account yet? <span style="color:#1E4D8C;font-weight:600">Create one</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2b SIGNUP -->
+      <div class="dv-scr" id="2b">
+        <div class="dv-lab"><a class="dv-oid" href="#2b">2b</a><span class="dv-nm">Create account</span><span class="dv-rt">· new counsellor sign-up</span></div>
+        <div class="dv-frame" style="width:600px">
+          <div class="dv-chrome"><span class="dv-dot" style="background:#E6857E"></span><span class="dv-dot" style="background:#E7C26B"></span><span class="dv-dot" style="background:#7FB98A"></span><span class="dv-url">edupath.in / signup</span></div>
+          <div style="position:relative;padding:48px 64px 52px;overflow:hidden">
+            <svg viewBox="0 0 600 560" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"><path d="M-20 500 C 80 220, 360 150, 640 180" fill="none" stroke="#DED8CA" stroke-width="2" stroke-dasharray="2 9" stroke-linecap="round"/></svg>
+            <div style="position:relative">
+              <div style="display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:26px">
+                <svg width="38" height="38" viewBox="0 0 40 40" fill="none" style="margin-bottom:12px"><path d="M9 33 C 9 16, 16 10, 31 10" stroke="#1E4D8C" stroke-width="3.4" stroke-linecap="round"/><circle cx="9" cy="33" r="4.6" fill="#2EB870"/><circle cx="31" cy="10" r="4.4" fill="#F4F1EA" stroke="#1E4D8C" stroke-width="3"/></svg>
+                <div style="font:400 27px 'Instrument Serif',serif;color:#14213A;line-height:1">Start your path</div>
+                <div style="font:400 13px 'Public Sans',sans-serif;color:#8A867B;margin-top:8px">Create a free counsellor account.</div>
+              </div>
+              <div style="background:#FBFAF6;border:1px solid #E4DFD2;border-radius:16px;padding:28px 26px;display:flex;flex-direction:column;gap:15px">
+                <div><div style="font:500 12px 'Public Sans',sans-serif;color:#3E4757;margin-bottom:7px">Full name</div><div style="background:#F4F1EA;border:1px solid #DCD6C8;border-radius:10px;padding:12px 15px;font:400 14px 'Public Sans',sans-serif;color:#14213A">Priya Deshmukh</div></div>
+                <div><div style="font:500 12px 'Public Sans',sans-serif;color:#3E4757;margin-bottom:7px">Email</div><div style="background:#F4F1EA;border:1px solid #DCD6C8;border-radius:10px;padding:12px 15px;font:400 14px 'Public Sans',sans-serif;color:#9A968B">you@example.com</div></div>
+                <div style="display:flex;gap:12px">
+                  <div style="flex:1"><div style="font:500 12px 'Public Sans',sans-serif;color:#3E4757;margin-bottom:7px">Password</div><div style="background:#F4F1EA;border:1px solid #DCD6C8;border-radius:10px;padding:12px 15px;font:400 13px 'Public Sans',sans-serif;color:#9A968B">Min. 8 chars</div></div>
+                  <div style="flex:1"><div style="font:500 12px 'Public Sans',sans-serif;color:#3E4757;margin-bottom:7px">Confirm</div><div style="background:#F4F1EA;border:1px solid #DCD6C8;border-radius:10px;padding:12px 15px;font:400 13px 'IBM Plex Mono',monospace;color:#14213A;letter-spacing:.1em">••••••••</div></div>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:center;gap:9px;background:#1E4D8C;color:#fff;border-radius:10px;padding:13px;font:600 14px 'Public Sans',sans-serif;margin-top:4px">Create account<svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v10M3 8h10"/></svg></div>
+              </div>
+              <div style="text-align:center;margin-top:20px;font:400 13px 'Public Sans',sans-serif;color:#8A867B">Already have an account? <span style="color:#1E4D8C;font-weight:600">Log in</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ═══════════════ 2c DISCOVER (HOME) ═══════════════ -->
+    <div class="dv-scr" id="2c">
+      <div class="dv-lab"><a class="dv-oid" href="#2c">2c</a><span class="dv-nm">Discover — home</span><span class="dv-rt">· browse all 713 colleges · lands here after login</span></div>
+      <div class="dv-frame" style="width:1240px">
+        <div class="dv-chrome"><span class="dv-dot" style="background:#E6857E"></span><span class="dv-dot" style="background:#E7C26B"></span><span class="dv-dot" style="background:#7FB98A"></span><span class="dv-url">edupath.in / discover</span></div>
+
+        <!-- nav -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 40px;border-bottom:1px solid #E4DFD2">
+          <div style="display:flex;align-items:center;gap:11px">
+            <svg width="28" height="28" viewBox="0 0 40 40" fill="none"><path d="M9 33 C 9 16, 16 10, 31 10" stroke="#1E4D8C" stroke-width="3.4" stroke-linecap="round"/><circle cx="9" cy="33" r="4.4" fill="#2EB870"/><circle cx="31" cy="10" r="4.2" fill="#F4F1EA" stroke="#1E4D8C" stroke-width="3"/></svg>
+            <span style="font:400 22px 'Instrument Serif',serif;color:#14213A">EduPath</span>
+          </div>
+          <nav style="display:flex;align-items:center;gap:28px;font:500 14px 'Public Sans',sans-serif;color:#5B6472">
+            <span style="color:#14213A;position:relative">Discover<span style="position:absolute;left:0;right:0;bottom:-21px;height:2px;background:#1E4D8C"></span></span>
+            <span>My Shortlist</span><span>Dashboard</span>
+            <span style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:#1E4D8C;color:#fff;font:600 12px 'Public Sans',sans-serif">PD</span>
+          </nav>
+        </div>
+
+        <!-- hero -->
+        <div style="position:relative;padding:56px 40px 30px;overflow:hidden">
+          <svg viewBox="0 0 1160 400" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"><path d="M100 380 C 140 140, 380 80, 1080 110" fill="none" stroke="#DED8CA" stroke-width="2" stroke-dasharray="2 9" stroke-linecap="round"/></svg>
+          <div style="position:relative;max-width:780px">
+            <div style="font:500 12px 'IBM Plex Mono',monospace;letter-spacing:.18em;color:#2EB870;text-transform:uppercase;margin-bottom:20px">Guidance Platform · MHT&nbsp;CET</div>
+            <h1 style="font:400 58px/1.03 'Instrument Serif',serif;color:#14213A;letter-spacing:-.01em;margin:0 0 20px">Every student has a<br><span style="font-style:italic;color:#1E4D8C">path.</span> We help you find it.</h1>
+            <p style="font:400 17px/1.55 'Public Sans',sans-serif;color:#5B6472;margin:0 0 28px;max-width:520px">From a single percentile to a confident admission — mapped with eleven years of real CAP cutoff data.</p>
+            <div style="display:flex;align-items:center;gap:0;max-width:580px;border-bottom:1.5px solid #14213A;padding-bottom:12px">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#14213A" stroke-width="1.6" stroke-linecap="round"><circle cx="7.5" cy="7.5" r="5"/><path d="M15 15l-3.6-3.6"/></svg>
+              <span style="flex:1;font:400 16px 'Public Sans',sans-serif;color:#9A968B;padding-left:12px">Search a college, city, or code…</span>
+              <span style="font:500 14px 'Public Sans',sans-serif;color:#14213A">Explore →</span>
+            </div>
+            <div style="display:flex;gap:26px;margin-top:22px;font:400 13px 'Public Sans',sans-serif;color:#7A7568">
+              <span><b style="font:600 15px 'IBM Plex Mono',monospace;color:#14213A">713</b>&nbsp; colleges</span>
+              <span style="color:#CFC9BA">·</span>
+              <span><b style="font:600 15px 'IBM Plex Mono',monospace;color:#14213A">11 yrs</b>&nbsp; cutoff data</span>
+              <span style="color:#CFC9BA">·</span>
+              <span><b style="font:600 15px 'IBM Plex Mono',monospace;color:#14213A">36</b>&nbsp; districts</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- filter chips -->
+        <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:14px 40px;border-top:1px solid #E4DFD2;border-bottom:1px solid #E4DFD2">
+          <span style="font:600 13px 'Public Sans',sans-serif;color:#1E4D8C;border:1px solid #1E4D8C;background:rgba(30,77,140,.06);padding:8px 15px;border-radius:999px">All Colleges</span>
+          <span style="display:inline-flex;align-items:center;gap:7px;font:500 13px 'Public Sans',sans-serif;color:#4A5462;border:1px solid #DCD6C8;padding:8px 15px;border-radius:999px"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6l6-3 6 3"/><path d="M3.2 6v7M8 6v7M12.8 6v7M2 14h12"/></svg>Government</span>
+          <span style="display:inline-flex;align-items:center;gap:7px;font:500 13px 'Public Sans',sans-serif;color:#4A5462;border:1px solid #DCD6C8;padding:8px 15px;border-radius:999px"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 14V6l5.5-3.5L13.5 6v8M6.5 14V9.5h3V14"/></svg>Private</span>
+          <span style="display:inline-flex;align-items:center;gap:7px;font:500 13px 'Public Sans',sans-serif;color:#4A5462;border:1px solid #DCD6C8;padding:8px 15px;border-radius:999px"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.5l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.3 4.3 13.3l.7-4.3L1.9 6l4.3-.6z"/></svg>NAAC A &amp; Above</span>
+          <span style="display:inline-flex;align-items:center;gap:7px;font:500 13px 'Public Sans',sans-serif;color:#B0A99A;border:1px dashed #DCD6C8;padding:8px 15px;border-radius:999px">Top Placements <span style="font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.05em;background:#F0E9D6;color:#B0952E;padding:2px 5px;border-radius:4px">SOON</span></span>
+          <span style="margin-left:auto;font:500 12px 'IBM Plex Mono',monospace;color:#8A867B">Sort ▾ Closing&nbsp;%ile</span>
+        </div>
+
+        <!-- editorial list -->
+        <div style="padding:26px 40px 30px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
+            <span style="font:400 26px 'Instrument Serif',serif;color:#14213A">713 colleges</span>
+            <span style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:.06em;color:#9A968B;text-transform:uppercase">sorted by closing percentile</span>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:22px;padding:20px 6px;border-bottom:1px solid #E4DFD2">
+            <span style="font:400 22px 'Instrument Serif',serif;color:#B7B1A2;width:40px;flex:none">01</span>
+            <div style="width:9px;height:9px;border-radius:50%;background:#2EB870;flex:none"></div>
+            <div style="flex:1;min-width:0"><div style="font:500 19px 'Newsreader',serif;color:#14213A">College of Engineering, Pune</div><div style="font:400 12px 'Public Sans',sans-serif;color:#8A867B;margin-top:2px">Pune · Government Autonomous · NAAC&nbsp;A++</div></div>
+            <div style="text-align:right;width:120px;flex:none"><div style="font:600 20px 'IBM Plex Mono',monospace;color:#14213A">99.24</div><div style="font:400 10px 'IBM Plex Mono',monospace;letter-spacing:.07em;color:#9A968B;text-transform:uppercase">closing&nbsp;%ile</div></div>
+            <div style="text-align:right;width:80px;flex:none"><div style="font:600 15px 'IBM Plex Mono',monospace;color:#14213A">₹87k</div><div style="font:400 10px 'IBM Plex Mono',monospace;letter-spacing:.07em;color:#9A968B;text-transform:uppercase">per&nbsp;yr</div></div>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#C4BCA9" stroke-width="1.6" style="flex:none"><path d="M6 3l5 5-5 5"/></svg>
+          </div>
+          <div style="display:flex;align-items:center;gap:22px;padding:20px 6px;border-bottom:1px solid #E4DFD2">
+            <span style="font:400 22px 'Instrument Serif',serif;color:#B7B1A2;width:40px;flex:none">02</span>
+            <div style="width:9px;height:9px;border-radius:50%;background:#1E4D8C;flex:none"></div>
+            <div style="flex:1;min-width:0"><div style="font:500 19px 'Newsreader',serif;color:#14213A">Veermata Jijabai Technological Institute</div><div style="font:400 12px 'Public Sans',sans-serif;color:#8A867B;margin-top:2px">Mumbai · Government-Aided · NAAC&nbsp;A</div></div>
+            <div style="text-align:right;width:120px;flex:none"><div style="font:600 20px 'IBM Plex Mono',monospace;color:#14213A">98.91</div><div style="font:400 10px 'IBM Plex Mono',monospace;letter-spacing:.07em;color:#9A968B;text-transform:uppercase">closing&nbsp;%ile</div></div>
+            <div style="text-align:right;width:80px;flex:none"><div style="font:600 15px 'IBM Plex Mono',monospace;color:#14213A">₹81k</div><div style="font:400 10px 'IBM Plex Mono',monospace;letter-spacing:.07em;color:#9A968B;text-transform:uppercase">per&nbsp;yr</div></div>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#C4BCA9" stroke-width="1.6" style="flex:none"><path d="M6 3l5 5-5 5"/></svg>
+          </div>
+          <div style="display:flex;align-items:center;gap:22px;padding:20px 6px;border-bottom:1px solid #E4DFD2">
+            <span style="font:400 22px 'Instrument Serif',serif;color:#B7B1A2;width:40px;flex:none">03</span>
+            <div style="width:9px;height:9px;border-radius:50%;background:#1E4D8C;flex:none"></div>
+            <div style="flex:1;min-width:0"><div style="font:500 19px 'Newsreader',serif;color:#14213A">Pune Institute of Computer Technology</div><div style="font:400 12px 'Public Sans',sans-serif;color:#8A867B;margin-top:2px">Pune · Private Unaided · NAAC&nbsp;A</div></div>
+            <div style="text-align:right;width:120px;flex:none"><div style="font:600 20px 'IBM Plex Mono',monospace;color:#14213A">97.63</div><div style="font:400 10px 'IBM Plex Mono',monospace;letter-spacing:.07em;color:#9A968B;text-transform:uppercase">closing&nbsp;%ile</div></div>
+            <div style="text-align:right;width:80px;flex:none"><div style="font:600 15px 'IBM Plex Mono',monospace;color:#14213A">₹1.3L</div><div style="font:400 10px 'IBM Plex Mono',monospace;letter-spacing:.07em;color:#9A968B;text-transform:uppercase">per&nbsp;yr</div></div>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#C4BCA9" stroke-width="1.6" style="flex:none"><path d="M6 3l5 5-5 5"/></svg>
+          </div>
+          <div style="display:flex;align-items:center;gap:22px;padding:20px 6px;border-bottom:1px solid #E4DFD2">
+            <span style="font:400 22px 'Instrument Serif',serif;color:#B7B1A2;width:40px;flex:none">04</span>
+            <div style="width:9px;height:9px;border-radius:50%;background:#1E4D8C;flex:none"></div>
+            <div style="flex:1;min-width:0"><div style="font:500 19px 'Newsreader',serif;color:#14213A">Sardar Patel College of Engineering</div><div style="font:400 12px 'Public Sans',sans-serif;color:#8A867B;margin-top:2px">Mumbai · Government-Aided · NAAC&nbsp;A</div></div>
+            <div style="text-align:right;width:120px;flex:none"><div style="font:600 20px 'IBM Plex Mono',monospace;color:#14213A">96.10</div><div style="font:400 10px 'IBM Plex Mono',monospace;letter-spacing:.07em;color:#9A968B;text-transform:uppercase">closing&nbsp;%ile</div></div>
+            <div style="text-align:right;width:80px;flex:none"><div style="font:600 15px 'IBM Plex Mono',monospace;color:#14213A">₹1.1L</div><div style="font:400 10px 'IBM Plex Mono',monospace;letter-spacing:.07em;color:#9A968B;text-transform:uppercase">per&nbsp;yr</div></div>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#C4BCA9" stroke-width="1.6" style="flex:none"><path d="M6 3l5 5-5 5"/></svg>
+          </div>
+          <div style="display:flex;align-items:center;gap:22px;padding:20px 6px;border-bottom:1px solid #E4DFD2">
+            <span style="font:400 22px 'Instrument Serif',serif;color:#B7B1A2;width:40px;flex:none">05</span>
+            <div style="width:9px;height:9px;border-radius:50%;background:#1E4D8C;flex:none"></div>
+            <div style="flex:1;min-width:0"><div style="font:500 19px 'Newsreader',serif;color:#14213A">Walchand College of Engineering</div><div style="font:400 12px 'Public Sans',sans-serif;color:#8A867B;margin-top:2px">Sangli · Government-Aided · NAAC&nbsp;A</div></div>
+            <div style="text-align:right;width:120px;flex:none"><div style="font:600 20px 'IBM Plex Mono',monospace;color:#14213A">95.42</div><div style="font:400 10px 'IBM Plex Mono',monospace;letter-spacing:.07em;color:#9A968B;text-transform:uppercase">closing&nbsp;%ile</div></div>
+            <div style="text-align:right;width:80px;flex:none"><div style="font:600 15px 'IBM Plex Mono',monospace;color:#14213A">₹92k</div><div style="font:400 10px 'IBM Plex Mono',monospace;letter-spacing:.07em;color:#9A968B;text-transform:uppercase">per&nbsp;yr</div></div>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#C4BCA9" stroke-width="1.6" style="flex:none"><path d="M6 3l5 5-5 5"/></svg>
+          </div>
+
+          <!-- predictor CTA band -->
+          <div style="position:relative;overflow:hidden;margin-top:26px;border-radius:16px;background:#14213A;padding:30px 34px;display:flex;align-items:center;justify-content:space-between;gap:24px">
+            <svg viewBox="0 0 900 160" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.5"><path d="M40 140 C 120 40, 500 30, 880 40" fill="none" stroke="#2C3A57" stroke-width="2" stroke-dasharray="2 9" stroke-linecap="round"/></svg>
+            <div style="position:relative">
+              <div style="font:400 24px 'Instrument Serif',serif;color:#F5F3EE;margin-bottom:5px">Ready for personalised matches?</div>
+              <div style="font:400 14px 'Public Sans',sans-serif;color:#9BA6BA;max-width:520px">Enter a student's percentile and category to get SAFE&nbsp;/&nbsp;PROBABLE&nbsp;/&nbsp;REACH predictions across every branch.</div>
+            </div>
+            <div style="position:relative;display:flex;align-items:center;gap:9px;background:#2EB870;color:#0E1729;padding:14px 24px;border-radius:11px;font:600 14px 'Public Sans',sans-serif;white-space:nowrap;flex:none">Get predictions<svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h9M8 4l4 4-4 4"/></svg></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ 2d COLLEGE DETAIL ═══════════════ -->
+    <div class="dv-scr" id="2d">
+      <div class="dv-lab"><a class="dv-oid" href="#2d">2d</a><span class="dv-nm">College profile</span><span class="dv-rt">· opens when you click a college row</span></div>
+      <div class="dv-frame" style="width:1240px">
+        <div class="dv-chrome"><span class="dv-dot" style="background:#E6857E"></span><span class="dv-dot" style="background:#E7C26B"></span><span class="dv-dot" style="background:#7FB98A"></span><span class="dv-url">edupath.in / colleges / 6006</span></div>
+
+        <!-- nav -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 40px;border-bottom:1px solid #E4DFD2">
+          <div style="display:flex;align-items:center;gap:11px">
+            <svg width="28" height="28" viewBox="0 0 40 40" fill="none"><path d="M9 33 C 9 16, 16 10, 31 10" stroke="#1E4D8C" stroke-width="3.4" stroke-linecap="round"/><circle cx="9" cy="33" r="4.4" fill="#2EB870"/><circle cx="31" cy="10" r="4.2" fill="#F4F1EA" stroke="#1E4D8C" stroke-width="3"/></svg>
+            <span style="font:400 22px 'Instrument Serif',serif;color:#14213A">EduPath</span>
+          </div>
+          <nav style="display:flex;align-items:center;gap:28px;font:500 14px 'Public Sans',sans-serif;color:#5B6472">
+            <span>Discover</span><span>My Shortlist</span><span>Dashboard</span>
+            <span style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:#1E4D8C;color:#fff;font:600 12px 'Public Sans',sans-serif">PD</span>
+          </nav>
+        </div>
+
+        <div style="padding:22px 40px 44px">
+          <div style="display:inline-flex;align-items:center;gap:6px;font:500 13px 'Public Sans',sans-serif;color:#8A867B;margin-bottom:18px"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3L5 8l5 5"/></svg>Back to Discover</div>
+
+          <!-- hero mosaic -->
+          <div style="display:grid;grid-template-columns:2fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:8px;height:340px;border-radius:14px;overflow:hidden;margin-bottom:24px">
+            <div style="grid-row:span 2;background:linear-gradient(135deg,#DCE3EC,#C6D2DF);display:flex;align-items:center;justify-content:center"><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#9DAEC0" stroke-width="1.2"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-5h6v5M9 11h.01M15 11h.01"/></svg></div>
+            <div style="background:linear-gradient(135deg,#E3E0D6,#D4CFC0);display:flex;align-items:center;justify-content:center"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#B3AB98" stroke-width="1.3"><path d="M3 21h18M5 21V7l7-4 7 4v14"/></svg></div>
+            <div style="background:linear-gradient(135deg,#DCE3EC,#CAD5E1);display:flex;align-items:center;justify-content:center"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#A6B4C4" stroke-width="1.3"><path d="M3 21h18M5 21V7l7-4 7 4v14"/></svg></div>
+            <div style="background:linear-gradient(135deg,#E3E0D6,#D4CFC0);display:flex;align-items:center;justify-content:center"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#B3AB98" stroke-width="1.3"><path d="M3 21h18M5 21V7l7-4 7 4v14"/></svg></div>
+            <div style="position:relative;background:linear-gradient(135deg,#1E4D8C,#14213A);display:flex;align-items:center;justify-content:center;font:600 15px 'Public Sans',sans-serif;color:#fff">+8 more</div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 280px;gap:32px;align-items:start">
+            <!-- left -->
+            <div style="min-width:0">
+              <!-- title -->
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
+                <div>
+                  <h1 style="font:400 38px/1.08 'Instrument Serif',serif;color:#14213A;margin:0 0 8px">College of Engineering, Pune</h1>
+                  <div style="display:flex;align-items:center;gap:7px;font:400 14px 'Public Sans',sans-serif;color:#8A867B"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 14.5s5-4.5 5-8.5A5 5 0 0 0 3 6c0 4 5 8.5 5 8.5z"/><circle cx="8" cy="6" r="1.7"/></svg>Pune · Government Autonomous · Est. 1854</div>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <span style="font:600 11px 'IBM Plex Mono',monospace;color:#1E7A46;background:#E7F4EC;padding:6px 11px;border-radius:7px">NAAC A++</span>
+                  <span style="font:600 11px 'IBM Plex Mono',monospace;color:#4A5462;background:#EDEAE1;padding:6px 11px;border-radius:7px">Autonomous</span>
+                  <span style="display:inline-flex;align-items:center;gap:4px;font:600 11px 'IBM Plex Mono',monospace;color:#14213A;border:1px solid #E4DFD2;padding:6px 11px;border-radius:7px"><svg width="11" height="11" viewBox="0 0 16 16" fill="#D9A441" stroke="#D9A441"><path d="M8 1.5l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.3 4.3 13.3l.7-4.3L1.9 6l4.3-.6z"/></svg>92/100</span>
+                </div>
+              </div>
+
+              <!-- about -->
+              <div style="background:#FBFAF6;border:1px solid #E4DFD2;border-radius:13px;padding:24px;margin-top:24px">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                  <div style="display:flex;align-items:center;gap:8px"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#2EB870" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.5a4.5 4.5 0 0 0-2.7 8.1c.4.3.7.8.7 1.3v.6h4v-.6c0-.5.3-1 .7-1.3A4.5 4.5 0 0 0 8 1.5zM6.5 14.5h3"/></svg><span style="font:600 13px 'Public Sans',sans-serif;color:#14213A">About this college</span></div>
+                  <span style="font:500 12px 'Public Sans',sans-serif;color:#8A867B">↺ Regenerate</span>
+                </div>
+                <p style="font:400 14.5px/1.65 'Newsreader',serif;color:#3E4757;margin:0">Established in 1854, the College of Engineering, Pune (COEP) is one of the oldest engineering institutions in Asia and a flagship autonomous college under MHT&nbsp;CET. Known for its rigorous Computer Science and Mechanical programmes, strong placement record, and a historic riverside campus, COEP consistently draws the state's highest-percentile candidates through the CAP rounds.</p>
+              </div>
+
+              <!-- quick facts -->
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid #E4DFD2;border-radius:13px;overflow:hidden;margin-top:20px;background:#FBFAF6">
+                <div style="padding:16px 18px;border-right:1px solid #E4DFD2"><div style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#9A968B;text-transform:uppercase;margin-bottom:5px">Established</div><div style="font:600 16px 'IBM Plex Mono',monospace;color:#14213A">1854</div></div>
+                <div style="padding:16px 18px;border-right:1px solid #E4DFD2"><div style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#9A968B;text-transform:uppercase;margin-bottom:5px">Autonomous</div><div style="font:600 16px 'Public Sans',sans-serif;color:#14213A">Yes</div></div>
+                <div style="padding:16px 18px;border-right:1px solid #E4DFD2"><div style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#9A968B;text-transform:uppercase;margin-bottom:5px">University</div><div style="font:600 13px 'Public Sans',sans-serif;color:#14213A">SPPU Pune</div></div>
+                <div style="padding:16px 18px"><div style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#9A968B;text-transform:uppercase;margin-bottom:5px">NIRF Rank</div><div style="font:600 16px 'IBM Plex Mono',monospace;color:#14213A">#57</div></div>
+              </div>
+
+              <!-- placements + fees -->
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px">
+                <div style="border:1px solid #E4DFD2;border-radius:13px;overflow:hidden;background:#FBFAF6">
+                  <div style="padding:12px 18px;border-bottom:1px solid #E4DFD2;font:600 13px 'Public Sans',sans-serif;color:#14213A">Placements</div>
+                  <div style="padding:18px;display:flex;gap:22px">
+                    <div><div style="font:400 11px 'Public Sans',sans-serif;color:#8A867B;margin-bottom:3px">Placement rate</div><div style="font:600 22px 'IBM Plex Mono',monospace;color:#14213A">91%</div></div>
+                    <div><div style="font:400 11px 'Public Sans',sans-serif;color:#8A867B;margin-bottom:3px">Avg package</div><div style="font:600 22px 'IBM Plex Mono',monospace;color:#14213A">9.4<span style="font-size:12px;color:#8A867B"> LPA</span></div></div>
+                    <div><div style="font:400 11px 'Public Sans',sans-serif;color:#8A867B;margin-bottom:3px">Highest</div><div style="font:600 22px 'IBM Plex Mono',monospace;color:#14213A">44<span style="font-size:12px;color:#8A867B"> LPA</span></div></div>
+                  </div>
+                </div>
+                <div style="border:1px solid #E4DFD2;border-radius:13px;overflow:hidden;background:#FBFAF6">
+                  <div style="padding:12px 18px;border-bottom:1px solid #E4DFD2;font:600 13px 'Public Sans',sans-serif;color:#14213A">Annual fees by category</div>
+                  <div style="padding:6px 18px">
+                    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #EEEAE0;font:400 13px 'Public Sans',sans-serif;color:#5B6472"><span>GOPEN</span><span style="font-family:'IBM Plex Mono';font-weight:600;color:#14213A">₹87,215</span></div>
+                    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #EEEAE0;font:400 13px 'Public Sans',sans-serif;color:#5B6472"><span>GOBC</span><span style="font-family:'IBM Plex Mono';font-weight:600;color:#14213A">₹43,608</span></div>
+                    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #EEEAE0;font:400 13px 'Public Sans',sans-serif;color:#5B6472"><span>GSC</span><span style="font-family:'IBM Plex Mono';font-weight:600;color:#14213A">₹0</span></div>
+                    <div style="display:flex;justify-content:space-between;padding:8px 0;font:400 13px 'Public Sans',sans-serif;color:#5B6472"><span>TFWS</span><span style="font-family:'IBM Plex Mono';font-weight:600;color:#14213A">₹0</span></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- facilities -->
+              <div style="border:1px solid #E4DFD2;border-radius:13px;overflow:hidden;background:#FBFAF6;margin-top:20px">
+                <div style="padding:12px 18px;border-bottom:1px solid #E4DFD2;font:600 13px 'Public Sans',sans-serif;color:#14213A">Facilities</div>
+                <div style="padding:18px;display:flex;gap:10px;flex-wrap:wrap">
+                  <span style="display:inline-flex;align-items:center;gap:6px;font:500 13px 'Public Sans',sans-serif;color:#3E4757;border:1px solid #B7E0C4;background:#F0F8F3;padding:7px 13px;border-radius:8px"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#2EB870" stroke-width="1.6"><path d="M2 6a9 9 0 0 1 12 0M4.5 8.5a5.5 5.5 0 0 1 7 0M8 11h.01"/></svg>Wi-Fi campus</span>
+                  <span style="display:inline-flex;align-items:center;gap:6px;font:500 13px 'Public Sans',sans-serif;color:#3E4757;border:1px solid #B7E0C4;background:#F0F8F3;padding:7px 13px;border-radius:8px"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#2EB870" stroke-width="1.6"><circle cx="8" cy="5" r="2.5"/><path d="M3 13a5 5 0 0 1 10 0"/></svg>Boys hostel</span>
+                  <span style="display:inline-flex;align-items:center;gap:6px;font:500 13px 'Public Sans',sans-serif;color:#3E4757;border:1px solid #B7E0C4;background:#F0F8F3;padding:7px 13px;border-radius:8px"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#2EB870" stroke-width="1.6"><circle cx="8" cy="5" r="2.5"/><path d="M3 13a5 5 0 0 1 10 0"/></svg>Girls hostel</span>
+                  <span style="display:inline-flex;align-items:center;gap:6px;font:500 13px 'Public Sans',sans-serif;color:#3E4757;border:1px solid #B7E0C4;background:#F0F8F3;padding:7px 13px;border-radius:8px"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#2EB870" stroke-width="1.6"><path d="M4 4l8 8M12 4l-8 8"/><circle cx="8" cy="8" r="6.5"/></svg>Sports</span>
+                  <span style="display:inline-flex;align-items:center;gap:6px;font:500 13px 'Public Sans',sans-serif;color:#B0A99A;border:1px solid #E4DFD2;padding:7px 13px;border-radius:8px;opacity:.6"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 21h18"/><path d="M3 13h10v-3l7 3"/></svg>36.8 acres</span>
+                </div>
+              </div>
+
+              <!-- branches table -->
+              <div style="border:1px solid #E4DFD2;border-radius:13px;overflow:hidden;background:#FBFAF6;margin-top:20px">
+                <div style="padding:12px 18px;border-bottom:1px solid #E4DFD2;display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#1E4D8C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2L1.5 5 8 8l6.5-3L8 2zM3 6.5v3.5c0 1 2.2 2 5 2s5-1 5-2V6.5"/></svg><span style="font:600 13px 'Public Sans',sans-serif;color:#14213A">Branches offered</span></div>
+                <table style="width:100%;border-collapse:collapse">
+                  <thead><tr style="background:#F4F1EA">
+                    <th style="text-align:left;padding:10px 18px;font:600 11px 'IBM Plex Mono',monospace;letter-spacing:.05em;color:#8A867B;text-transform:uppercase;width:52%">Branch</th>
+                    <th style="text-align:right;padding:10px 18px;font:600 11px 'IBM Plex Mono',monospace;letter-spacing:.05em;color:#8A867B;text-transform:uppercase">2026 pred. close</th>
+                    <th style="text-align:center;padding:10px 18px;font:600 11px 'IBM Plex Mono',monospace;letter-spacing:.05em;color:#8A867B;text-transform:uppercase">Confidence</th>
+                  </tr></thead>
+                  <tbody>
+                    <tr style="border-top:1px solid #EEEAE0"><td style="padding:12px 18px;font:600 14px 'Public Sans',sans-serif;color:#1E4D8C">Computer Science &amp; Engineering</td><td style="padding:12px 18px;text-align:right;font:500 14px 'IBM Plex Mono',monospace;color:#14213A">98.82</td><td style="padding:12px 18px;text-align:center"><span style="font:600 10px 'IBM Plex Mono',monospace;color:#1E7A46;background:#E7F4EC;padding:4px 9px;border-radius:6px">high</span></td></tr>
+                    <tr style="border-top:1px solid #EEEAE0"><td style="padding:12px 18px;font:600 14px 'Public Sans',sans-serif;color:#1E4D8C">Information Technology</td><td style="padding:12px 18px;text-align:right;font:500 14px 'IBM Plex Mono',monospace;color:#14213A">97.91</td><td style="padding:12px 18px;text-align:center"><span style="font:600 10px 'IBM Plex Mono',monospace;color:#1E7A46;background:#E7F4EC;padding:4px 9px;border-radius:6px">high</span></td></tr>
+                    <tr style="border-top:1px solid #EEEAE0"><td style="padding:12px 18px;font:600 14px 'Public Sans',sans-serif;color:#1E4D8C">Electronics &amp; Telecomm.</td><td style="padding:12px 18px;text-align:right;font:500 14px 'IBM Plex Mono',monospace;color:#14213A">95.44</td><td style="padding:12px 18px;text-align:center"><span style="font:600 10px 'IBM Plex Mono',monospace;color:#B0952E;background:#F5EBD3;padding:4px 9px;border-radius:6px">medium</span></td></tr>
+                    <tr style="border-top:1px solid #EEEAE0"><td style="padding:12px 18px;font:600 14px 'Public Sans',sans-serif;color:#1E4D8C">Mechanical Engineering</td><td style="padding:12px 18px;text-align:right;font:500 14px 'IBM Plex Mono',monospace;color:#14213A">92.10</td><td style="padding:12px 18px;text-align:center"><span style="font:600 10px 'IBM Plex Mono',monospace;color:#B0952E;background:#F5EBD3;padding:4px 9px;border-radius:6px">medium</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- sticky sidebar -->
+            <div style="position:sticky;top:20px;border:1px solid #E4DFD2;border-radius:14px;background:#FBFAF6;padding:18px;display:flex;flex-direction:column;gap:11px">
+              <div style="display:flex;align-items:center;justify-content:center;gap:8px;background:#1E4D8C;color:#fff;border-radius:10px;padding:12px;font:600 13px 'Public Sans',sans-serif"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 14s-5-3.2-5-7a3 3 0 0 1 5-2 3 3 0 0 1 5 2c0 3.8-5 7-5 7z"/></svg>Save to shortlist</div>
+              <div style="display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid #DCD6C8;color:#3E4757;border-radius:10px;padding:12px;font:500 13px 'Public Sans',sans-serif"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M1.5 8h13M8 1.5c1.8 2 1.8 11 0 13M8 1.5c-1.8 2-1.8 11 0 13"/></svg>Visit website</div>
+              <div style="display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid #DCD6C8;color:#3E4757;border-radius:10px;padding:12px;font:500 13px 'Public Sans',sans-serif"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 14.5s5-4.5 5-8.5A5 5 0 0 0 3 6c0 4 5 8.5 5 8.5z"/><circle cx="8" cy="6" r="1.7"/></svg>View on Maps</div>
+              <div style="text-align:center;font:500 12px 'Public Sans',sans-serif;color:#8A867B;padding-top:4px">View your full shortlist →</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ 2e BRANCH DEEP-DIVE ═══════════════ -->
+    <div class="dv-scr" id="2e">
+      <div class="dv-lab"><a class="dv-oid" href="#2e">2e</a><span class="dv-nm">Branch deep-dive</span><span class="dv-rt">· click a branch name → cutoff history &amp; 2026 forecast</span></div>
+      <div class="dv-frame" style="width:1000px">
+        <div class="dv-chrome"><span class="dv-dot" style="background:#E6857E"></span><span class="dv-dot" style="background:#E7C26B"></span><span class="dv-dot" style="background:#7FB98A"></span><span class="dv-url">edupath.in / branches / 6006-CSE</span></div>
+
+        <!-- nav -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 40px;border-bottom:1px solid #E4DFD2">
+          <div style="display:flex;align-items:center;gap:11px">
+            <svg width="28" height="28" viewBox="0 0 40 40" fill="none"><path d="M9 33 C 9 16, 16 10, 31 10" stroke="#1E4D8C" stroke-width="3.4" stroke-linecap="round"/><circle cx="9" cy="33" r="4.4" fill="#2EB870"/><circle cx="31" cy="10" r="4.2" fill="#F4F1EA" stroke="#1E4D8C" stroke-width="3"/></svg>
+            <span style="font:400 22px 'Instrument Serif',serif;color:#14213A">EduPath</span>
+          </div>
+          <span style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:#1E4D8C;color:#fff;font:600 12px 'Public Sans',sans-serif">PD</span>
+        </div>
+
+        <div style="padding:22px 40px 44px">
+          <div style="display:inline-flex;align-items:center;gap:6px;font:500 13px 'Public Sans',sans-serif;color:#8A867B;margin-bottom:16px"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3L5 8l5 5"/></svg>Back to college</div>
+
+          <div style="font:500 12px 'IBM Plex Mono',monospace;letter-spacing:.14em;color:#2EB870;text-transform:uppercase;margin-bottom:10px">Branch forecast</div>
+          <h1 style="font:400 36px/1.1 'Instrument Serif',serif;color:#14213A;margin:0 0 6px">Computer Science &amp; Engineering</h1>
+          <div style="font:400 14px 'Public Sans',sans-serif;color:#8A867B;margin-bottom:26px">College of Engineering, Pune · Canonical&nbsp;6006-CSE</div>
+
+          <!-- forecast summary strip -->
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid #E4DFD2;border-radius:13px;overflow:hidden;background:#FBFAF6;margin-bottom:24px">
+            <div style="padding:18px 22px;border-right:1px solid #E4DFD2"><div style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#9A968B;text-transform:uppercase;margin-bottom:6px">2026 predicted close</div><div style="font:600 26px 'IBM Plex Mono',monospace;color:#14213A">98.82</div></div>
+            <div style="padding:18px 22px;border-right:1px solid #E4DFD2"><div style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#9A968B;text-transform:uppercase;margin-bottom:6px">3-yr trend</div><div style="display:flex;align-items:center;gap:6px;font:600 26px 'IBM Plex Mono',monospace;color:#C75450"><svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 11l4-4 3 3 5-6M14 4v3.5M14 4h-3.5"/></svg>+0.4</div></div>
+            <div style="padding:18px 22px"><div style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#9A968B;text-transform:uppercase;margin-bottom:6px">Confidence</div><div style="margin-top:2px"><span style="font:600 12px 'IBM Plex Mono',monospace;color:#1E7A46;background:#E7F4EC;padding:5px 12px;border-radius:7px">high</span></div></div>
+          </div>
+
+          <!-- chart -->
+          <div style="border:1px solid #E4DFD2;border-radius:13px;overflow:hidden;background:#FBFAF6;margin-bottom:24px">
+            <div style="padding:14px 22px;border-bottom:1px solid #E4DFD2;font:600 13px 'Public Sans',sans-serif;color:#14213A">Round-1 open-category closing percentile</div>
+            <div style="padding:28px 26px 20px">
+              <svg viewBox="0 0 640 260" style="width:100%;height:auto;display:block;font-family:'IBM Plex Mono',monospace">
+                <!-- gridlines -->
+                <line x1="70" y1="30" x2="620" y2="30" stroke="#EEEAE0" stroke-width="1"/>
+                <line x1="70" y1="80" x2="620" y2="80" stroke="#EEEAE0" stroke-width="1"/>
+                <line x1="70" y1="130" x2="620" y2="130" stroke="#EEEAE0" stroke-width="1"/>
+                <line x1="70" y1="180" x2="620" y2="180" stroke="#EEEAE0" stroke-width="1"/>
+                <line x1="70" y1="210" x2="620" y2="210" stroke="#D8D2C4" stroke-width="1"/>
+                <text x="58" y="34" text-anchor="end" font-size="11" fill="#9A968B">99.5</text>
+                <text x="58" y="84" text-anchor="end" font-size="11" fill="#9A968B">99.0</text>
+                <text x="58" y="134" text-anchor="end" font-size="11" fill="#9A968B">98.5</text>
+                <text x="58" y="184" text-anchor="end" font-size="11" fill="#9A968B">98.0</text>
+                <!-- bars: baseline y=210, scale 100px per 0.5 -->
+                <!-- 2023: 98.90 -> 99.5-98.9=0.6 -> 120px tall top at 210-120=90 -->
+                <rect x="108" y="90" width="70" height="120" rx="4" fill="#C6D2DF"/>
+                <text x="143" y="80" text-anchor="middle" font-size="12" fill="#14213A" font-weight="600">98.90</text>
+                <text x="143" y="230" text-anchor="middle" font-size="12" fill="#8A867B">2023</text>
+                <!-- 2024: 98.64 -> 0.86 ->172? cap. use 0.86*200=172 top=38 -->
+                <rect x="228" y="38" width="70" height="172" rx="4" fill="#C6D2DF"/>
+                <text x="263" y="28" text-anchor="middle" font-size="12" fill="#14213A" font-weight="600">98.64</text>
+                <text x="263" y="230" text-anchor="middle" font-size="12" fill="#8A867B">2024</text>
+                <!-- 2025: 98.79 -> 0.71*200=142 top=68 -->
+                <rect x="348" y="68" width="70" height="142" rx="4" fill="#C6D2DF"/>
+                <text x="383" y="58" text-anchor="middle" font-size="12" fill="#14213A" font-weight="600">98.79</text>
+                <text x="383" y="230" text-anchor="middle" font-size="12" fill="#8A867B">2025</text>
+                <!-- 2026*: 98.82 predicted -> 0.68*200=136 top=74, blue -->
+                <rect x="468" y="74" width="70" height="136" rx="4" fill="#1E4D8C"/>
+                <text x="503" y="64" text-anchor="middle" font-size="12" fill="#1E4D8C" font-weight="700">98.82</text>
+                <text x="503" y="230" text-anchor="middle" font-size="12" fill="#1E4D8C" font-weight="600">2026*</text>
+              </svg>
+              <div style="display:flex;align-items:center;gap:18px;margin-top:6px;padding-left:8px">
+                <span style="display:inline-flex;align-items:center;gap:7px;font:400 12px 'Public Sans',sans-serif;color:#8A867B"><span style="width:11px;height:11px;border-radius:3px;background:#C6D2DF"></span>Historical (actual)</span>
+                <span style="display:inline-flex;align-items:center;gap:7px;font:400 12px 'Public Sans',sans-serif;color:#8A867B"><span style="width:11px;height:11px;border-radius:3px;background:#1E4D8C"></span>2026 forecast</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- category table -->
+          <div style="border:1px solid #E4DFD2;border-radius:13px;overflow:hidden;background:#FBFAF6">
+            <div style="padding:14px 22px;border-bottom:1px solid #E4DFD2;font:600 13px 'Public Sans',sans-serif;color:#14213A">Closing percentile by category · Round 1</div>
+            <table style="width:100%;border-collapse:collapse">
+              <thead><tr style="background:#F4F1EA">
+                <th style="text-align:left;padding:10px 22px;font:600 11px 'IBM Plex Mono',monospace;letter-spacing:.05em;color:#8A867B;text-transform:uppercase">Category</th>
+                <th style="text-align:right;padding:10px 16px;font:600 11px 'IBM Plex Mono',monospace;letter-spacing:.05em;color:#8A867B;text-transform:uppercase">2023</th>
+                <th style="text-align:right;padding:10px 16px;font:600 11px 'IBM Plex Mono',monospace;letter-spacing:.05em;color:#8A867B;text-transform:uppercase">2024</th>
+                <th style="text-align:right;padding:10px 16px;font:600 11px 'IBM Plex Mono',monospace;letter-spacing:.05em;color:#8A867B;text-transform:uppercase">2025</th>
+                <th style="text-align:right;padding:10px 22px;font:600 11px 'IBM Plex Mono',monospace;letter-spacing:.05em;color:#1E4D8C;text-transform:uppercase">2026*</th>
+              </tr></thead>
+              <tbody>
+                <tr style="border-top:1px solid #EEEAE0"><td style="padding:11px 22px;font:500 13px 'Public Sans',sans-serif;color:#14213A">GOPEN</td><td style="padding:11px 16px;text-align:right;font:400 13px 'IBM Plex Mono',monospace;color:#5B6472">98.90</td><td style="padding:11px 16px;text-align:right;font:400 13px 'IBM Plex Mono',monospace;color:#5B6472">98.64</td><td style="padding:11px 16px;text-align:right;font:400 13px 'IBM Plex Mono',monospace;color:#5B6472">98.79</td><td style="padding:11px 22px;text-align:right;font:600 13px 'IBM Plex Mono',monospace;color:#1E4D8C">98.82</td></tr>
+                <tr style="border-top:1px solid #EEEAE0"><td style="padding:11px 22px;font:500 13px 'Public Sans',sans-serif;color:#14213A">GOBC</td><td style="padding:11px 16px;text-align:right;font:400 13px 'IBM Plex Mono',monospace;color:#5B6472">96.11</td><td style="padding:11px 16px;text-align:right;font:400 13px 'IBM Plex Mono',monospace;color:#5B6472">95.88</td><td style="padding:11px 16px;text-align:right;font:400 13px 'IBM Plex Mono',monospace;color:#5B6472">96.02</td><td style="padding:11px 22px;text-align:right;font:600 13px 'IBM Plex Mono',monospace;color:#1E4D8C">96.05</td></tr>
+                <tr style="border-top:1px solid #EEEAE0"><td style="padding:11px 22px;font:500 13px 'Public Sans',sans-serif;color:#14213A">GSC</td><td style="padding:11px 16px;text-align:right;font:400 13px 'IBM Plex Mono',monospace;color:#5B6472">91.40</td><td style="padding:11px 16px;text-align:right;font:400 13px 'IBM Plex Mono',monospace;color:#5B6472">90.92</td><td style="padding:11px 16px;text-align:right;font:400 13px 'IBM Plex Mono',monospace;color:#5B6472">91.15</td><td style="padding:11px 22px;text-align:right;font:600 13px 'IBM Plex Mono',monospace;color:#1E4D8C">91.18</td></tr>
+                <tr style="border-top:1px solid #EEEAE0"><td style="padding:11px 22px;font:500 13px 'Public Sans',sans-serif;color:#14213A">TFWS</td><td style="padding:11px 16px;text-align:right;font:400 13px 'IBM Plex Mono',monospace;color:#5B6472">97.80</td><td style="padding:11px 16px;text-align:right;font:400 13px 'IBM Plex Mono',monospace;color:#5B6472">97.51</td><td style="padding:11px 16px;text-align:right;font:400 13px 'IBM Plex Mono',monospace;color:#5B6472">97.66</td><td style="padding:11px 22px;text-align:right;font:600 13px 'IBM Plex Mono',monospace;color:#1E4D8C">97.69</td></tr>
+              </tbody>
+            </table>
+            <div style="padding:12px 22px;border-top:1px solid #E4DFD2;font:400 11px 'Public Sans',sans-serif;color:#9A968B">* 2026 values are model forecasts based on 11 years of CAP data. Verify against official rounds before advising.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ DASHBOARD + INTAKE ROW ═══════════════ -->
+    <div class="dv-row">
+
+      <!-- 2f DASHBOARD -->
+      <div class="dv-scr" id="2f">
+        <div class="dv-lab"><a class="dv-oid" href="#2f">2f</a><span class="dv-nm">Dashboard</span><span class="dv-rt">· counsellor home · students + saved colleges</span></div>
+        <div class="dv-frame" style="width:760px">
+          <div class="dv-chrome"><span class="dv-dot" style="background:#E6857E"></span><span class="dv-dot" style="background:#E7C26B"></span><span class="dv-dot" style="background:#7FB98A"></span><span class="dv-url">edupath.in / dashboard</span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 30px;border-bottom:1px solid #E4DFD2">
+            <div style="display:flex;align-items:center;gap:10px"><svg width="26" height="26" viewBox="0 0 40 40" fill="none"><path d="M9 33 C 9 16, 16 10, 31 10" stroke="#1E4D8C" stroke-width="3.4" stroke-linecap="round"/><circle cx="9" cy="33" r="4.4" fill="#2EB870"/><circle cx="31" cy="10" r="4.2" fill="#F4F1EA" stroke="#1E4D8C" stroke-width="3"/></svg><span style="font:400 20px 'Instrument Serif',serif;color:#14213A">EduPath</span></div>
+            <nav style="display:flex;align-items:center;gap:22px;font:500 13px 'Public Sans',sans-serif;color:#5B6472"><span>Discover</span><span>Shortlist</span><span style="color:#14213A">Dashboard</span><span style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:#1E4D8C;color:#fff;font:600 11px 'Public Sans',sans-serif">PD</span></nav>
+          </div>
+          <div style="padding:30px">
+            <h1 style="font:400 32px 'Instrument Serif',serif;color:#14213A;margin:0 0 3px">Welcome back, Priya</h1>
+            <p style="font:400 13px 'Public Sans',sans-serif;color:#8A867B;margin:0 0 24px">Your EduPath counsellor dashboard</p>
+
+            <!-- stats -->
+            <div style="display:grid;grid-template-columns:repeat(3,1fr) 1.1fr;gap:12px;margin-bottom:30px">
+              <div style="border:1px solid #E4DFD2;border-radius:12px;background:#FBFAF6;padding:16px"><svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="#1E4D8C" stroke-width="1.6"><path d="M8 14s-5-3.2-5-7a3 3 0 0 1 5-2 3 3 0 0 1 5 2c0 3.8-5 7-5 7z"/></svg><div style="font:600 26px 'IBM Plex Mono',monospace;color:#14213A;margin-top:8px">12</div><div style="font:400 11px 'Public Sans',sans-serif;color:#8A867B">Saved colleges</div></div>
+              <div style="border:1px solid #E4DFD2;border-radius:12px;background:#FBFAF6;padding:16px"><svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="#1E4D8C" stroke-width="1.6"><circle cx="6" cy="5" r="2.5"/><path d="M1.5 13a4.5 4.5 0 0 1 9 0M11 3a2.5 2.5 0 0 1 0 4.8M14.5 13a4 4 0 0 0-3-3.8"/></svg><div style="font:600 26px 'IBM Plex Mono',monospace;color:#14213A;margin-top:8px">7</div><div style="font:400 11px 'Public Sans',sans-serif;color:#8A867B">Student profiles</div></div>
+              <div style="border:1px solid #E4DFD2;border-radius:12px;background:#FBFAF6;padding:16px"><svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="#8A867B" stroke-width="1.6"><rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M2 5l6 4 6-4"/></svg><div style="font:500 11px 'Public Sans',sans-serif;color:#14213A;margin-top:8px;word-break:break-all;line-height:1.3">priya.deshmukh<br>@edupath.in</div><div style="font:400 11px 'Public Sans',sans-serif;color:#8A867B;margin-top:2px">Account</div></div>
+              <div style="border:1px dashed #DCD6C8;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#8A867B"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="5"/><path d="M15 15l-3.6-3.6"/></svg><span style="font:500 12px 'Public Sans',sans-serif">Discover colleges</span></div>
+            </div>
+
+            <!-- students -->
+            <div style="display:flex;align-items:center;justify-content:between;margin-bottom:12px"><span style="font:500 15px 'Public Sans',sans-serif;color:#14213A;flex:1">Student profiles</span><span style="font:500 12px 'Public Sans',sans-serif;color:#1E4D8C">+ New profile</span></div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:28px">
+              <div style="display:flex;align-items:center;gap:13px;border:1px solid #E4DFD2;border-radius:12px;background:#FBFAF6;padding:12px 16px"><div style="width:38px;height:38px;border-radius:50%;background:#EDEAE1;display:flex;align-items:center;justify-content:center;font:600 15px 'Instrument Serif',serif;color:#1E4D8C;flex:none">A</div><div style="flex:1;min-width:0"><div style="font:600 14px 'Public Sans',sans-serif;color:#14213A">Aditya Kulkarni</div><div style="font:400 12px 'IBM Plex Mono',monospace;color:#8A867B">96.40% · OBC · Pune</div></div><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#C4BCA9" stroke-width="1.6"><path d="M6 3l5 5-5 5"/></svg></div>
+              <div style="display:flex;align-items:center;gap:13px;border:1px solid #E4DFD2;border-radius:12px;background:#FBFAF6;padding:12px 16px"><div style="width:38px;height:38px;border-radius:50%;background:#EDEAE1;display:flex;align-items:center;justify-content:center;font:600 15px 'Instrument Serif',serif;color:#1E4D8C;flex:none">S</div><div style="flex:1;min-width:0"><div style="font:600 14px 'Public Sans',sans-serif;color:#14213A">Sneha Patil</div><div style="font:400 12px 'IBM Plex Mono',monospace;color:#8A867B">92.15% · GEN · Nashik</div></div><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#C4BCA9" stroke-width="1.6"><path d="M6 3l5 5-5 5"/></svg></div>
+              <div style="display:flex;align-items:center;gap:13px;border:1px solid #E4DFD2;border-radius:12px;background:#FBFAF6;padding:12px 16px"><div style="width:38px;height:38px;border-radius:50%;background:#EDEAE1;display:flex;align-items:center;justify-content:center;font:600 15px 'Instrument Serif',serif;color:#1E4D8C;flex:none">R</div><div style="flex:1;min-width:0"><div style="font:600 14px 'Public Sans',sans-serif;color:#14213A">Rohan Jadhav</div><div style="font:400 12px 'IBM Plex Mono',monospace;color:#8A867B">88.72% · SC · Kolhapur</div></div><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#C4BCA9" stroke-width="1.6"><path d="M6 3l5 5-5 5"/></svg></div>
+            </div>
+
+            <!-- saved -->
+            <div style="display:flex;align-items:center;margin-bottom:12px"><span style="font:500 15px 'Public Sans',sans-serif;color:#14213A;flex:1">My shortlist</span><span style="font:500 12px 'Public Sans',sans-serif;color:#1E4D8C">Reorder &amp; print →</span></div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;align-items:center;gap:13px;border:1px solid #E4DFD2;border-radius:12px;background:#FBFAF6;padding:12px 16px"><div style="width:9px;height:9px;border-radius:50%;background:#2EB870;flex:none"></div><div style="flex:1;min-width:0"><div style="font:500 14px 'Newsreader',serif;color:#14213A">College of Engineering, Pune</div><div style="font:400 11px 'Public Sans',sans-serif;color:#8A867B">Pune</div></div><span style="font:600 12px 'IBM Plex Mono',monospace;color:#14213A">92/100</span></div>
+              <div style="display:flex;align-items:center;gap:13px;border:1px solid #E4DFD2;border-radius:12px;background:#FBFAF6;padding:12px 16px"><div style="width:9px;height:9px;border-radius:50%;background:#1E4D8C;flex:none"></div><div style="flex:1;min-width:0"><div style="font:500 14px 'Newsreader',serif;color:#14213A">VJTI Mumbai</div><div style="font:400 11px 'Public Sans',sans-serif;color:#8A867B">Mumbai</div></div><span style="font:600 12px 'IBM Plex Mono',monospace;color:#14213A">89/100</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2g NEW STUDENT INTAKE -->
+      <div class="dv-scr" id="2g">
+        <div class="dv-lab"><a class="dv-oid" href="#2g">2g</a><span class="dv-nm">New student intake</span><span class="dv-rt">· fill details → predictions run</span></div>
+        <div class="dv-frame" style="width:620px">
+          <div class="dv-chrome"><span class="dv-dot" style="background:#E6857E"></span><span class="dv-dot" style="background:#E7C26B"></span><span class="dv-dot" style="background:#7FB98A"></span><span class="dv-url">edupath.in / students / new</span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 30px;border-bottom:1px solid #E4DFD2">
+            <div style="display:flex;align-items:center;gap:10px"><svg width="26" height="26" viewBox="0 0 40 40" fill="none"><path d="M9 33 C 9 16, 16 10, 31 10" stroke="#1E4D8C" stroke-width="3.4" stroke-linecap="round"/><circle cx="9" cy="33" r="4.4" fill="#2EB870"/><circle cx="31" cy="10" r="4.2" fill="#F4F1EA" stroke="#1E4D8C" stroke-width="3"/></svg><span style="font:400 20px 'Instrument Serif',serif;color:#14213A">EduPath</span></div>
+            <span style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:#1E4D8C;color:#fff;font:600 11px 'Public Sans',sans-serif">PD</span>
+          </div>
+          <div style="padding:28px 30px 34px">
+            <h1 style="font:400 30px 'Instrument Serif',serif;color:#14213A;margin:0 0 4px">New student</h1>
+            <p style="font:400 13px 'Public Sans',sans-serif;color:#8A867B;margin:0 0 24px">Fill in the details. After saving, predictions run automatically.</p>
+
+            <div style="display:flex;flex-direction:column;gap:16px">
+              <!-- personal -->
+              <div style="border:1px solid #E4DFD2;border-radius:13px;background:#FBFAF6;overflow:hidden">
+                <div style="padding:12px 18px;border-bottom:1px solid #E4DFD2;font:600 13px 'Public Sans',sans-serif;color:#14213A">Personal</div>
+                <div style="padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:14px">
+                  <div style="grid-column:span 2"><div style="font:500 12px 'Public Sans',sans-serif;color:#3E4757;margin-bottom:6px">Student name</div><div style="background:#F4F1EA;border:1px solid #DCD6C8;border-radius:9px;padding:10px 13px;font:400 13px 'Public Sans',sans-serif;color:#14213A">Aditya Kulkarni</div></div>
+                  <div><div style="font:500 12px 'Public Sans',sans-serif;color:#3E4757;margin-bottom:6px">Gender</div><div style="display:flex;align-items:center;justify-content:space-between;background:#F4F1EA;border:1px solid #DCD6C8;border-radius:9px;padding:10px 13px;font:400 13px 'Public Sans',sans-serif;color:#14213A">Male<span style="color:#9A968B">▾</span></div></div>
+                </div>
+              </div>
+              <!-- academic -->
+              <div style="border:1px solid #E4DFD2;border-radius:13px;background:#FBFAF6;overflow:hidden">
+                <div style="padding:12px 18px;border-bottom:1px solid #E4DFD2;font:600 13px 'Public Sans',sans-serif;color:#14213A">Academic scores</div>
+                <div style="padding:18px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+                  <div><div style="font:500 12px 'Public Sans',sans-serif;color:#3E4757;margin-bottom:6px">MHT-CET %ile <span style="color:#C75450">*</span></div><div style="background:#fff;border:1.5px solid #1E4D8C;border-radius:9px;padding:10px 13px;font:600 14px 'IBM Plex Mono',monospace;color:#14213A">96.40</div></div>
+                  <div><div style="font:500 12px 'Public Sans',sans-serif;color:#3E4757;margin-bottom:6px">JEE Main rank</div><div style="background:#F4F1EA;border:1px solid #DCD6C8;border-radius:9px;padding:10px 13px;font:400 13px 'Public Sans',sans-serif;color:#9A968B">Optional</div></div>
+                  <div><div style="font:500 12px 'Public Sans',sans-serif;color:#3E4757;margin-bottom:6px">Board %</div><div style="background:#F4F1EA;border:1px solid #DCD6C8;border-radius:9px;padding:10px 13px;font:400 13px 'IBM Plex Mono',monospace;color:#14213A">89.2</div></div>
+                </div>
+              </div>
+              <!-- category -->
+              <div style="border:1px solid #E4DFD2;border-radius:13px;background:#FBFAF6;overflow:hidden">
+                <div style="padding:12px 18px;border-bottom:1px solid #E4DFD2;font:600 13px 'Public Sans',sans-serif;color:#14213A">Category &amp; eligibility</div>
+                <div style="padding:18px">
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
+                    <div><div style="font:500 12px 'Public Sans',sans-serif;color:#3E4757;margin-bottom:6px">Category <span style="color:#C75450">*</span></div><div style="display:flex;align-items:center;justify-content:space-between;background:#F4F1EA;border:1px solid #DCD6C8;border-radius:9px;padding:10px 13px;font:400 13px 'Public Sans',sans-serif;color:#14213A">OBC<span style="color:#9A968B">▾</span></div></div>
+                    <div><div style="font:500 12px 'Public Sans',sans-serif;color:#3E4757;margin-bottom:6px">Home district</div><div style="display:flex;align-items:center;justify-content:space-between;background:#F4F1EA;border:1px solid #DCD6C8;border-radius:9px;padding:10px 13px;font:400 13px 'Public Sans',sans-serif;color:#14213A">Pune<span style="color:#9A968B">▾</span></div></div>
+                  </div>
+                  <div style="display:flex;gap:18px;flex-wrap:wrap">
+                    <span style="display:inline-flex;align-items:center;gap:8px;font:400 13px 'Public Sans',sans-serif;color:#5B6472"><span style="width:34px;height:20px;border-radius:999px;background:#DCD6C8;position:relative"><span style="position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff"></span></span>PwD</span>
+                    <span style="display:inline-flex;align-items:center;gap:8px;font:400 13px 'Public Sans',sans-serif;color:#5B6472"><span style="width:34px;height:20px;border-radius:999px;background:#2EB870;position:relative"><span style="position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:#fff"></span></span>TFWS</span>
+                    <span style="display:inline-flex;align-items:center;gap:8px;font:400 13px 'Public Sans',sans-serif;color:#5B6472"><span style="width:34px;height:20px;border-radius:999px;background:#DCD6C8;position:relative"><span style="position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff"></span></span>Defense</span>
+                  </div>
+                </div>
+              </div>
+              <!-- preferences -->
+              <div style="border:1px solid #E4DFD2;border-radius:13px;background:#FBFAF6;overflow:hidden">
+                <div style="padding:12px 18px;border-bottom:1px solid #E4DFD2;font:600 13px 'Public Sans',sans-serif;color:#14213A">Branch preferences</div>
+                <div style="padding:18px;display:flex;gap:8px;flex-wrap:wrap">
+                  <span style="font:500 12px 'Public Sans',sans-serif;color:#1E4D8C;border:1px solid #1E4D8C;background:rgba(30,77,140,.06);padding:6px 12px;border-radius:999px">Computer Science ✓</span>
+                  <span style="font:500 12px 'Public Sans',sans-serif;color:#1E4D8C;border:1px solid #1E4D8C;background:rgba(30,77,140,.06);padding:6px 12px;border-radius:999px">Information Tech ✓</span>
+                  <span style="font:500 12px 'Public Sans',sans-serif;color:#5B6472;border:1px solid #DCD6C8;padding:6px 12px;border-radius:999px">Electronics</span>
+                  <span style="font:500 12px 'Public Sans',sans-serif;color:#5B6472;border:1px solid #DCD6C8;padding:6px 12px;border-radius:999px">Mechanical</span>
+                  <span style="font:500 12px 'Public Sans',sans-serif;color:#5B6472;border:1px solid #DCD6C8;padding:6px 12px;border-radius:999px">Civil</span>
+                </div>
+              </div>
+              <!-- submit -->
+              <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:4px">
+                <span style="font:500 13px 'Public Sans',sans-serif;color:#5B6472;border:1px solid #DCD6C8;padding:12px 20px;border-radius:10px">Cancel</span>
+                <span style="display:inline-flex;align-items:center;gap:8px;font:600 13px 'Public Sans',sans-serif;color:#0E1729;background:#2EB870;padding:12px 22px;border-radius:10px">Create &amp; run predictions<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h9M8 4l4 4-4 4"/></svg></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ═══════════════ 2h PREDICTION RESULTS ═══════════════ -->
+    <div class="dv-scr" id="2h">
+      <div class="dv-lab"><a class="dv-oid" href="#2h">2h</a><span class="dv-nm">Prediction results</span><span class="dv-rt">· the core value — SAFE / PROBABLE / REACH bands</span></div>
+      <div class="dv-frame" style="width:1240px">
+        <div class="dv-chrome"><span class="dv-dot" style="background:#E6857E"></span><span class="dv-dot" style="background:#E7C26B"></span><span class="dv-dot" style="background:#7FB98A"></span><span class="dv-url">edupath.in / students / 42 / results</span></div>
+
+        <!-- nav -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 40px;border-bottom:1px solid #E4DFD2">
+          <div style="display:flex;align-items:center;gap:11px"><svg width="28" height="28" viewBox="0 0 40 40" fill="none"><path d="M9 33 C 9 16, 16 10, 31 10" stroke="#1E4D8C" stroke-width="3.4" stroke-linecap="round"/><circle cx="9" cy="33" r="4.4" fill="#2EB870"/><circle cx="31" cy="10" r="4.2" fill="#F4F1EA" stroke="#1E4D8C" stroke-width="3"/></svg><span style="font:400 22px 'Instrument Serif',serif;color:#14213A">EduPath</span></div>
+          <nav style="display:flex;align-items:center;gap:20px;font:500 13px 'Public Sans',sans-serif;color:#5B6472">
+            <span style="font-family:'IBM Plex Mono'">Aditya · 96.40%ile</span>
+            <span style="display:inline-flex;align-items:center;gap:6px;color:#1E4D8C;font-weight:600"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2h8v12l-4-2.5L4 14z"/></svg>Shortlist (4)</span>
+            <span style="display:inline-flex;align-items:center;gap:5px;color:#8A867B"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M11 2l3 3-8 8H3v-3z"/></svg>Edit student</span>
+          </nav>
+        </div>
+
+        <div style="padding:26px 40px 44px">
+          <h1 style="font:400 32px 'Instrument Serif',serif;color:#14213A;margin:0 0 4px">Prediction results</h1>
+          <p style="font:400 13px 'IBM Plex Mono',monospace;color:#8A867B;margin:0 0 26px">CAP Round 1 · OBC · Home university: Savitribai Phule Pune University</p>
+
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:start">
+
+            <!-- SAFE -->
+            <div style="border:1px solid #B7E0C4;border-radius:13px;overflow:hidden">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 18px;background:#EAF6EE">
+                <div style="display:flex;align-items:center;gap:9px"><span style="width:10px;height:10px;border-radius:50%;background:#2EB870"></span><span style="font:600 14px 'Public Sans',sans-serif;color:#1E7A46">Safe</span></div>
+                <span style="font:500 11px 'IBM Plex Mono',monospace;color:#5B6472">14 across 9 colleges</span>
+              </div>
+              <div style="padding:14px;background:#FBFAF6;display:flex;flex-direction:column;gap:11px">
+                <p style="font:400 12px/1.4 'Public Sans',sans-serif;color:#8A867B;margin:0 2px 2px">Strong chance — percentile comfortably above cutoff.</p>
+                <div style="border:1px solid #E4DFD2;border-radius:10px;background:#fff;padding:13px">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:9px"><div><div style="font:500 14px 'Newsreader',serif;color:#1E4D8C;line-height:1.2">Walchand College of Engineering</div><div style="font:400 11px 'Public Sans',sans-serif;color:#8A867B;margin-top:2px">Computer Science · Sangli</div></div><span style="font:600 11px 'Public Sans',sans-serif;color:#1E7A46;border:1px solid #B7E0C4;border-radius:7px;padding:4px 8px;white-space:nowrap">✓ Saved</span></div>
+                  <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:9px"><span style="font:600 9.5px 'IBM Plex Mono',monospace;color:#1E7A46;background:#E7F4EC;padding:3px 7px;border-radius:5px">high confidence</span><span style="font:600 9.5px 'IBM Plex Mono',monospace;color:#4A5462;background:#EDEAE1;padding:3px 7px;border-radius:5px">Home University</span></div>
+                  <div style="display:flex;gap:14px;font:400 11px 'Public Sans',sans-serif;color:#5B6472"><span>Close: <b style="font-family:'IBM Plex Mono';color:#14213A">94.10</b></span><span>Margin: <b style="color:#1E7A46">+2.30</b></span></div>
+                </div>
+                <div style="border:1px solid #E4DFD2;border-radius:10px;background:#fff;padding:13px">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:9px"><div><div style="font:500 14px 'Newsreader',serif;color:#1E4D8C;line-height:1.2">Govt. College of Engineering</div><div style="font:400 11px 'Public Sans',sans-serif;color:#8A867B;margin-top:2px">Information Tech · Sambhajinagar</div></div><span style="display:inline-flex;align-items:center;gap:4px;font:600 11px 'Public Sans',sans-serif;color:#1E4D8C;border:1px solid #DCD6C8;border-radius:7px;padding:4px 8px;white-space:nowrap"><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg>Add</span></div>
+                  <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:9px"><span style="font:600 9.5px 'IBM Plex Mono',monospace;color:#1E7A46;background:#E7F4EC;padding:3px 7px;border-radius:5px">high confidence</span><span style="font:600 9.5px 'IBM Plex Mono',monospace;color:#4A5462;background:#EDEAE1;padding:3px 7px;border-radius:5px">Other University</span></div>
+                  <div style="display:flex;gap:14px;font:400 11px 'Public Sans',sans-serif;color:#5B6472"><span>Close: <b style="font-family:'IBM Plex Mono';color:#14213A">91.80</b></span><span>Margin: <b style="color:#1E7A46">+4.60</b></span></div>
+                </div>
+                <span style="text-align:center;font:500 12px 'Public Sans',sans-serif;color:#1E4D8C;padding:2px">View all 14 in table →</span>
+              </div>
+            </div>
+
+            <!-- PROBABLE -->
+            <div style="border:1px solid #E8D6A8;border-radius:13px;overflow:hidden">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 18px;background:#F8F0DD">
+                <div style="display:flex;align-items:center;gap:9px"><span style="width:10px;height:10px;border-radius:50%;background:#D9A441"></span><span style="font:600 14px 'Public Sans',sans-serif;color:#B0952E">Probable</span></div>
+                <span style="font:500 11px 'IBM Plex Mono',monospace;color:#5B6472">11 across 8 colleges</span>
+              </div>
+              <div style="padding:14px;background:#FBFAF6;display:flex;flex-direction:column;gap:11px">
+                <p style="font:400 12px/1.4 'Public Sans',sans-serif;color:#8A867B;margin:0 2px 2px">Within reach — cutoff may move by round 3.</p>
+                <div style="border:1px solid #E4DFD2;border-radius:10px;background:#fff;padding:13px">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:9px"><div><div style="font:500 14px 'Newsreader',serif;color:#1E4D8C;line-height:1.2">Pune Institute of Computer Tech.</div><div style="font:400 11px 'Public Sans',sans-serif;color:#8A867B;margin-top:2px">Information Tech · Pune</div></div><span style="font:600 11px 'Public Sans',sans-serif;color:#1E7A46;border:1px solid #B7E0C4;border-radius:7px;padding:4px 8px;white-space:nowrap">✓ Saved</span></div>
+                  <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:9px"><span style="font:600 9.5px 'IBM Plex Mono',monospace;color:#B0952E;background:#F5EBD3;padding:3px 7px;border-radius:5px">medium confidence</span><span style="font:600 9.5px 'IBM Plex Mono',monospace;color:#4A5462;background:#EDEAE1;padding:3px 7px;border-radius:5px">Home University</span></div>
+                  <div style="display:flex;gap:14px;font:400 11px 'Public Sans',sans-serif;color:#5B6472"><span>Close: <b style="font-family:'IBM Plex Mono';color:#14213A">96.90</b></span><span>Margin: <b style="color:#C75450">−0.50</b></span></div>
+                </div>
+                <div style="border:1px solid #E4DFD2;border-radius:10px;background:#fff;padding:13px">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:9px"><div><div style="font:500 14px 'Newsreader',serif;color:#1E4D8C;line-height:1.2">Vishwakarma Institute of Tech.</div><div style="font:400 11px 'Public Sans',sans-serif;color:#8A867B;margin-top:2px">Computer Science · Pune</div></div><span style="display:inline-flex;align-items:center;gap:4px;font:600 11px 'Public Sans',sans-serif;color:#1E4D8C;border:1px solid #DCD6C8;border-radius:7px;padding:4px 8px;white-space:nowrap"><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg>Add</span></div>
+                  <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:9px"><span style="font:600 9.5px 'IBM Plex Mono',monospace;color:#B0952E;background:#F5EBD3;padding:3px 7px;border-radius:5px">medium confidence</span><span style="font:600 9.5px 'IBM Plex Mono',monospace;color:#4A5462;background:#EDEAE1;padding:3px 7px;border-radius:5px">Home University</span></div>
+                  <div style="display:flex;gap:14px;font:400 11px 'Public Sans',sans-serif;color:#5B6472"><span>Close: <b style="font-family:'IBM Plex Mono';color:#14213A">96.55</b></span><span>Margin: <b style="color:#C75450">−0.15</b></span></div>
+                </div>
+                <span style="text-align:center;font:500 12px 'Public Sans',sans-serif;color:#1E4D8C;padding:2px">View all 11 in table →</span>
+              </div>
+            </div>
+
+            <!-- REACH -->
+            <div style="border:1px solid #E8BFBD;border-radius:13px;overflow:hidden">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 18px;background:#F8E7E5">
+                <div style="display:flex;align-items:center;gap:9px"><span style="width:10px;height:10px;border-radius:50%;background:#C75450"></span><span style="font:600 14px 'Public Sans',sans-serif;color:#B23F3B">Reach</span></div>
+                <span style="font:500 11px 'IBM Plex Mono',monospace;color:#5B6472">6 across 5 colleges</span>
+              </div>
+              <div style="padding:14px;background:#FBFAF6;display:flex;flex-direction:column;gap:11px">
+                <p style="font:400 12px/1.4 'Public Sans',sans-serif;color:#8A867B;margin:0 2px 2px">Aspirational — include 2–3 for leverage.</p>
+                <div style="border:1px solid #E4DFD2;border-radius:10px;background:#fff;padding:13px">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:9px"><div><div style="font:500 14px 'Newsreader',serif;color:#1E4D8C;line-height:1.2">College of Engineering, Pune</div><div style="font:400 11px 'Public Sans',sans-serif;color:#8A867B;margin-top:2px">Computer Science · Pune</div></div><span style="display:inline-flex;align-items:center;gap:4px;font:600 11px 'Public Sans',sans-serif;color:#1E4D8C;border:1px solid #DCD6C8;border-radius:7px;padding:4px 8px;white-space:nowrap"><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg>Add</span></div>
+                  <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:9px"><span style="font:600 9.5px 'IBM Plex Mono',monospace;color:#B0952E;background:#F5EBD3;padding:3px 7px;border-radius:5px">medium confidence</span><span style="font:600 9.5px 'IBM Plex Mono',monospace;color:#4A5462;background:#EDEAE1;padding:3px 7px;border-radius:5px">Home University</span></div>
+                  <div style="display:flex;gap:14px;font:400 11px 'Public Sans',sans-serif;color:#5B6472"><span>Close: <b style="font-family:'IBM Plex Mono';color:#14213A">98.82</b></span><span>Margin: <b style="color:#C75450">−2.42</b></span></div>
+                </div>
+                <div style="border:1px solid #E4DFD2;border-radius:10px;background:#fff;padding:13px">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:9px"><div><div style="font:500 14px 'Newsreader',serif;color:#1E4D8C;line-height:1.2">VJTI Mumbai</div><div style="font:400 11px 'Public Sans',sans-serif;color:#8A867B;margin-top:2px">Computer Science · Mumbai</div></div><span style="display:inline-flex;align-items:center;gap:4px;font:600 11px 'Public Sans',sans-serif;color:#1E4D8C;border:1px solid #DCD6C8;border-radius:7px;padding:4px 8px;white-space:nowrap"><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg>Add</span></div>
+                  <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:9px"><span style="font:600 9.5px 'IBM Plex Mono',monospace;color:#C75450;background:#F8E1DF;padding:3px 7px;border-radius:5px">low confidence</span><span style="font:600 9.5px 'IBM Plex Mono',monospace;color:#4A5462;background:#EDEAE1;padding:3px 7px;border-radius:5px">Other University</span></div>
+                  <div style="display:flex;gap:14px;font:400 11px 'Public Sans',sans-serif;color:#5B6472"><span>Close: <b style="font-family:'IBM Plex Mono';color:#14213A">99.05</b></span><span>Margin: <b style="color:#C75450">−2.65</b></span></div>
+                </div>
+                <span style="text-align:center;font:500 12px 'Public Sans',sans-serif;color:#1E4D8C;padding:2px">View all 6 in table →</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ SHORTLIST ROW: STUDENT + GLOBAL ═══════════════ -->
+    <div class="dv-row">
+
+      <!-- 2i STUDENT SHORTLIST -->
+      <div class="dv-scr" id="2i">
+        <div class="dv-lab"><a class="dv-oid" href="#2i">2i</a><span class="dv-nm">Student shortlist</span><span class="dv-rt">· saved predictions for one student, print-ready</span></div>
+        <div class="dv-frame" style="width:640px">
+          <div class="dv-chrome"><span class="dv-dot" style="background:#E6857E"></span><span class="dv-dot" style="background:#E7C26B"></span><span class="dv-dot" style="background:#7FB98A"></span><span class="dv-url">edupath.in / students / 42 / shortlist</span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 30px;border-bottom:1px solid #E4DFD2">
+            <div style="display:flex;align-items:center;gap:10px"><svg width="26" height="26" viewBox="0 0 40 40" fill="none"><path d="M9 33 C 9 16, 16 10, 31 10" stroke="#1E4D8C" stroke-width="3.4" stroke-linecap="round"/><circle cx="9" cy="33" r="4.4" fill="#2EB870"/><circle cx="31" cy="10" r="4.2" fill="#F4F1EA" stroke="#1E4D8C" stroke-width="3"/></svg><span style="font:400 20px 'Instrument Serif',serif;color:#14213A">EduPath</span></div>
+            <span style="font:500 12px 'Public Sans',sans-serif;color:#8A867B">← Back to predictions</span>
+          </div>
+          <div style="padding:26px 30px 34px">
+            <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:22px">
+              <div><h1 style="font:400 28px 'Instrument Serif',serif;color:#14213A;margin:0 0 2px">Shortlist</h1><p style="font:400 12px 'IBM Plex Mono',monospace;color:#8A867B;margin:0">Aditya Kulkarni · 4 saved options</p></div>
+              <span style="display:inline-flex;align-items:center;gap:7px;font:500 12px 'Public Sans',sans-serif;color:#3E4757;border:1px solid #DCD6C8;padding:8px 14px;border-radius:9px"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6V2h8v4M4 12H3a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1M4 10h8v4H4z"/></svg>Print</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <div style="display:flex;align-items:center;gap:13px;border:1px solid #E4DFD2;border-radius:11px;background:#FBFAF6;padding:13px 16px"><span style="font:400 16px 'Instrument Serif',serif;color:#B7B1A2;width:20px;flex:none">1</span><div style="flex:1;min-width:0"><div style="font:500 14px 'Newsreader',serif;color:#14213A">Walchand College of Engineering</div><div style="font:400 11px 'Public Sans',sans-serif;color:#8A867B">Computer Science · Home University · ₹92k/yr</div></div><span style="font:600 10px 'IBM Plex Mono',monospace;color:#1E7A46;background:#E7F4EC;padding:4px 9px;border-radius:6px;flex:none">Safe</span><span style="font:500 12px 'IBM Plex Mono',monospace;color:#8A867B;flex:none">94.10</span></div>
+              <div style="display:flex;align-items:center;gap:13px;border:1px solid #E4DFD2;border-radius:11px;background:#FBFAF6;padding:13px 16px"><span style="font:400 16px 'Instrument Serif',serif;color:#B7B1A2;width:20px;flex:none">2</span><div style="flex:1;min-width:0"><div style="font:500 14px 'Newsreader',serif;color:#14213A">Pune Institute of Computer Tech.</div><div style="font:400 11px 'Public Sans',sans-serif;color:#8A867B">Information Tech · Home University · ₹1.3L/yr</div></div><span style="font:600 10px 'IBM Plex Mono',monospace;color:#B0952E;background:#F5EBD3;padding:4px 9px;border-radius:6px;flex:none">Probable</span><span style="font:500 12px 'IBM Plex Mono',monospace;color:#8A867B;flex:none">96.90</span></div>
+              <div style="display:flex;align-items:center;gap:13px;border:1px solid #E4DFD2;border-radius:11px;background:#FBFAF6;padding:13px 16px"><span style="font:400 16px 'Instrument Serif',serif;color:#B7B1A2;width:20px;flex:none">3</span><div style="flex:1;min-width:0"><div style="font:500 14px 'Newsreader',serif;color:#14213A">College of Engineering, Pune</div><div style="font:400 11px 'Public Sans',sans-serif;color:#8A867B">Computer Science · Home University · ₹87k/yr</div></div><span style="font:600 10px 'IBM Plex Mono',monospace;color:#B23F3B;background:#F8E1DF;padding:4px 9px;border-radius:6px;flex:none">Reach</span><span style="font:500 12px 'IBM Plex Mono',monospace;color:#8A867B;flex:none">98.82</span></div>
+              <div style="display:flex;align-items:center;gap:13px;border:1px solid #E4DFD2;border-radius:11px;background:#FBFAF6;padding:13px 16px"><span style="font:400 16px 'Instrument Serif',serif;color:#B7B1A2;width:20px;flex:none">4</span><div style="flex:1;min-width:0"><div style="font:500 14px 'Newsreader',serif;color:#14213A">VJTI Mumbai</div><div style="font:400 11px 'Public Sans',sans-serif;color:#8A867B">Computer Science · Other University · ₹81k/yr</div></div><span style="font:600 10px 'IBM Plex Mono',monospace;color:#B23F3B;background:#F8E1DF;padding:4px 9px;border-radius:6px;flex:none">Reach</span><span style="font:500 12px 'IBM Plex Mono',monospace;color:#8A867B;flex:none">99.05</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2j GLOBAL SHORTLIST -->
+      <div class="dv-scr" id="2j">
+        <div class="dv-lab"><a class="dv-oid" href="#2j">2j</a><span class="dv-nm">My Shortlist (global)</span><span class="dv-rt">· saved colleges · drag to reorder priority</span></div>
+        <div class="dv-frame" style="width:640px">
+          <div class="dv-chrome"><span class="dv-dot" style="background:#E6857E"></span><span class="dv-dot" style="background:#E7C26B"></span><span class="dv-dot" style="background:#7FB98A"></span><span class="dv-url">edupath.in / my-shortlist</span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 30px;border-bottom:1px solid #E4DFD2">
+            <div style="display:flex;align-items:center;gap:10px"><svg width="26" height="26" viewBox="0 0 40 40" fill="none"><path d="M9 33 C 9 16, 16 10, 31 10" stroke="#1E4D8C" stroke-width="3.4" stroke-linecap="round"/><circle cx="9" cy="33" r="4.4" fill="#2EB870"/><circle cx="31" cy="10" r="4.2" fill="#F4F1EA" stroke="#1E4D8C" stroke-width="3"/></svg><span style="font:400 20px 'Instrument Serif',serif;color:#14213A">EduPath</span></div>
+            <span style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:#1E4D8C;color:#fff;font:600 11px 'Public Sans',sans-serif">PD</span>
+          </div>
+          <div style="padding:26px 30px 34px">
+            <span style="font:500 12px 'Public Sans',sans-serif;color:#8A867B;margin-bottom:16px;display:inline-block">← Back to Discover</span>
+            <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:6px">
+              <div style="display:flex;align-items:center;gap:9px"><svg width="20" height="20" viewBox="0 0 16 16" fill="#1E4D8C" stroke="#1E4D8C" stroke-width="1"><path d="M8 14s-5-3.2-5-7a3 3 0 0 1 5-2 3 3 0 0 1 5 2c0 3.8-5 7-5 7z"/></svg><h1 style="font:400 28px 'Instrument Serif',serif;color:#14213A;margin:0">Your Shortlist</h1></div>
+              <span style="display:inline-flex;align-items:center;gap:7px;font:600 12px 'Public Sans',sans-serif;color:#0E1729;background:#2EB870;padding:9px 15px;border-radius:9px">Get predictions →</span>
+            </div>
+            <p style="font:400 12px 'Public Sans',sans-serif;color:#8A867B;margin:0 0 18px">5 colleges saved · drag to reorder priority</p>
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <div style="display:flex;align-items:center;gap:12px;border:1px solid #E4DFD2;border-radius:11px;background:#FBFAF6;padding:13px 15px"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#C4BCA9" stroke-width="1.6" style="flex:none"><circle cx="6" cy="4" r="1"/><circle cx="6" cy="8" r="1"/><circle cx="6" cy="12" r="1"/><circle cx="10" cy="4" r="1"/><circle cx="10" cy="8" r="1"/><circle cx="10" cy="12" r="1"/></svg><div style="width:9px;height:9px;border-radius:50%;background:#2EB870;flex:none"></div><div style="flex:1;min-width:0"><div style="font:500 14px 'Newsreader',serif;color:#14213A">College of Engineering, Pune</div><div style="font:400 11px 'Public Sans',sans-serif;color:#8A867B">Pune · Government Autonomous</div></div><span style="font:600 12px 'IBM Plex Mono',monospace;color:#14213A;flex:none">92/100</span><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#C4BCA9" stroke-width="1.6" style="flex:none"><path d="M3 4h10M6 4V2.5h4V4M5 4l.5 9h5L11 4"/></svg></div>
+              <div style="display:flex;align-items:center;gap:12px;border:1px solid #E4DFD2;border-radius:11px;background:#FBFAF6;padding:13px 15px"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#C4BCA9" stroke-width="1.6" style="flex:none"><circle cx="6" cy="4" r="1"/><circle cx="6" cy="8" r="1"/><circle cx="6" cy="12" r="1"/><circle cx="10" cy="4" r="1"/><circle cx="10" cy="8" r="1"/><circle cx="10" cy="12" r="1"/></svg><div style="width:9px;height:9px;border-radius:50%;background:#1E4D8C;flex:none"></div><div style="flex:1;min-width:0"><div style="font:500 14px 'Newsreader',serif;color:#14213A">VJTI Mumbai</div><div style="font:400 11px 'Public Sans',sans-serif;color:#8A867B">Mumbai · Government-Aided</div></div><span style="font:600 12px 'IBM Plex Mono',monospace;color:#14213A;flex:none">89/100</span><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#C4BCA9" stroke-width="1.6" style="flex:none"><path d="M3 4h10M6 4V2.5h4V4M5 4l.5 9h5L11 4"/></svg></div>
+              <div style="display:flex;align-items:center;gap:12px;border:1px solid #E4DFD2;border-radius:11px;background:#FBFAF6;padding:13px 15px"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#C4BCA9" stroke-width="1.6" style="flex:none"><circle cx="6" cy="4" r="1"/><circle cx="6" cy="8" r="1"/><circle cx="6" cy="12" r="1"/><circle cx="10" cy="4" r="1"/><circle cx="10" cy="8" r="1"/><circle cx="10" cy="12" r="1"/></svg><div style="width:9px;height:9px;border-radius:50%;background:#1E4D8C;flex:none"></div><div style="flex:1;min-width:0"><div style="font:500 14px 'Newsreader',serif;color:#14213A">Pune Institute of Computer Tech.</div><div style="font:400 11px 'Public Sans',sans-serif;color:#8A867B">Pune · Private Unaided</div></div><span style="font:600 12px 'IBM Plex Mono',monospace;color:#14213A;flex:none">86/100</span><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#C4BCA9" stroke-width="1.6" style="flex:none"><path d="M3 4h10M6 4V2.5h4V4M5 4l.5 9h5L11 4"/></svg></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+</x-dc>
+</body>
+</html>
