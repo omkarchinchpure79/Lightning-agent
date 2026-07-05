@@ -16,6 +16,25 @@ from pydantic import BaseModel, Field, field_validator
 # Student CRUD
 # ---------------------------------------------------------------------------
 
+def _validate_category_base(v: Optional[str]) -> Optional[str]:
+    """Fail-closed: reject unknown base categories at write time, not at
+    prediction time — otherwise an invalid student sits in the DB and every
+    later prediction call 400s. Lazy imports because api.db's import
+    side-effect puts app/ on sys.path and engine_adapter puts scripts/ there.
+    """
+    if v is None:
+        return v
+    from api import db as _db  # noqa: F401
+    import engine_adapter  # noqa: F401
+    from constants import BASE_CATEGORY_VARIANTS
+
+    code = v.strip().upper()
+    if code not in BASE_CATEGORY_VARIANTS:
+        valid = ", ".join(sorted(BASE_CATEGORY_VARIANTS))
+        raise ValueError(f"Unknown base category '{v}'. Use one of: {valid}")
+    return code
+
+
 class StudentCreate(BaseModel):
     name: str
     gender: Optional[str] = None
@@ -44,6 +63,11 @@ class StudentCreate(BaseModel):
         if v is not None and v not in ("M", "F", "Other"):
             raise ValueError("gender must be 'M', 'F', or 'Other'")
         return v
+
+    @field_validator("category_base")
+    @classmethod
+    def _valid_category_base(cls, v: str) -> str:
+        return _validate_category_base(v)
 
 
 class StudentUpdate(BaseModel):
@@ -75,6 +99,11 @@ class StudentUpdate(BaseModel):
         if v is not None and v not in ("M", "F", "Other"):
             raise ValueError("gender must be 'M', 'F', or 'Other'")
         return v
+
+    @field_validator("category_base")
+    @classmethod
+    def _valid_category_base(cls, v: Optional[str]) -> Optional[str]:
+        return _validate_category_base(v)
 
 
 class StudentListItem(BaseModel):

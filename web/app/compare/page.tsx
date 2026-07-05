@@ -419,6 +419,22 @@ function ComparePageInner() {
   // the raw History API (see setCodes below), bypassing the router entirely.
   const [codes, setCodesState] = useState<string[]>(() => parseCodes(searchParams.get("codes")));
 
+  // A bare /compare visit (nav link, bookmark) carries no ?codes= — fall back
+  // to the floating-tray list once it hydrates, otherwise a counsellor with a
+  // full tray lands on "Add at least 2 colleges" despite the nav badge. Runs
+  // once, and only when the URL contributed nothing (shared links still win).
+  const seededFromTrayRef = useRef(false);
+  useEffect(() => {
+    if (seededFromTrayRef.current || !compare.hydrated) return;
+    seededFromTrayRef.current = true;
+    if (codes.length === 0 && compare.items.length > 0) {
+      const trayCodes = compare.items.map((c) => c.code).slice(0, MAX_COMPARE);
+      setCodesState(trayCodes);
+      window.history.replaceState(null, "", `/compare?codes=${trayCodes.join(",")}`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [compare.hydrated]);
+
   const results = useQueries({
     queries: codes.map((code) => ({
       queryKey: ["college", code],

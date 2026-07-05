@@ -40,7 +40,9 @@ CLAUDE.local.md
 SESSION_TRANSCRIPT.md
 bing_raw.html
 
-# Playwright artifactsgit add .
-git commit -m "Initial commit"
+# Playwright artifacts
 web/test-results/
 web/playwright-report/
+
+# Obsidian vault workspace config (local editor state)
+.obsidian/

@@ -109,6 +109,24 @@ class TestStudentCRUD(unittest.TestCase):
         resp = _client.get("/api/students/999999999")
         self.assertEqual(resp.status_code, 404)
 
+    def test_create_rejects_unknown_base_category(self):
+        # Fail-closed at write time: an invalid category must never reach the
+        # DB (it would 400 on every later prediction call instead).
+        payload = {**_STUDENT_BASE, "name": "API Test — bad category", "category_base": "OPEN"}
+        resp = _client.post("/api/students", json=payload)
+        self.assertEqual(resp.status_code, 422, resp.text)
+        self.assertIn("Unknown base category", resp.text)
+
+    def test_create_normalises_lowercase_category(self):
+        sid, created = self._create(name="API Test — lowercase cat", category_base="gopen")
+        self.assertEqual(created["category_base"], "GOPEN")
+
+    def test_patch_rejects_unknown_base_category(self):
+        sid, _ = self._create(name="API Test — patch bad category")
+        resp = _client.patch(f"/api/students/{sid}", json={"category_base": "NOTACAT"})
+        self.assertEqual(resp.status_code, 422, resp.text)
+        self.assertIn("Unknown base category", resp.text)
+
     def test_patch_nonexistent_returns_404(self):
         resp = _client.patch("/api/students/999999999", json={"percentile": 70.0})
         self.assertEqual(resp.status_code, 404)
