@@ -30,7 +30,7 @@ def _owns(conn, student_id: int, counselor_id: int) -> bool:
     ).fetchone()
     return row is not None
 
-_BOOL_FIELDS = ("pwd_status", "defense_status", "tfws_eligible", "orphan_status")
+_BOOL_FIELDS = ("pwd_status", "defense_status", "tfws_eligible", "orphan_status", "ews_eligible")
 _JSON_FIELDS = ("preferred_branches", "preferred_locations")
 
 
@@ -75,6 +75,9 @@ def _shortlist_item(row) -> ShortlistItem:
         category_used=d.get("category_used"),
         seat_type=d.get("seat_type"),
         fee_text=d.get("fee_text"),
+        branch_code=d.get("branch_code"),
+        college_score=d.get("college_score"),
+        seat_pool=d.get("seat_pool"),
     )
 
 
@@ -261,13 +264,14 @@ async def save_shortlist(
                     """INSERT INTO student_shortlists
                        (student_id, canonical_code, college_name, branch_name, band,
                         predicted_close, margin, confidence, category_used, seat_type,
-                        fee_text)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                        fee_text, branch_code, college_score, seat_pool)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                     (
                         student_id, item.canonical_code, item.college_name,
                         item.branch_name, item.band, item.predicted_close,
                         item.margin, item.confidence, item.category_used,
-                        item.seat_type, item.fee_text,
+                        item.seat_type, item.fee_text, item.branch_code,
+                        item.college_score, item.seat_pool,
                     ),
                 )
             conn.commit()

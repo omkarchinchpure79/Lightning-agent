@@ -89,7 +89,7 @@ export default function LoginPage() {
           style={{ background: "var(--ep-surface)" }}
         >
           <h2 className="font-display text-xl text-[var(--ep-text)] mb-2">
-            Save your shortlist?
+            Save your bookmarks?
           </h2>
           <p className="text-sm text-ep-muted mb-6">
             You have <strong>{mergeItems.length} college{mergeItems.length !== 1 ? "s" : ""}</strong> saved before logging in. Save them to your account?

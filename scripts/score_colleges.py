@@ -2,14 +2,18 @@
 score_colleges.py
 Phase 3 — Compute 1-10 subset scores from raw college_details data.
 
-For each college that has data in college_details, computes scores for
-the 20 subsets defined in subset_definitions and writes them to
-college_subset_scores. Then triggers compute_college_scores() to update
-colleges.score and colleges.completeness.
+For every college, computes scores for the 21 subsets defined in
+subset_definitions and writes them to college_subset_scores. Then triggers
+compute_college_scores() to update colleges.score and colleges.completeness
+via the fixed-weight pillar formula in setup_college_profiles.pillar_score
+(NOT a flat average — see that function's docstring for why).
 
 Scoring rules (all deterministic, no guessing):
-  naac          : A++=10, A+=9, A=7, B++=6, B+=5, B=4, C=2, None=skip
-  nirf          : 1-50->10, 51-100->8, 101-150->7, 151-200->6, 201-300->5, 301+=4
+  selectivity   : from real cutoff data (toughest branch, OPEN_CATEGORIES, Round 1,
+                  newest year with data) -> see _score_selectivity buckets. Computed
+                  for ALL colleges, even ones with no college_details row at all.
+  naac          : A++=10, A+=9.5, A=9, B++=7, B+=6, B=5, C=3, None=skip
+  nirf          : 1-25->10, 26-50->9.5, 51-100->9, 101-150->8.5, 151-200->8, 201-300->7, 301+=6
   nba           : has NBA branches -> 8, else skip
   autonomous    : is_autonomous=1 -> 8, else skip
   affiliation   : always derivable from DB join -> score via university tier
@@ -39,8 +43,10 @@ import sqlite3
 import sys
 import os
 from setup_college_profiles import compute_college_scores
+from constants import OPEN_CATEGORIES
 
 DB_PATH = "db/edupath.db"
+CUTOFF_YEARS_NEWEST_FIRST = (2025, 2024, 2023)  # matches CLAUDE.md's documented data years
 
 TIER1_CITIES = {"pune", "mumbai", "nagpur", "thane", "navi mumbai"}
 TIER2_CITIES = {
@@ -50,22 +56,30 @@ TIER2_CITIES = {
 }
 
 
+# NAAC A is the 3rd-highest of 7 grades and marks a genuinely excellent college
+# (top ~15%), so it maps HIGH (9), not mid — the old A=7 undervalued it enough
+# that a college with real NAAC A scored below one with no accreditation data at
+# all (audit 2026-07-05). Gaps to A+/A++ stay small; B/C fall away.
 def _score_naac(grade):
     if grade is None:
         return None
     g = grade.upper().strip()
-    return {"A++": 10, "A+": 9, "A": 7, "B++": 6, "B+": 5, "B": 4, "C": 2}.get(g)
+    return {"A++": 10, "A+": 9.5, "A": 9, "B++": 7, "B+": 6, "B": 5, "C": 3}.get(g)
 
 
+# NIRF ranks only the top ~300 engineering colleges NATIONALLY, so being ranked
+# at all is elite; the bands map high accordingly (old 101-150->7 undervalued a
+# nationally-ranked institute).
 def _score_nirf(rank):
     if rank is None:
         return None
-    if rank <= 50:   return 10
-    if rank <= 100:  return 8
-    if rank <= 150:  return 7
-    if rank <= 200:  return 6
-    if rank <= 300:  return 5
-    return 4
+    if rank <= 25:   return 10
+    if rank <= 50:   return 9.5
+    if rank <= 100:  return 9
+    if rank <= 150:  return 8.5
+    if rank <= 200:  return 8
+    if rank <= 300:  return 7
+    return 6
 
 
 def _score_year(year):
@@ -146,6 +160,64 @@ def _score_inst_type(itype):
     return {"gov": 10, "aided": 8, "pvt": 5}.get(itype.lower())
 
 
+def _score_selectivity(pct):
+    if pct is None:
+        return None
+    if pct >= 99.5: return 10
+    if pct >= 99.0: return 9
+    if pct >= 97.0: return 8
+    if pct >= 93.0: return 7
+    if pct >= 85.0: return 6
+    if pct >= 70.0: return 5
+    if pct >= 50.0: return 4
+    if pct >= 30.0: return 3
+    return 2
+
+
+def compute_selectivity_for_college(conn, college_code, dry_run=False):
+    """
+    Demand-based score computed straight from real CET cutoff data — the one
+    subset that needs no manual entry and is available for essentially every
+    college, which is exactly why it anchors the quality score (see
+    setup_college_profiles.pillar_score). Uses the college's toughest branch
+    (MAX closing percentile among OPEN_CATEGORIES, Round 1) in the newest year
+    that has any data, so a college's flagship-branch reputation drives the
+    signal rather than diluting it against weaker branches.
+    """
+    cur = conn.cursor()
+    pct = None
+    for year in CUTOFF_YEARS_NEWEST_FIRST:
+        cur.execute(f"""
+            SELECT MAX(cu.percentile)
+            FROM cutoffs cu
+            JOIN branches b ON cu.branch_code = b.branch_code
+            WHERE b.college_code = ? AND cu.year = ? AND cu.round = 1
+              AND cu.category IN ({",".join("?" * len(OPEN_CATEGORIES))})
+              AND cu.is_all_india = 0
+        """, (college_code, year, *OPEN_CATEGORIES))
+        row = cur.fetchone()
+        if row and row[0] is not None:
+            pct = row[0]
+            break
+
+    score = _score_selectivity(pct)
+    if score is None:
+        return {}
+
+    if not dry_run:
+        cur.execute("""
+            INSERT INTO college_subset_scores (college_code, subset_name, score, source)
+            VALUES (?, 'selectivity', ?, 'auto')
+            ON CONFLICT(college_code, subset_name)
+            DO UPDATE SET score = excluded.score, source = 'auto'
+            WHERE source = 'auto'
+        """, (college_code, float(score)))
+        cur.execute("UPDATE colleges SET top_percentile = ? WHERE college_code = ?",
+                    (round(pct, 2), college_code))
+
+    return {"selectivity": float(score)}
+
+
 def compute_scores_for_college(conn, college_code, dry_run=False):
     """
     Compute all auto-scoreable subsets for one college and write to college_subset_scores.
@@ -224,13 +296,17 @@ def run(conn, target_code=None, dry_run=False):
     if target_code:
         codes = [target_code]
     else:
-        cur.execute("SELECT DISTINCT college_code FROM college_details")
+        # ALL colleges, not just ones with a college_details row: selectivity
+        # is derivable from cutoffs alone, so a college with zero profile data
+        # (previously scored NULL entirely) still gets a real quality score.
+        cur.execute("SELECT college_code FROM colleges")
         codes = [r[0] for r in cur.fetchall()]
 
     total_scored = 0
     total_subsets = 0
     for code in codes:
-        scores = compute_scores_for_college(conn, code, dry_run=dry_run)
+        scores = compute_selectivity_for_college(conn, code, dry_run=dry_run)
+        scores.update(compute_scores_for_college(conn, code, dry_run=dry_run))
         if scores:
             total_scored += 1
             total_subsets += len(scores)
@@ -251,7 +327,9 @@ def run(conn, target_code=None, dry_run=False):
         GROUP BY subset_name
         ORDER BY filled DESC
     """)
-    print("\nAuto-scored subsets (out of 401 colleges):")
+    cur.execute("SELECT COUNT(*) FROM colleges")
+    total_colleges = cur.fetchone()[0]
+    print(f"\nAuto-scored subsets (out of {total_colleges} colleges):")
     for r in cur.fetchall():
         print(f"  {r[0]:<20}: {r[1]:>3} colleges")
 

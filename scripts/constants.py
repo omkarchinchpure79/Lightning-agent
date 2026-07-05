@@ -184,7 +184,38 @@ def canonical_branch_key(college_name, branch_name, branch_code):
 
 
 # Must equal len(SUBSET_DEFINITIONS) in setup_college_profiles.py
-TOTAL_SUBSETS = 20
+TOTAL_SUBSETS = 21
+
+# Open-seat categories treated as one "general demand" signal for trend lines
+# and for the selectivity score (see score_colleges.py). H/O/S are the same
+# underlying demand for a general-category seat, just split by home-university
+# jurisdiction — taking the toughest of the three per college/branch/year is
+# the correct read of "how hard is this seat to get."
+OPEN_CATEGORIES = ("GOPENH", "GOPENS", "GOPENO")
+
+
+def canonical_college_key(college_code, college_name):
+    """
+    Stable identity for a physical college across CET Cell's annual code/name
+    churn — the same problem canonical_branch_key() solves for branches, one
+    level up. Two fragments of the SAME college (e.g. code '2008' before a
+    district rename vs '02008' after, or '6281'/'06281' across the 2023->2024
+    4-digit->5-digit re-padding) must resolve to one key so scoring, profile
+    lookups, etc. aggregate all of a college's data instead of splitting it.
+
+    Rule (mirrors canonical_branch_key):
+      - RECODED_COLLEGES (code AND name both churned) -> key by name fragment.
+      - Everything else -> key by college_code with leading zeros stripped.
+        This is safe because CET Cell's only systematic change for these
+        colleges is 4-digit -> 5-digit zero-padding; the digits after the
+        padding are unchanged. Name text (trust prefixes, city renames,
+        added/dropped suffixes) is deliberately NOT part of this key — name
+        drift is exactly what breaks naive name-equality grouping.
+    """
+    for frag in RECODED_COLLEGES:
+        if frag in college_name:
+            return f"NAME::{frag}"
+    return "CODE::" + college_code.lstrip("0")
 
 
 # ---------------------------------------------------------------------------
@@ -208,8 +239,17 @@ DISTRICT_ALIASES = {
     "SANGLI": "Sangli", "SATARA": "Satara", "AHMEDNAGAR": "Ahmednagar",
     "AMRAVATI": "Amravati", "AKOLA": "Akola", "YAVATMAL": "Yavatmal",
     "BULDHANA": "Buldhana", "WASHIM": "Washim", "NANDED": "Nanded",
-    "LATUR": "Latur", "OSMANABAD": "Osmanabad", "BEED": "Beed", "JALNA": "Jalna",
-    "AURANGABAD": "Aurangabad", "PARBHANI": "Parbhani", "HINGOLI": "Hingoli",
+    "LATUR": "Latur", "OSMANABAD": "Dharashiv", "DHARASHIV": "Dharashiv",
+    "BEED": "Beed", "JALNA": "Jalna",
+    # Aurangabad -> Chhatrapati Sambhajinagar, official Maharashtra government
+    # rename (Gazette notification, 2023) — same decision that renamed Osmanabad
+    # to Dharashiv above. All spelling variants normalize to the current name.
+    "AURANGABAD": "Chhatrapati Sambhajinagar",
+    "CHHATRAPATI SAMBHAJINAGAR": "Chhatrapati Sambhajinagar",
+    "SAMBHAJINAGAR": "Chhatrapati Sambhajinagar",
+    "SAMBHAJI NAGAR": "Chhatrapati Sambhajinagar",
+    "CHHATRAPATI SAMBHAJI NAGAR": "Chhatrapati Sambhajinagar",
+    "PARBHANI": "Parbhani", "HINGOLI": "Hingoli",
     "JALGAON": "Jalgaon", "DHULE": "Dhule", "NANDURBAR": "Nandurbar",
     "WARDHA": "Wardha", "CHANDRAPUR": "Chandrapur", "GADCHIROLI": "Gadchiroli",
     "GONDIA": "Gondia", "BHANDARA": "Bhandara", "RAIGAD": "Raigad",
@@ -239,8 +279,15 @@ CITY_TO_DISTRICT = {
     "Solapur": "Solapur", "Pandharpur": "Solapur", "Ahmednagar": "Ahmednagar",
     "Amravati": "Amravati", "Akola": "Akola", "Yavatmal": "Yavatmal",
     "Buldhana": "Buldhana", "Washim": "Washim", "Nanded": "Nanded", "Latur": "Latur",
-    "Aurangabad": "Aurangabad", "Chhatrapati Sambhajinagar": "Aurangabad",
-    "Jalna": "Jalna", "Beed": "Beed", "Osmanabad": "Osmanabad", "Parbhani": "Parbhani",
+    # Aurangabad/Osmanabad are the pre-2023 names of Chhatrapati Sambhajinagar/
+    # Dharashiv (official Maharashtra government rename) — both old and new
+    # spellings map to the CURRENT name, never the retired one.
+    "Aurangabad": "Chhatrapati Sambhajinagar",
+    "Chhatrapati Sambhajinagar": "Chhatrapati Sambhajinagar",
+    "Sambhaji Nagar": "Chhatrapati Sambhajinagar",
+    "Sambhajinagar": "Chhatrapati Sambhajinagar",
+    "Jalna": "Jalna", "Beed": "Beed",
+    "Osmanabad": "Dharashiv", "Dharashiv": "Dharashiv", "Parbhani": "Parbhani",
     "Jalgaon": "Jalgaon", "Dhule": "Dhule", "Nandurbar": "Nandurbar",
     "Wardha": "Wardha", "Chandrapur": "Chandrapur", "Gondia": "Gondia",
     "Bhandara": "Bhandara", "Gadchiroli": "Gadchiroli", "Ratnagiri": "Ratnagiri",

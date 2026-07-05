@@ -7,6 +7,7 @@ variants, so one entry covers all seat variants of the same physical branch.
 
 Returns:
   - identity (college, branch, paired branch codes)
+  - general_intake / tfws_intake: sanctioned seats (from branch_intake), or None
   - cutoff_trends: closing percentile 2023–2025 per category (representative
     open categories plus any available), grouped by year and round
   - predictions_2026: all predicted closes for all categories and rounds
@@ -114,12 +115,24 @@ async def branch_deep_dive(canonical_code: str):
                 (canonical_code,),
             ).fetchall()
 
+            # Sanctioned seat intake (general + TFWS) for this branch, parsed
+            # from the official CET Cell seat-matrix PDFs (parse_seat_intake.py).
+            # None where the college's intake PDF wasn't available / didn't
+            # parse — never a guessed number.
+            intake_row = conn.execute(
+                """SELECT general_intake, tfws_intake
+                   FROM branch_intake WHERE canonical_code = ?""",
+                (canonical_code,),
+            ).fetchone()
+
             return {
                 "canonical_code": canonical_code,
                 "college_code": college_code,
                 "college_name": college_name,
                 "branch_name": branch_name,
                 "branch_codes": branch_codes,
+                "general_intake": intake_row["general_intake"] if intake_row else None,
+                "tfws_intake": intake_row["tfws_intake"] if intake_row else None,
                 "cutoff_trends": [
                     {
                         "year": r["year"],

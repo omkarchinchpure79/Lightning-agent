@@ -52,6 +52,7 @@ async def ad_hoc_prediction(body: AdHocPredictionRequest):
         body.pwd_status,
         body.orphan_status,
         body.family_income_bracket,
+        body.ews_eligible,
     )
     if "error" in result:
         raise HTTPException(400, result["error"])
@@ -99,6 +100,7 @@ async def student_prediction(
         bool(student.get("pwd_status")),
         bool(student.get("orphan_status")),
         student.get("family_income_bracket"),
+        bool(student.get("ews_eligible")),
     )
     if "error" in result:
         raise HTTPException(400, result["error"])

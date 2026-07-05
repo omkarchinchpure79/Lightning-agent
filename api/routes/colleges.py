@@ -19,12 +19,45 @@ from pydantic import BaseModel
 import engine_adapter as ea
 from api.db import get_conn
 from api.schemas import CollegeSearchResult
+from constants import canonical_college_key
 
 router = APIRouter()
 
 # Base URL the frontend can reach the API's own static image mount at.
 # Local dev default matches NEXT_PUBLIC_API_URL's default in web/lib/api.ts.
 _API_PUBLIC_BASE = os.environ.get("API_PUBLIC_BASE", "http://localhost:8000")
+
+
+def _canonical_groups(conn):
+    """
+    {canonical_key: [college_code, ...]} for every college in the DB. Single
+    place this file resolves "same physical college" — by canonical_college_key
+    (code identity), NOT exact college_name match. Real CET Cell PDFs don't
+    repeat identical name text year to year even for the unchanged college
+    (district renames, dropped trust-name prefixes), so name-equality silently
+    left 32 physical colleges showing as duplicate rows in /search and missing
+    branches/cutoffs in /branches + /strategy (audit 2026-07-05).
+    """
+    groups: dict[str, list[str]] = {}
+    for code, name in conn.execute("SELECT college_code, college_name FROM colleges"):
+        groups.setdefault(canonical_college_key(code, name), []).append(code)
+    return groups
+
+
+def _sibling_codes(conn, college_code):
+    """All codes sharing college_code's canonical identity (itself included)."""
+    row = conn.execute(
+        "SELECT college_name FROM colleges WHERE college_code = ?", (college_code,)
+    ).fetchone()
+    if not row:
+        return None, None
+    name = row[0]
+    key = canonical_college_key(college_code, name)
+    codes = [
+        c for c, n in conn.execute("SELECT college_code, college_name FROM colleges")
+        if canonical_college_key(c, n) == key
+    ]
+    return codes, name
 
 
 # ---------------------------------------------------------------------------
@@ -42,13 +75,19 @@ async def search_colleges(
     year_max: Optional[int] = Query(default=None),
     score_min: Optional[float] = Query(default=None),
     score_max: Optional[float] = Query(default=None),
+    percentile_min: Optional[float] = Query(default=None, ge=0.0, le=100.0),
+    percentile_max: Optional[float] = Query(default=None, ge=0.0, le=100.0),
     branch: Optional[str] = Query(default=None),
+    sort_by: str = Query(default="score", pattern="^(score|percentile)$"),
     limit: int = Query(default=20, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
 ):
     """
     Substring search on college name (case-insensitive).
-    Empty q = browse mode, ordered by score DESC.
+    Empty q = browse mode, ordered by score DESC (or top_percentile DESC when
+    sort_by=percentile — the college's toughest branch's real closing
+    percentile, GOPEN-equivalent Round 1, latest available year; same
+    definition score_colleges.py uses for the selectivity subset).
     Supports limit/offset for pagination. Max limit 200.
     Per physical college, the 5-digit code is preferred over the legacy 4-digit code.
     """
@@ -56,93 +95,102 @@ async def search_colleges(
         conn = get_conn()
         try:
             params: list = []
+            clauses: list[str] = []
 
-            name_filter = ""
             if q:
-                name_filter = "WHERE LOWER(c.college_name) LIKE LOWER(?)"
+                clauses.append("LOWER(c.college_name) LIKE LOWER(?)")
                 params.append(f"%{q}%")
-
-            district_filter = ""
             if district:
-                district_filter = "AND LOWER(cd.district) LIKE LOWER(?)"
+                clauses.append("LOWER(cd.district) LIKE LOWER(?)")
                 params.append(f"%{district}%")
-
-            type_filter = ""
             if institution_type:
-                type_filter = "AND cd.institution_type = ?"
+                clauses.append("cd.institution_type = ?")
                 params.append(institution_type)
-
-            naac_filter = ""
             if naac_above_a:
-                naac_filter = "AND cd.naac_grade IN ('A', 'A+', 'A++')"
+                clauses.append("cd.naac_grade IN ('A', 'A+', 'A++')")
             elif naac_grade:
-                naac_filter = "AND cd.naac_grade = ?"
+                clauses.append("cd.naac_grade = ?")
                 params.append(naac_grade)
-
-            year_filter = ""
             if year_min is not None:
-                year_filter += "AND cd.year_established >= ? "
+                clauses.append("cd.year_established >= ?")
                 params.append(year_min)
             if year_max is not None:
-                year_filter += "AND cd.year_established <= ? "
+                clauses.append("cd.year_established <= ?")
                 params.append(year_max)
-
-            score_filter = ""
             if score_min is not None:
-                score_filter += "AND r.score >= ? "
+                clauses.append("c.score >= ?")
                 params.append(score_min)
             if score_max is not None:
-                score_filter += "AND r.score <= ? "
+                clauses.append("c.score <= ?")
                 params.append(score_max)
+            if percentile_min is not None:
+                clauses.append("c.top_percentile >= ?")
+                params.append(percentile_min)
+            if percentile_max is not None:
+                clauses.append("c.top_percentile <= ?")
+                params.append(percentile_max)
 
-            branch_filter = ""
-            if branch:
-                # Branch rows aren't always mirrored across the 4-digit/5-digit
-                # code pair for the same physical college, so match by college
-                # NAME (any code variant), not just the code `ranked` picked.
-                branch_filter = """AND EXISTS (
-                    SELECT 1 FROM branches b
-                    JOIN colleges c2 ON c2.college_code = b.college_code
-                    WHERE c2.college_name = r.college_name
-                      AND LOWER(b.branch_name) LIKE LOWER(?)
-                )"""
-                params.append(f"%{branch}%")
+            where_sql = ("WHERE " + " AND ".join(clauses)) if clauses else ""
+            order_column = "score" if sort_by == "score" else "top_percentile"
 
-            # One row per physical college: prefer the 5-digit code (newer).
+            # Fetch every matching CODE (no dedup, no pagination yet) — dedup
+            # to one row per physical college happens in Python below, keyed
+            # by canonical_college_key, since that identity can't be expressed
+            # as a SQL PARTITION BY (it needs the RECODED_COLLEGES name-fragment
+            # fallback, which is Python logic).
             sql = f"""
-                WITH ranked AS (
-                    SELECT c.college_code, c.college_name, c.city, c.score,
-                           ROW_NUMBER() OVER (
-                               PARTITION BY c.college_name
-                               ORDER BY LENGTH(c.college_code) DESC
-                           ) AS rn
-                    FROM colleges c
-                    {name_filter}
-                )
-                SELECT r.college_code, r.college_name, r.city, r.score,
+                SELECT c.college_code, c.college_name, c.city, c.score, c.top_percentile,
                        cd.district, cd.institution_type, cd.naac_grade,
                        cd.image_urls AS _image_urls_json,
                        cd.local_image_paths AS _local_paths_json,
                        CASE WHEN cd.image_urls LIKE '%gps-cs-s%'
                               OR cd.local_image_paths IS NOT NULL
                             THEN 1 ELSE 0 END AS has_photo
-                FROM ranked r
-                LEFT JOIN college_details cd ON cd.college_code = r.college_code
-                WHERE r.rn = 1
-                  {district_filter}
-                  {type_filter}
-                  {naac_filter}
-                  {year_filter}
-                  {score_filter}
-                  {branch_filter}
-                ORDER BY has_photo DESC, r.score DESC
-                LIMIT ? OFFSET ?
+                FROM colleges c
+                LEFT JOIN college_details cd ON cd.college_code = c.college_code
+                {where_sql}
             """
+            candidates = conn.execute(sql, params).fetchall()
+
+            # Branch filter: match against ANY code sharing a candidate's
+            # canonical identity, not just the exact code that happened to
+            # carry the branches rows (siblings don't always mirror branches).
+            if branch:
+                groups = _canonical_groups(conn)
+                key_by_code = {c: k for k, codes in groups.items() for c in codes}
+                matched_codes = {
+                    r[0] for r in conn.execute(
+                        "SELECT DISTINCT college_code FROM branches WHERE LOWER(branch_name) LIKE LOWER(?)",
+                        (f"%{branch}%",),
+                    )
+                }
+                matched_keys = {key_by_code[c] for c in matched_codes if c in key_by_code}
+                candidates = [
+                    r for r in candidates
+                    if key_by_code.get(r["college_code"]) in matched_keys
+                ]
+
+            # Dedup to one row per physical college: prefer has_photo, then the
+            # 5-digit (newer) code — same preference the old SQL PARTITION used.
+            best_by_key: dict = {}
+            for r in candidates:
+                key = canonical_college_key(r["college_code"], r["college_name"])
+                cur_best = best_by_key.get(key)
+                if cur_best is None or (r["has_photo"], len(r["college_code"])) > (
+                    cur_best["has_photo"], len(cur_best["college_code"])
+                ):
+                    best_by_key[key] = r
+
+            def _sort_key(r):
+                metric = r[order_column]
+                return (r["has_photo"], metric if metric is not None else -1)
+
+            ordered = sorted(best_by_key.values(), key=_sort_key, reverse=True)
+            page = ordered[offset:offset + limit]
+
             import json as _json, re as _re
-            params.extend([limit, offset])
-            rows = conn.execute(sql, params).fetchall()
             results = []
-            for r in rows:
+            for r in page:
                 d = dict(r)
                 d.pop("has_photo", None)
                 raw_urls = d.pop("_image_urls_json", None)
@@ -212,43 +260,52 @@ async def college_profile(college_code: str):
 async def college_branches(college_code: str):
     """
     All distinct branches at this college (from predictions_2026 round 1,
-    representative open categories). Returns predicted close and a link to
-    the canonical_code for the branch deep-dive endpoint.
+    representative open categories). Returns predicted 2026 close, the actual
+    2025 close (same open-category convention as college_card_api's cutoff
+    trend line), confidence, the official CET course/branch code (representative
+    10-digit code for the branch), and seat intake (general/TFWS, from branch_intake
+    — parsed from the official CET Cell seat-matrix PDFs, see
+    parse_seat_intake.py; None where a college's intake PDF wasn't available
+    or didn't parse, never a guessed number).
     """
     OPEN_CATS = ("GOPENH", "GOPENS", "GOPENO")
 
     def _query():
         conn = get_conn()
         try:
-            row = conn.execute(
-                "SELECT college_name FROM colleges WHERE college_code = ?",
-                (college_code,),
-            ).fetchone()
-            if not row:
+            codes, college_name = _sibling_codes(conn, college_code)
+            if codes is None:
                 return None
-            college_name = row[0]
-            codes = [
-                r[0]
-                for r in conn.execute(
-                    "SELECT college_code FROM colleges WHERE college_name = ?",
-                    (college_name,),
-                )
-            ]
             ph = ",".join("?" * len(codes))
             cat_ph = ",".join("?" * len(OPEN_CATS))
             rows = conn.execute(
                 f"""
+                WITH closes_2025 AS (
+                    SELECT b.branch_name, MIN(cu.percentile) AS close_2025
+                    FROM cutoffs cu JOIN branches b ON cu.branch_code = b.branch_code
+                    WHERE b.college_code IN ({ph})
+                      AND cu.year = 2025 AND cu.round = 1
+                      AND cu.category IN ({cat_ph})
+                      AND cu.is_all_india = 0
+                    GROUP BY b.branch_name
+                )
                 SELECT p.canonical_code, p.branch_name,
                        MIN(p.predicted_pct) AS pred_close,
-                       p.confidence, p.years_used
+                       p.confidence, p.years_used,
+                       MAX(p.branch_code) AS branch_code,
+                       MAX(c25.close_2025) AS close_2025,
+                       MAX(bi.general_intake) AS general_intake,
+                       MAX(bi.tfws_intake) AS tfws_intake
                 FROM predictions_2026 p
+                LEFT JOIN closes_2025 c25 ON c25.branch_name = p.branch_name
+                LEFT JOIN branch_intake bi ON bi.canonical_code = p.canonical_code
                 WHERE p.college_code IN ({ph})
                   AND p.round = 1
                   AND p.category IN ({cat_ph})
                 GROUP BY p.canonical_code, p.branch_name
                 ORDER BY pred_close DESC
                 """,
-                codes + list(OPEN_CATS),
+                codes + list(OPEN_CATS) + codes + list(OPEN_CATS),
             ).fetchall()
             return {
                 "college_code": college_code,
@@ -485,20 +542,8 @@ async def college_strategy(
     def _paired():
         conn = get_conn()
         try:
-            row = conn.execute(
-                "SELECT college_name FROM colleges WHERE college_code = ?",
-                (college_code,),
-            ).fetchone()
-            if not row:
-                return None
-            name = row[0]
-            codes = [
-                r[0]
-                for r in conn.execute(
-                    "SELECT college_code FROM colleges WHERE college_name = ?", (name,)
-                )
-            ]
-            return set(codes)
+            codes, _name = _sibling_codes(conn, college_code)
+            return set(codes) if codes is not None else None
         finally:
             conn.close()
 

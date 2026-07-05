@@ -65,6 +65,7 @@ def init_tables() -> None:
                 defense_status        INTEGER NOT NULL DEFAULT 0,
                 tfws_eligible         INTEGER NOT NULL DEFAULT 0,
                 orphan_status         INTEGER NOT NULL DEFAULT 0,
+                ews_eligible          INTEGER NOT NULL DEFAULT 0,
                 family_income_bracket TEXT,
                 preferred_branches    TEXT,
                 preferred_locations   TEXT,
@@ -89,6 +90,9 @@ def init_tables() -> None:
                 category_used   TEXT,
                 seat_type       TEXT,
                 fee_text        TEXT,
+                branch_code     TEXT,
+                college_score   REAL,
+                seat_pool       TEXT,
                 saved_at        TEXT NOT NULL DEFAULT (datetime('now'))
             );
 
@@ -120,6 +124,21 @@ def init_tables() -> None:
                 UNIQUE(counselor_id, college_code)
             );
         """)
+
+        # Idempotent column migrations for DBs created before these columns
+        # existed (CREATE TABLE IF NOT EXISTS won't add columns to an existing
+        # table). Each ALTER is guarded — SQLite has no ADD COLUMN IF NOT EXISTS.
+        _migrations = [
+            ("student_profiles", "ews_eligible", "INTEGER NOT NULL DEFAULT 0"),
+            ("student_shortlists", "branch_code", "TEXT"),
+            ("student_shortlists", "college_score", "REAL"),
+            ("student_shortlists", "seat_pool", "TEXT"),
+        ]
+        for table, col, decl in _migrations:
+            cols = {r["name"] for r in conn.execute(f"PRAGMA table_info({table})")}
+            if col not in cols:
+                conn.execute(f"ALTER TABLE {table} ADD COLUMN {col} {decl}")
+
         conn.commit()
     finally:
         conn.close()

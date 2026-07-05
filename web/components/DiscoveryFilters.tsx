@@ -17,6 +17,8 @@ export interface SidebarFilterState {
   branch?: string;
   scoreMin?: number;
   scoreMax?: number;
+  percentileMin?: number;
+  percentileMax?: number;
 }
 
 interface DiscoveryFiltersProps {
@@ -43,7 +45,8 @@ export function DiscoveryFilters({ value, onChange, onClose, resultCount }: Disc
 
   const hasActiveFilters =
     value.district || value.institutionType || value.naacGrade || value.branch ||
-    value.scoreMin != null || value.scoreMax != null;
+    value.scoreMin != null || value.scoreMax != null ||
+    value.percentileMin != null || value.percentileMax != null;
 
   function update(patch: Partial<SidebarFilterState>) {
     onChange({ ...value, ...patch });
@@ -55,6 +58,8 @@ export function DiscoveryFilters({ value, onChange, onClose, resultCount }: Disc
 
   const scoreFloor = ranges?.score_min ?? 0;
   const scoreCeil = ranges?.score_max ?? 100;
+  const pctFloor = ranges?.percentile_min ?? 0;
+  const pctCeil = ranges?.percentile_max ?? 100;
 
   return (
     <div className="flex flex-col gap-6">
@@ -170,7 +175,7 @@ export function DiscoveryFilters({ value, onChange, onClose, resultCount }: Disc
           className="w-full rounded-[10px] border px-3 py-2 text-sm text-[var(--ep-text)] outline-none focus:border-[var(--color-ep-primary)]"
           style={inputStyle}
         >
-          <option value="">Any branch</option>
+          <option value="">All Branches</option>
           {branchKeywords.map((b) => (
             <option key={b} value={b}>{b}</option>
           ))}
@@ -208,6 +213,41 @@ export function DiscoveryFilters({ value, onChange, onClose, resultCount }: Disc
             min={scoreFloor}
             max={scoreCeil}
             step={0.5}
+          />
+        </div>
+      </div>
+
+      {/* Percentile range — the college's toughest-branch real closing percentile */}
+      <div>
+        <label
+          className="font-mono block text-[10px] uppercase mb-2"
+          style={{ letterSpacing: "0.08em", color: "#9A968B" }}
+        >
+          Cutoff percentile
+        </label>
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            placeholder={pctFloor.toFixed(1)}
+            value={value.percentileMin ?? ""}
+            onChange={(e) => update({ percentileMin: e.target.value ? Number(e.target.value) : undefined })}
+            className="font-mono w-full rounded-[10px] border px-2 py-1.5 text-sm text-[var(--ep-text)] outline-none focus:border-[var(--color-ep-primary)]"
+            style={inputStyle}
+            min={0}
+            max={100}
+            step={0.1}
+          />
+          <span className="text-ep-muted text-xs">to</span>
+          <input
+            type="number"
+            placeholder={pctCeil.toFixed(1)}
+            value={value.percentileMax ?? ""}
+            onChange={(e) => update({ percentileMax: e.target.value ? Number(e.target.value) : undefined })}
+            className="font-mono w-full rounded-[10px] border px-2 py-1.5 text-sm text-[var(--ep-text)] outline-none focus:border-[var(--color-ep-primary)]"
+            style={inputStyle}
+            min={0}
+            max={100}
+            step={0.1}
           />
         </div>
       </div>

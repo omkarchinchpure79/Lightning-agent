@@ -5,6 +5,7 @@ from fastapi import APIRouter
 
 import engine_adapter as ea
 from api.db import get_conn
+from constants import canonical_college_key, YEAR_WEIGHTS
 
 router = APIRouter()
 
@@ -61,11 +62,47 @@ async def filter_ranges() -> dict[str, Any]:
                 "SELECT MIN(year_established), MAX(year_established) "
                 "FROM college_details WHERE year_established IS NOT NULL"
             ).fetchone()
+            pct_row = conn.execute(
+                "SELECT MIN(top_percentile), MAX(top_percentile) FROM colleges "
+                "WHERE top_percentile IS NOT NULL"
+            ).fetchone()
             return {
                 "score_min": score_row[0],
                 "score_max": score_row[1],
                 "year_min": year_row[0],
                 "year_max": year_row[1],
+                "percentile_min": pct_row[0],
+                "percentile_max": pct_row[1],
+            }
+        finally:
+            conn.close()
+
+    return await asyncio.to_thread(_fetch)
+
+
+@router.get("/stats")
+async def stats() -> dict[str, Any]:
+    """
+    Real, always-current homepage hero numbers — never hardcode these on the
+    frontend (audit 2026-07-05: "11 yrs cutoff data" and "36 districts" were
+    literal strings on the homepage that didn't match the actual data).
+    college_count is the true PHYSICAL college count (grouped by
+    canonical_college_key, same identity /search dedupes on) — not a raw
+    colleges-table row count, which double-counts every 4-digit/5-digit pair.
+    cutoff_year_* comes from constants.YEAR_WEIGHTS, the single source of
+    truth for which years the prediction engine actually trains on.
+    """
+    def _fetch():
+        conn = get_conn()
+        try:
+            rows = conn.execute("SELECT college_code, college_name FROM colleges").fetchall()
+            college_count = len({canonical_college_key(c, n) for c, n in rows})
+            return {
+                "college_count": college_count,
+                "district_count": len(ea.list_districts()),
+                "cutoff_year_min": min(YEAR_WEIGHTS),
+                "cutoff_year_max": max(YEAR_WEIGHTS),
+                "cutoff_year_count": len(YEAR_WEIGHTS),
             }
         finally:
             conn.close()

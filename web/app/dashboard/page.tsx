@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Search,
-  Heart,
+  Bookmark,
   Building2,
   MapPin,
   Star,
@@ -71,7 +71,7 @@ export default function DashboardPage() {
           <StatCard
             label="Saved colleges"
             value={count}
-            icon={<Heart className="h-[18px] w-[18px]" style={{ color: "var(--color-ep-primary)" }} />}
+            icon={<Bookmark className="h-[18px] w-[18px]" style={{ color: "var(--color-ep-primary)" }} />}
           />
           <StatCard
             label="Student profiles"
@@ -178,11 +178,11 @@ export default function DashboardPage() {
           )}
         </section>
 
-        {/* Saved shortlist */}
+        {/* Saved bookmarks */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-[15px] font-medium text-[var(--ep-text)]">
-              My shortlist
+              My bookmarks
             </h2>
             {count > 0 && (
               <Link

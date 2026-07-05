@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   X,
   ListX,
+  ArrowRight,
 } from "lucide-react";
 
 import {
@@ -32,6 +33,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
+import { fmtPercentile, cn } from "@/lib/utils";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -90,9 +92,9 @@ function feeText(row: PredictionRow): string {
 // displaying it to 2 decimals implies precision the model doesn't have. Show 1
 // decimal plus the calibrated likely range instead (see roadmap item C2).
 function closeText(row: PredictionRow): string {
-  const point = row.predicted_close.toFixed(1);
+  const point = fmtPercentile(row.predicted_close);
   if (row.predicted_low == null || row.predicted_high == null) return point;
-  return `${point} (likely ${row.predicted_low.toFixed(0)}–${row.predicted_high.toFixed(0)})`;
+  return `${point} (likely ${fmtPercentile(row.predicted_low, 0)}–${fmtPercentile(row.predicted_high, 0)})`;
 }
 
 function intervalWidth(row: PredictionRow): number | null {
@@ -139,7 +141,26 @@ function rowToShortlist(row: PredictionRow): ShortlistItem {
     category_used: row.category_used,
     seat_type: row.seat_type,
     fee_text: feeText(row),
+    branch_code: row.branch_code,
+    college_score: row.college_score,
+    seat_pool: row.seat_pool ?? null,
   };
+}
+
+// A pool seat (TFWS/EWS) shares canonical_code with the general seat but is a
+// distinct selectable entry — key everything on canonical_code + seat_pool so
+// the general and TFWS entries for one branch don't collapse into each other.
+function shortlistKey(item: ShortlistItem): string {
+  return item.seat_pool ? `${item.canonical_code}::${item.seat_pool}` : item.canonical_code;
+}
+
+// Seat-intake label for a row: TFWS entries show the TFWS quota, others the
+// general intake. Null where the CET seat-matrix PDF didn't cover this branch.
+function seatsText(row: PredictionRow): string | null {
+  if (row.seat_pool === "TFWS") {
+    return row.tfws_intake != null ? `${row.tfws_intake} TFWS seats` : null;
+  }
+  return row.general_intake != null ? `${row.general_intake} seats` : null;
 }
 
 // ── College card ──────────────────────────────────────────────────────────────
@@ -180,6 +201,11 @@ function CollegeCard({
           >
             {row.branch_name} · {row.city}
           </Link>
+          {row.branch_code && (
+            <span className="font-mono text-[10px] text-ep-muted block mt-0.5">
+              Code {row.branch_code}
+            </span>
+          )}
         </div>
         <button
           onClick={() => onAdd(row)}
@@ -258,6 +284,7 @@ function CollegeCard({
             {row.margin.toFixed(1)}
           </strong>
         </span>
+        {seatsText(row) && <span>{seatsText(row)}</span>}
         <span>{feeText(row)}</span>
       </div>
     </motion.div>
@@ -333,7 +360,7 @@ function BandTable({
           <Button
             size="sm"
             onClick={() => {
-              onAddSelected(sorted.filter((r) => selected.has(r.canonical_code)));
+              onAddSelected(sorted.filter((r) => selected.has(r.entry_key)));
               setSelected(new Set());
             }}
             disabled={saving}
@@ -362,7 +389,7 @@ function BandTable({
                 <Checkbox
                   checked={selected.size === sorted.length && sorted.length > 0}
                   onCheckedChange={(c) =>
-                    setSelected(c ? new Set(sorted.map((r) => r.canonical_code)) : new Set())
+                    setSelected(c ? new Set(sorted.map((r) => r.entry_key)) : new Set())
                   }
                 />
               </th>
@@ -405,16 +432,16 @@ function BandTable({
           <tbody>
             {sorted.map((row) => (
               <tr
-                key={row.canonical_code}
+                key={row.entry_key}
                 className="border-b border-[var(--ep-border)] hover:bg-[var(--ep-surface)] transition-colors"
               >
                 <td className="py-2 px-3">
                   <Checkbox
-                    checked={selected.has(row.canonical_code)}
+                    checked={selected.has(row.entry_key)}
                     onCheckedChange={(c) =>
                       setSelected((prev) => {
                         const next = new Set(prev);
-                        c ? next.add(row.canonical_code) : next.delete(row.canonical_code);
+                        c ? next.add(row.entry_key) : next.delete(row.entry_key);
                         return next;
                       })
                     }
@@ -434,6 +461,9 @@ function BandTable({
                   >
                     {row.branch_name} · {row.city}
                   </Link>
+                  {row.branch_code && (
+                    <span className="font-mono text-[10px] text-ep-muted block">Code {row.branch_code}</span>
+                  )}
                 </td>
                 <td className="font-mono py-2.5 px-3 text-right text-[var(--ep-text)] whitespace-nowrap">
                   {closeText(row)}
@@ -474,7 +504,7 @@ function BandTable({
                 <td className="py-2.5 px-3">
                   <Button
                     size="icon"
-                    variant={shortlistCodes.has(row.canonical_code) ? "success" : "ghost"}
+                    variant={shortlistCodes.has(row.entry_key) ? "success" : "ghost"}
                     onClick={() => onAdd([row])}
                     disabled={saving}
                     aria-label="Add to shortlist"
@@ -555,9 +585,9 @@ function BandColumn({
         <p className="text-xs text-ep-muted px-1">{cfg.description}</p>
         {top.map((row) => (
           <CollegeCard
-            key={row.canonical_code}
+            key={row.entry_key}
             row={row}
-            inShortlist={shortlistCodes.has(row.canonical_code)}
+            inShortlist={shortlistCodes.has(row.entry_key)}
             onAdd={(r) => onAdd([r])}
             saving={saving}
             roundNum={roundNum}
@@ -603,6 +633,8 @@ export default function ResultsPage() {
 
   // Which band (if any) is in full-width table mode
   const [expandedBand, setExpandedBand] = useState<BandKey | null>(null);
+  // Which CAP round the predictions are for (I–IV). The engine has all four.
+  const [roundNum, setRoundNum] = useState(1);
 
   const { data: student } = useQuery({
     queryKey: ["student", studentId],
@@ -611,8 +643,8 @@ export default function ResultsPage() {
   });
 
   const { data: predictions, isLoading, error } = useQuery({
-    queryKey: ["predictions", studentId, 1],
-    queryFn: () => getStudentPredictions(studentId, 1),
+    queryKey: ["predictions", studentId, roundNum],
+    queryFn: () => getStudentPredictions(studentId, roundNum),
     enabled: !isNaN(studentId),
     staleTime: 5 * 60 * 1000,
   });
@@ -624,7 +656,7 @@ export default function ResultsPage() {
   });
 
   const shortlistCodes = useMemo(
-    () => new Set((shortlist?.items ?? []).map((i) => i.canonical_code)),
+    () => new Set((shortlist?.items ?? []).map(shortlistKey)),
     [shortlist]
   );
 
@@ -635,10 +667,10 @@ export default function ResultsPage() {
 
   function addToShortlist(rows: PredictionRow[]) {
     const current = shortlist?.items ?? [];
-    const existingCodes = new Set(current.map((i) => i.canonical_code));
+    const existingKeys = new Set(current.map(shortlistKey));
     const merged = [
       ...current,
-      ...rows.map(rowToShortlist).filter((i) => !existingCodes.has(i.canonical_code)),
+      ...rows.map(rowToShortlist).filter((i) => !existingKeys.has(shortlistKey(i))),
     ];
     mutateShortlist(merged);
   }
@@ -699,6 +731,30 @@ export default function ResultsPage() {
               )}
             </p>
           )}
+        </div>
+
+        {/* CAP round selector — the engine has all four rounds; switching
+            re-runs predictions for that round. */}
+        <div className="mb-5 flex items-center gap-2 flex-wrap">
+          <span className="font-mono text-[11px] uppercase text-ep-muted" style={{ letterSpacing: "0.08em" }}>
+            CAP Round
+          </span>
+          <div className="inline-flex rounded-[9px] border p-0.5" style={{ borderColor: "var(--ep-border)", background: "var(--ep-surface)" }}>
+            {[1, 2, 3, 4].map((r) => (
+              <button
+                key={r}
+                onClick={() => setRoundNum(r)}
+                className={cn(
+                  "px-3.5 py-1.5 rounded-[7px] text-[13px] font-semibold font-mono transition-colors",
+                  r === roundNum ? "text-white" : "text-[var(--ep-text-secondary)] hover:bg-[var(--ep-bg)]"
+                )}
+                style={r === roundNum ? { background: "var(--color-ep-primary)" } : undefined}
+              >
+                R{r}
+              </button>
+            ))}
+          </div>
+          {isLoading && <span className="text-[12px] text-ep-muted animate-pulse">Loading round {roundNum}…</span>}
         </div>
 
         {/* Budget warning */}
@@ -824,6 +880,34 @@ export default function ResultsPage() {
           </AnimatePresence>
         )}
       </main>
+
+      {/* Floating shortlist bar — appears as soon as the counsellor adds a
+          college, so they can jump to the shortlist without scrolling back up. */}
+      <AnimatePresence>
+        {(shortlist?.items.length ?? 0) > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 24 }}
+            transition={{ type: "spring", stiffness: 320, damping: 30 }}
+            className="fixed bottom-5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 rounded-full border pl-5 pr-2 py-2 shadow-lg"
+            style={{ background: "var(--ep-surface)", borderColor: "var(--ep-border-strong)" }}
+          >
+            <span className="flex items-center gap-2 text-sm font-semibold text-[var(--ep-text)]">
+              <BookmarkPlus className="h-4 w-4" style={{ color: "var(--color-ep-primary)" }} />
+              {shortlist!.items.length} in shortlist
+            </span>
+            <Link
+              href={`/students/${studentId}/shortlist`}
+              className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              style={{ background: "var(--color-ep-primary)" }}
+            >
+              Review &amp; rank
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

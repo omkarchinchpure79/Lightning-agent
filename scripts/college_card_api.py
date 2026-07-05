@@ -17,26 +17,33 @@ import json
 import os
 import sqlite3
 
-from constants import BRANCH_NAME_ALIASES
+from constants import BRANCH_NAME_ALIASES, OPEN_CATEGORIES, canonical_college_key
 from fee_calculator import compute_fee
 
 DB_PATH = "db/edupath.db"
 FEE_CATEGORIES = ["GOPEN", "GOBC", "GSC", "TFWS"]
 # Representative categories for the cutoff trend line (open seats).
-TREND_CATEGORIES = ("GOPENH", "GOPENS", "GOPENO")
+TREND_CATEGORIES = OPEN_CATEGORIES
 # Base URL the frontend can reach the API's own static image mount at.
 API_PUBLIC_BASE = os.environ.get("API_PUBLIC_BASE", "http://localhost:8000")
 
 
 def _paired_codes(conn, college_code):
-    """All college_codes sharing this college's name (4- and 5-digit variants)."""
+    """
+    All college_codes identifying the same physical college (4-/5-digit code
+    variants, and codes that persisted through a name/district change — e.g.
+    Aurangabad -> Chhatrapati Sambhajinagar). Grouped by canonical_college_key,
+    NOT by exact college_name match: real PDFs don't repeat identical name text
+    year to year, so name-equality silently missed pairs like this.
+    """
     row = conn.execute("SELECT college_name FROM colleges WHERE college_code=?",
                        (college_code,)).fetchone()
     if not row:
         return [], None
     name = row[0]
-    codes = [r[0] for r in conn.execute(
-        "SELECT college_code FROM colleges WHERE college_name=?", (name,))]
+    key = canonical_college_key(college_code, name)
+    codes = [r[0] for r in conn.execute("SELECT college_code, college_name FROM colleges")
+             if canonical_college_key(r[0], r[1]) == key]
     return codes, name
 
 

@@ -21,9 +21,22 @@ import re
 import sqlite3
 
 from constants import (CITY_TO_DISTRICT, DISTRICT_ALIASES,
-                       find_impossible_percentile_keys, normalize_district)
+                       find_impossible_percentile_keys, normalize_district,
+                       canonical_college_key)
 
 DB_PATH = "db/edupath.db"
+
+# Fact columns that must be a single, current truth per physical college.
+# (table, column, college_data_sources.field_name-or-None)
+# None means the field isn't tracked in college_data_sources (e.g. colleges.city
+# comes from the CET cutoff PDFs, not the scraper) — falls straight to the
+# recency tiebreak below.
+RECONCILED_FACTS = (
+    ("college_details", "naac_grade", "naac_grade"),
+    ("college_details", "institution_type", "institution_type"),
+    ("college_details", "year_established", "year_established"),
+    ("colleges", "city", None),
+)
 
 # (name_substring, {column: value}, reason). name_substring must be specific
 # enough to hit ONLY the intended college(s); it updates every paired code.
@@ -32,8 +45,16 @@ CORRECTIONS = [
      {"institution_type": "gov", "is_autonomous": 1},
      "COEP is a Maharashtra state government autonomous university, not private."),
     ("Institute of Chemical Technology, Matunga",
-     {"institution_type": "gov"},
-     "ICT Mumbai (Matunga) is a state-funded deemed university (ICT Act 2013), not private."),
+     {"institution_type": "gov", "naac_grade": "A++", "nirf_rank": 41},
+     "ICT Mumbai (Matunga): state-funded deemed university (ICT Act 2013); NAAC A++ "
+     "(CGPA 3.77) + NIRF Engineering #41 (2024) verified across ICT site/Wikipedia/NIRF "
+     "2026-07-05 — was missing, leaving an elite institute on the data-less proxy."),
+    # Walchand Sangli held CONFLICTING scraped NAAC grades across its paired codes
+    # (6007='A+', 06007='C'), both wrong. Verified NAAC 'A' (CGPA 3.17, Dec 2023,
+    # valid to 2028) via careers360/grokipedia/college site (2026-07-05).
+    ("Walchand College of Engineering, Sangli",
+     {"naac_grade": "A"},
+     "Walchand Sangli verified NAAC A (CGPA 3.17, 2023) — fixes the A+/C paired-code conflict."),
 ]
 
 
@@ -95,6 +116,46 @@ def _name_location(name):
     return tok, loc_to_district[tok]
 
 
+# Official Maharashtra government district renames (Gazette notifications,
+# 2023) — the OLD name is not wrong data, it's just retired. Every college
+# still carrying the old name in a display/filter field gets updated to the
+# current name so it isn't double-counted as a separate district from its
+# own current-name self (audit 2026-07-05: this is exactly what inflated the
+# homepage's district count and split "Aurangabad" colleges away from
+# "Chhatrapati Sambhajinagar" colleges in filters).
+RETIRED_DISTRICT_NAMES = {
+    "Aurangabad": "Chhatrapati Sambhajinagar",
+    "Osmanabad": "Dharashiv",
+}
+
+
+def rename_retired_district_names(conn, dry_run=False):
+    """
+    Update colleges.city and college_details.district wherever they still hold
+    a retired district name, to the current official name. Idempotent —
+    re-running finds nothing once applied.
+    """
+    cur = conn.cursor()
+    total = 0
+    for old, new in RETIRED_DISTRICT_NAMES.items():
+        for table, column in (("colleges", "city"), ("college_details", "district")):
+            count = cur.execute(
+                f"SELECT COUNT(*) FROM {table} WHERE {column} = ?", (old,)
+            ).fetchone()[0]
+            if not count:
+                continue
+            print(f"  [{table}.{column}] {old!r} -> {new!r}: {count} rows")
+            if not dry_run:
+                cur.execute(f"UPDATE {table} SET {column} = ? WHERE {column} = ?", (new, old))
+            total += count
+    if not dry_run:
+        conn.commit()
+    print(f"\nRetired district name corrections: {total} rows"
+          + (" (dry run)" if dry_run else
+             ". Run populate_university_map.py to refresh university_code."))
+    return total
+
+
 def fix_districts_from_official_name(conn, dry_run=False):
     """
     The scraped college_details.district is wrong for some colleges (the
@@ -143,6 +204,106 @@ def fix_districts_from_official_name(conn, dry_run=False):
           + (" (dry run)" if dry_run else
          ". Run populate_university_map.py to refresh university_code."))
     return fixed
+
+
+def reconcile_paired_college_facts(conn, dry_run=False):
+    """
+    A physical college has ONE true NAAC grade, institution type, founding year,
+    and city — but its data was scraped independently per college_code fragment
+    (4-digit vs 5-digit, or a code that survived a name/district rename), so the
+    two fragments can flatly disagree (found by audit 2026-07-04 while fixing
+    college scoring: e.g. one fragment's naac_grade='C' sourced from an official
+    site, the paired fragment's naac_grade='A+' with no source at all — the old
+    MAX()-based score sync would silently take the more favorable, unsourced
+    value). Blindly averaging or MAXing these into the quality score lets a
+    scraping error inflate — or a stale value depress — a college's score.
+
+    Resolution order per conflicting field, cheapest/most-trustworthy first:
+      1. One fragment's value has an is_official=1 source in college_data_sources
+         -> that wins outright (a scrape traced to the college's own site beats
+         an untraceable one, regardless of which number is bigger).
+      2. Neither/both are is_official, but one has ANY recorded source and the
+         other has none -> the sourced one wins.
+      3. Neither has any provenance:
+         - For `city` ONLY: the 5-digit code's value wins. A city conflict here
+           is virtually always a government district rename (e.g. Aurangabad ->
+           Chhatrapati Sambhajinagar, 2023) — renames are directional, so the
+           value on CET Cell's newer 5-digit-code record (2024/2025) really is
+           the current name. This is a narrow, justified exception, not a
+           general "newer code = correct" claim.
+         - For every other field (naac_grade, institution_type, year_established):
+           these are either static facts that should NEVER legitimately differ
+           (year_established) or ones that can genuinely change in either
+           direction (naac_grade re-accreditation) — with zero provenance on
+           either side there is no honest way to pick a winner. Per this
+           project's fail-closed rule, GUESSING here would risk inflating or
+           deflating a real college's quality score on a coin flip, so these
+           are left untouched and printed under NEEDS MANUAL REVIEW instead.
+    Every resolution (and every left-unresolved conflict) is printed so nothing
+    is silent. Writes the winning value to BOTH fragments so a resolved
+    conflict cannot resurface on the next score_colleges.py run (which reads
+    college_details fresh each time). Idempotent.
+    """
+    cur = conn.cursor()
+    all_colleges = cur.execute("SELECT college_code, college_name FROM colleges").fetchall()
+    groups = {}
+    for code, name in all_colleges:
+        groups.setdefault(canonical_college_key(code, name), []).append(code)
+
+    sources = {}  # (college_code, field_name) -> (is_official, retrieved_date)
+    for code, field, official, retrieved in cur.execute(
+        "SELECT college_code, field_name, is_official, retrieved_date FROM college_data_sources"
+    ).fetchall():
+        sources[(code, field)] = (official, retrieved)
+
+    resolved, unresolved = 0, 0
+    for codes in groups.values():
+        if len(codes) < 2:
+            continue
+        for table, column, source_field in RECONCILED_FACTS:
+            ph = ",".join("?" * len(codes))
+            rows = cur.execute(
+                f"SELECT college_code, {column} FROM {table} "
+                f"WHERE college_code IN ({ph}) AND {column} IS NOT NULL", codes).fetchall()
+            values = {code: val for code, val in rows}
+            if len(set(values.values())) < 2:
+                continue  # no conflict (or only one fragment has a value at all)
+
+            winner_code, why = None, None
+            if source_field:
+                officials = [c for c in values if sources.get((c, source_field), (0, None))[0]]
+                if len(officials) == 1:
+                    winner_code, why = officials[0], "is_official source"
+                elif not officials:
+                    sourced = [c for c in values if (c, source_field) in sources]
+                    if len(sourced) == 1:
+                        winner_code, why = sourced[0], "only sourced fragment"
+            if winner_code is None and column == "city":
+                five_digit = [c for c in values if len(c) == 5]
+                if len(five_digit) == 1:
+                    winner_code, why = five_digit[0], "5-digit code (district rename is directional)"
+
+            if winner_code is None:
+                print(f"  [NEEDS MANUAL REVIEW] [{table}.{column}] codes {codes}: {values}  "
+                      f"-> no provenance either side, left unresolved (not guessed)")
+                unresolved += 1
+                continue
+
+            winning_value = values[winner_code]
+            print(f"  [{table}.{column}] codes {codes}: {values}  "
+                  f"-> {winning_value!r} (from {winner_code}, {why})")
+            if not dry_run:
+                losers = [c for c in codes if c in values and values[c] != winning_value]
+                cur.executemany(
+                    f"UPDATE {table} SET {column} = ? WHERE college_code = ?",
+                    [(winning_value, c) for c in losers])
+            resolved += 1
+
+    if not dry_run:
+        conn.commit()
+    print(f"\nPaired-code fact reconciliation: {resolved} conflicting fields resolved, "
+          f"{unresolved} left for manual review" + (" (dry run)" if dry_run else "."))
+    return resolved
 
 
 def quarantine_impossible_percentiles(conn, dry_run=False):
@@ -203,6 +364,8 @@ if __name__ == "__main__":
     conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.execute("PRAGMA journal_mode=WAL")
     apply(conn, dry_run=args.dry_run)
+    rename_retired_district_names(conn, dry_run=args.dry_run)
     fix_districts_from_official_name(conn, dry_run=args.dry_run)
+    reconcile_paired_college_facts(conn, dry_run=args.dry_run)
     quarantine_impossible_percentiles(conn, dry_run=args.dry_run)
     conn.close()

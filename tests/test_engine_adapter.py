@@ -71,13 +71,23 @@ class TestEngineAdapter(unittest.TestCase):
         with_total = sum(len(with_tfws[b]) for b in ("safe", "probable", "reach"))
         self.assertGreaterEqual(with_total, base_total)
 
-    def test_merged_pools_deduplicate_by_canonical_code(self):
-        """A branch eligible under both the student's own category and an extra
-        pool must appear exactly once (best band kept), never twice."""
+    def test_pool_rows_are_distinct_selectable_entries(self):
+        """A pool seat (e.g. TFWS's separate quota) is a genuinely different seat
+        the counsellor can shortlist independently of the general seat, so the
+        same branch may appear as BOTH a general entry and a TFWS entry
+        (counsellor request 2026-07-05). Identity is entry_key (canonical_code +
+        seat_pool), which must be unique; canonical_code alone may repeat."""
         out = ea.preference_list(90, "General — Open", "Pune", tfws_eligible=True)
-        codes = [r["canonical_code"] for b in ("safe", "probable", "reach") for r in out[b]]
-        self.assertEqual(len(codes), len(set(codes)),
-                         "canonical_code must be unique across the merged bands")
+        keys = [r["entry_key"] for b in ("safe", "probable", "reach") for r in out[b]]
+        self.assertEqual(len(keys), len(set(keys)),
+                         "entry_key must be unique across the merged bands")
+        # A TFWS entry's entry_key is canonical_code + '::TFWS' and is distinct
+        # from the general entry's plain canonical_code for the same branch.
+        tfws = [r for b in ("safe", "probable", "reach") for r in out[b]
+                if r["seat_pool"] == "TFWS"]
+        self.assertTrue(tfws, "TFWS-eligible student should see TFWS entries")
+        for r in tfws:
+            self.assertEqual(r["entry_key"], f"{r['canonical_code']}::TFWS")
 
     def test_round_strategy_and_profile_and_fee(self):
         rs = ea.round_strategy(94, "General — Open", "Pune", ["Computer"])

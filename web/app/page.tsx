@@ -17,7 +17,9 @@ import {
   ArrowRight,
 } from "lucide-react";
 
-import { searchColleges, fetchBranchKeywords, type CollegeSearchResult } from "@/lib/api";
+import { searchColleges, fetchBranchKeywords, fetchSiteStats, type CollegeSearchResult, type CollegeSortBy, type SiteStats } from "@/lib/api";
+import { fmtPercentile } from "@/lib/utils";
+import { CompareButton } from "@/components/CompareButton";
 import { NavHeader } from "@/components/NavHeader";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DiscoveryFilters, type SidebarFilterState } from "@/components/DiscoveryFilters";
@@ -40,10 +42,6 @@ interface FilterPill {
   naacFilter?: boolean;
 }
 
-interface ComingSoonPill {
-  label: string;
-}
-
 const FILTER_PILLS: FilterPill[] = [
   { id: "all",        label: "All Colleges",          icon: GraduationCap },
   { id: "government", label: "Government",             icon: Landmark, apiType: "gov" },
@@ -51,11 +49,9 @@ const FILTER_PILLS: FilterPill[] = [
   { id: "naac_a",     label: "NAAC A & Above",         icon: Star, naacFilter: true },
 ];
 
-// Top Placements: only 15/713 colleges have placement_pct data (2% coverage) — unusable as a filter.
-// Engineering & Tech: every college in MHT CET CAP is an engineering college — filter would be universal.
-const COMING_SOON_PILLS: ComingSoonPill[] = [
-  { label: "Top Placements" },
-  { label: "Engineering & Tech" },
+const SORT_OPTIONS: { value: CollegeSortBy; label: string }[] = [
+  { value: "score", label: "Score" },
+  { value: "percentile", label: "Cutoff percentile" },
 ];
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -85,11 +81,14 @@ function applyClientFilter(
 
 // ── Editorial list row ────────────────────────────────────────────────────────
 
-function CollegeRow({ college, index }: { college: CollegeSearchResult; index: number }) {
+function CollegeRow({ college, index, sortBy }: { college: CollegeSearchResult; index: number; sortBy: CollegeSortBy }) {
   const router = useRouter();
   const meta = [college.city, institutionLabel(college.institution_type), college.naac_grade ? `NAAC ${college.naac_grade}` : null]
     .filter(Boolean)
     .join(" · ") || "Maharashtra";
+
+  const metricValue = sortBy === "percentile" ? college.top_percentile : college.score;
+  const metricLabel = sortBy === "percentile" ? "percentile" : "score";
 
   return (
     <motion.div
@@ -118,16 +117,21 @@ function CollegeRow({ college, index }: { college: CollegeSearchResult; index: n
         </div>
         <div className="text-xs text-ep-muted mt-0.5 truncate">{meta}</div>
       </div>
-      {college.score != null && (
+      {metricValue != null && (
         <div className="text-right w-[100px] shrink-0">
           <div className="font-mono text-xl font-semibold text-[var(--ep-text)]">
-            {college.score.toFixed(0)}
+            {sortBy === "percentile" ? fmtPercentile(metricValue) : metricValue.toFixed(0)}
           </div>
           <div className="font-mono text-[10px] uppercase tracking-wide" style={{ color: "#9A968B" }}>
-            score
+            {metricLabel}
           </div>
         </div>
       )}
+      <CompareButton
+        college={{ code: college.college_code, name: college.college_name }}
+        variant="chip"
+        className="shrink-0"
+      />
       <ChevronRight className="h-4 w-4 shrink-0" style={{ color: "#C4BCA9" }} />
     </motion.div>
   );
@@ -147,11 +151,14 @@ export default function HomePage() {
   const [searchQ, setSearchQ]           = useState("");
   const [sidebarFilters, setSidebarFilters] = useState<SidebarFilterState>({});
   const [naacAboveA, setNaacAboveA]     = useState(false);
+  const [sortBy, setSortBy]             = useState<CollegeSortBy>("score");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [heroBranchOptions, setHeroBranchOptions] = useState<string[]>([]);
+  const [siteStats, setSiteStats] = useState<SiteStats | null>(null);
 
   useEffect(() => {
     fetchBranchKeywords().then(setHeroBranchOptions).catch(() => {});
+    fetchSiteStats().then(setSiteStats).catch(() => {});
   }, []);
 
   const activeFilter: FilterId = naacAboveA
@@ -167,6 +174,7 @@ export default function HomePage() {
     replace = false,
     filters: SidebarFilterState = sidebarFilters,
     naacFlag: boolean = naacAboveA,
+    sort: CollegeSortBy = sortBy,
   ) {
     if (pageOffset === 0) setLoading(true);
     else setLoadingMore(true);
@@ -179,6 +187,9 @@ export default function HomePage() {
           branch: filters.branch,
           scoreMin: filters.scoreMin,
           scoreMax: filters.scoreMax,
+          percentileMin: filters.percentileMin,
+          percentileMax: filters.percentileMax,
+          sortBy: sort,
         }
       );
       setAllColleges((prev) => replace ? page : [...prev, ...page]);
@@ -192,7 +203,13 @@ export default function HomePage() {
     }
   }
 
-  useEffect(() => { loadPage(0, true, {}, false); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { loadPage(0, true, {}, false, "score"); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function handleSortChange(next: CollegeSortBy) {
+    setSortBy(next);
+    setOffset(0);
+    loadPage(0, true, sidebarFilters, naacAboveA, next);
+  }
 
   function handleFilterClick(pill: FilterPill) {
     const naac = pill.naacFilter ?? false;
@@ -238,7 +255,8 @@ export default function HomePage() {
   const hasAnyFilter = Boolean(
     searchQ.trim() || naacAboveA || sidebarFilters.institutionType ||
     sidebarFilters.district || sidebarFilters.naacGrade || sidebarFilters.branch ||
-    sidebarFilters.scoreMin != null || sidebarFilters.scoreMax != null
+    sidebarFilters.scoreMin != null || sidebarFilters.scoreMax != null ||
+    sidebarFilters.percentileMin != null || sidebarFilters.percentileMax != null
   );
 
   return (
@@ -274,7 +292,7 @@ export default function HomePage() {
             <span className="italic" style={{ color: "var(--color-ep-primary)" }}>path.</span> We help you find it.
           </h1>
           <p className="text-[17px] leading-relaxed text-[#5B6472] mb-7 max-w-xl">
-            From a single percentile to a confident admission — mapped with eleven years of real CAP cutoff data.
+            From a single percentile to a confident admission — mapped with {siteStats ? `${siteStats.cutoff_year_count} years` : "real"} of real CAP cutoff data.
           </p>
 
           <form onSubmit={handleSearch} className="max-w-xl">
@@ -297,15 +315,15 @@ export default function HomePage() {
 
           <div className="flex items-center gap-6 mt-6 text-[13px] text-[#7A7568] flex-wrap">
             <span>
-              <b className="font-mono text-[15px] font-semibold text-[var(--ep-text)]">{allColleges.length || 713}</b> colleges
+              <b className="font-mono text-[15px] font-semibold text-[var(--ep-text)]">{siteStats ? siteStats.college_count : "…"}</b> colleges
             </span>
             <span style={{ color: "#CFC9BA" }}>·</span>
             <span>
-              <b className="font-mono text-[15px] font-semibold text-[var(--ep-text)]">11 yrs</b> cutoff data
+              <b className="font-mono text-[15px] font-semibold text-[var(--ep-text)]">{siteStats ? siteStats.cutoff_year_count : "…"} yrs</b> cutoff data
             </span>
             <span style={{ color: "#CFC9BA" }}>·</span>
             <span>
-              <b className="font-mono text-[15px] font-semibold text-[var(--ep-text)]">36</b> districts
+              <b className="font-mono text-[15px] font-semibold text-[var(--ep-text)]">{siteStats ? siteStats.district_count : "…"}</b> districts
             </span>
           </div>
         </div>
@@ -320,7 +338,7 @@ export default function HomePage() {
             onChange={(e) => handleSidebarChange({ ...sidebarFilters, branch: e.target.value || undefined })}
             className="bg-transparent text-sm text-[var(--ep-text)] outline-none cursor-pointer"
           >
-            <option value="">Any branch</option>
+            <option value="">All Branches</option>
             {heroBranchOptions.map((b) => (
               <option key={b} value={b}>{b}</option>
             ))}
@@ -354,25 +372,19 @@ export default function HomePage() {
               </motion.button>
             );
           })}
-          {COMING_SOON_PILLS.map((pill) => (
-            <span
-              key={pill.label}
-              className="flex items-center gap-1.5 px-[15px] py-2 rounded-full text-[13px] font-medium whitespace-nowrap border border-dashed select-none"
-              style={{ borderColor: "var(--ep-border-strong)", color: "#B0A99A" }}
-              title="Coming soon"
+          <label className="ml-auto flex items-center gap-1.5 font-mono text-xs" style={{ color: "#8A867B" }}>
+            Sort
+            <select
+              value={sortBy}
+              onChange={(e) => handleSortChange(e.target.value as CollegeSortBy)}
+              className="bg-transparent font-mono text-xs font-semibold outline-none cursor-pointer"
+              style={{ color: "var(--ep-text)" }}
             >
-              {pill.label}
-              <span
-                className="font-mono text-[9px] font-semibold px-[5px] py-[2px] rounded"
-                style={{ letterSpacing: "0.05em", background: "#F0E9D6", color: "var(--color-ep-amber-ink)" }}
-              >
-                SOON
-              </span>
-            </span>
-          ))}
-          <span className="ml-auto font-mono text-xs" style={{ color: "#8A867B" }}>
-            Sort ▾ Score
-          </span>
+              {SORT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </label>
         </div>
       </div>
 
@@ -451,7 +463,7 @@ export default function HomePage() {
                   className="font-mono text-[11px] uppercase hidden sm:inline"
                   style={{ letterSpacing: "0.06em", color: "#9A968B" }}
                 >
-                  sorted by score
+                  sorted by {sortBy === "percentile" ? "cutoff percentile" : "score"}
                 </span>
               </div>
             </div>
@@ -479,7 +491,7 @@ export default function HomePage() {
                 <AnimatePresence mode="popLayout">
                   <div>
                     {filtered.map((c, i) => (
-                      <CollegeRow key={c.college_code} college={c} index={i} />
+                      <CollegeRow key={c.college_code} college={c} index={i} sortBy={sortBy} />
                     ))}
                   </div>
                 </AnimatePresence>

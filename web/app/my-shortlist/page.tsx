@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
-import { Heart, MapPin, Star, Trash2, ArrowLeft, GripVertical, Printer, ArrowRight } from "lucide-react";
+import { Bookmark, MapPin, Star, Trash2, ArrowLeft, GripVertical, Printer, ArrowRight } from "lucide-react";
 
 import { useShortlist, type ShortlistCollege } from "@/lib/useShortlist";
 import { NavHeader } from "@/components/NavHeader";
@@ -67,7 +67,7 @@ function ShortlistRow({
         whileTap={{ scale: 0.9 }}
         onClick={onRemove}
         className="h-8 w-8 rounded-full flex items-center justify-center text-ep-muted hover:text-[var(--color-ep-red)] transition-colors shrink-0"
-        aria-label="Remove from shortlist"
+        aria-label="Remove from bookmarks"
       >
         <Trash2 className="h-4 w-4" />
       </motion.button>
@@ -104,8 +104,8 @@ export default function ShortlistPage() {
         {/* Header */}
         <div className="flex items-end justify-between mb-1.5 gap-4 flex-wrap">
           <div className="flex items-center gap-2.5">
-            <Heart className="h-5 w-5" style={{ color: "var(--color-ep-primary)", fill: "var(--color-ep-primary)" }} />
-            <h1 className="font-display text-[28px] text-[var(--ep-text)]">Your Shortlist</h1>
+            <Bookmark className="h-5 w-5" style={{ color: "var(--color-ep-primary)", fill: "var(--color-ep-primary)" }} />
+            <h1 className="font-display text-[28px] text-[var(--ep-text)]">Your Bookmarks</h1>
           </div>
 
           {items.length > 0 && (
@@ -142,12 +142,12 @@ export default function ShortlistPage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center py-20"
           >
-            <Heart className="h-12 w-12 mx-auto mb-4 opacity-15 text-[var(--ep-text)]" />
+            <Bookmark className="h-12 w-12 mx-auto mb-4 opacity-15 text-[var(--ep-text)]" />
             <p className="text-sm font-medium text-[var(--ep-text)]">
-              Your shortlist is empty
+              No colleges bookmarked yet
             </p>
             <p className="text-xs text-ep-muted mt-1 mb-5">
-              Explore colleges and tap the heart to save them here.
+              Explore colleges and tap Save to bookmark them here.
             </p>
             <Link
               href="/"

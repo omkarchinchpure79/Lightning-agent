@@ -5,6 +5,7 @@ import { ThemeProvider } from "next-themes";
 import { MotionConfig } from "framer-motion";
 import { useState } from "react";
 import { AuthProvider } from "@/lib/AuthProvider";
+import { CompareTray } from "@/components/CompareTray";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -20,7 +21,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <AuthProvider>
       <ThemeProvider attribute="class" defaultTheme="light" disableTransitionOnChange>
         <MotionConfig reducedMotion="user">
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+          <QueryClientProvider client={queryClient}>
+            {children}
+            <CompareTray />
+          </QueryClientProvider>
         </MotionConfig>
       </ThemeProvider>
     </AuthProvider>

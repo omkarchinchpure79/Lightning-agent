@@ -268,6 +268,34 @@ class TestColleges(unittest.TestCase):
         self.assertLessEqual(len(resp.json()), 20)
         self.assertGreater(len(resp.json()), 0)
 
+    def test_search_sort_by_percentile_orders_descending(self):
+        resp = _client.get("/api/colleges/search?sort_by=percentile&limit=10")
+        self.assertEqual(resp.status_code, 200)
+        pcts = [r["top_percentile"] for r in resp.json() if r["top_percentile"] is not None]
+        self.assertGreater(len(pcts), 0)
+        self.assertEqual(pcts, sorted(pcts, reverse=True))
+
+    def test_search_percentile_range_filter(self):
+        resp = _client.get("/api/colleges/search?percentile_min=99&percentile_max=100&limit=50")
+        self.assertEqual(resp.status_code, 200)
+        for r in resp.json():
+            if r["top_percentile"] is not None:
+                self.assertGreaterEqual(r["top_percentile"], 99)
+                self.assertLessEqual(r["top_percentile"], 100)
+
+    def test_search_rejects_invalid_sort_by(self):
+        resp = _client.get("/api/colleges/search?sort_by=bogus")
+        self.assertEqual(resp.status_code, 422)
+
+    def test_search_does_not_duplicate_name_mismatched_paired_codes(self):
+        """K J Somaiya (3209/03209) carries two DIFFERENT college_name strings for
+        the same physical college — regression guard for the bug where /search
+        partitioned by exact name and showed both fragments as separate rows."""
+        resp = _client.get("/api/colleges/search?q=K J Somaiya Institute&limit=50")
+        self.assertEqual(resp.status_code, 200)
+        codes = [r["college_code"] for r in resp.json()]
+        self.assertIn(len([c for c in codes if c in ("3209", "03209")]), (0, 1))
+
     def test_college_profile_returns_full_shape(self):
         resp = _client.get("/api/colleges/6006")   # COEP 5-digit code
         self.assertEqual(resp.status_code, 200)
@@ -292,6 +320,22 @@ class TestColleges(unittest.TestCase):
     def test_college_branches_not_found(self):
         resp = _client.get("/api/colleges/00000/branches")
         self.assertEqual(resp.status_code, 404)
+
+    def test_college_branches_include_2025_close_and_intake_fields(self):
+        """Regression guard: the branches table must carry the real 2025 actual
+        close (not just the 2026 prediction) and seat intake (general/TFWS),
+        parsed from the official seat-matrix PDFs — never fabricated."""
+        resp = _client.get("/api/colleges/6006/branches")
+        self.assertEqual(resp.status_code, 200)
+        branches = resp.json()["branches"]
+        self.assertGreater(len(branches), 0)
+        row = branches[0]
+        self.assertIn("close_2025", row)
+        self.assertIn("general_intake", row)
+        self.assertIn("tfws_intake", row)
+        # If intake is present, it must be a plausible positive seat count, never negative/zero-guessed.
+        if row["general_intake"] is not None:
+            self.assertGreater(row["general_intake"], 0)
 
 
 class TestHealth(unittest.TestCase):
@@ -333,6 +377,17 @@ class TestLookups(unittest.TestCase):
         resp = _client.get("/api/lookups/cap-rounds")
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json(), [1, 2, 3])
+
+    def test_stats_reflect_real_data_not_hardcoded_placeholders(self):
+        """Regression guard for the homepage hero numbers that used to be
+        literal fake strings ("11 yrs cutoff data", "36 districts")."""
+        resp = _client.get("/api/lookups/stats")
+        self.assertEqual(resp.status_code, 200)
+        d = resp.json()
+        self.assertGreater(d["college_count"], 0)
+        self.assertGreater(d["district_count"], 0)
+        self.assertEqual(d["cutoff_year_max"] - d["cutoff_year_min"] + 1 >= d["cutoff_year_count"], True)
+        self.assertEqual(d["cutoff_year_count"], 3)  # 2023, 2024, 2025 — matches constants.YEAR_WEIGHTS
 
 
 if __name__ == "__main__":

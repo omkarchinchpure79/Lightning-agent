@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Heart, LogIn, LogOut, LayoutDashboard, User, Users } from "lucide-react";
+import { Bookmark, LogIn, LogOut, LayoutDashboard, User, Users, GitCompareArrows } from "lucide-react";
 import { CollegeSearch } from "./CollegeSearch";
 import { ThemeToggle } from "./ThemeToggle";
 import { EduPathLogo } from "./EduPathLogo";
 import { useShortlist } from "@/lib/useShortlist";
+import { useCompare } from "@/lib/useCompare";
 import { useAuth } from "@/lib/useAuth";
 
 interface NavHeaderProps {
@@ -22,6 +23,7 @@ interface NavHeaderProps {
  */
 export function NavHeader({ right }: NavHeaderProps) {
   const { count } = useShortlist();
+  const { count: compareCount } = useCompare();
   const { counselor, isLoggedIn, logout } = useAuth();
   const router = useRouter();
 
@@ -59,14 +61,29 @@ export function NavHeader({ right }: NavHeaderProps) {
             href="/my-shortlist"
             className="text-[15px] font-medium text-[var(--ep-text-secondary)] hover:text-[var(--ep-text)] transition-colors flex items-center gap-1.5"
           >
-            <Heart className="h-4 w-4" />
-            My Shortlist
+            <Bookmark className="h-4 w-4" />
+            Bookmarks
             {count > 0 && (
               <span
                 className="inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1 rounded-full text-[11px] font-semibold text-white"
                 style={{ background: "var(--color-ep-primary)" }}
               >
                 {count}
+              </span>
+            )}
+          </Link>
+          <Link
+            href="/compare"
+            className="text-[15px] font-medium text-[var(--ep-text-secondary)] hover:text-[var(--ep-text)] transition-colors flex items-center gap-1.5"
+          >
+            <GitCompareArrows className="h-4 w-4" />
+            Compare
+            {compareCount > 0 && (
+              <span
+                className="inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1 rounded-full text-[11px] font-semibold text-white"
+                style={{ background: "var(--color-ep-primary)" }}
+              >
+                {compareCount}
               </span>
             )}
           </Link>

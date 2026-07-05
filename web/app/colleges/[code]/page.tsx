@@ -19,7 +19,7 @@ import {
   ExternalLink,
   AlertTriangle,
   ChevronLeft,
-  Heart,
+  Bookmark,
   X,
   Star,
   Lightbulb,
@@ -32,6 +32,7 @@ import {
   Images,
   Trophy,
   Check,
+  Copy,
 } from "lucide-react";
 
 import {
@@ -42,8 +43,9 @@ import {
   type CollegeProfile,
   type CollegeFeeEntry,
 } from "@/lib/api";
-import { googleImageUrl, cn } from "@/lib/utils";
+import { googleImageUrl, cn, fmtPercentile } from "@/lib/utils";
 import { useShortlist } from "@/lib/useShortlist";
+import { CompareButton } from "@/components/CompareButton";
 import { NavHeader } from "@/components/NavHeader";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -88,6 +90,51 @@ function NotAvailable({ label }: { label: string }) {
     <p className="text-sm text-ep-muted italic">
       {label} data not available for this college.
     </p>
+  );
+}
+
+// Click-to-copy code chip (college code, course code). Shows the official
+// numeric code counsellors quote in CAP forms, and copies it verbatim.
+function CopyableCode({
+  code,
+  label,
+  className,
+}: {
+  code: string;
+  label?: string;
+  className?: string;
+}) {
+  const [copied, setCopied] = useState(false);
+  async function handleCopy(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1400);
+    } catch {
+      /* clipboard blocked — no-op */
+    }
+  }
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      title={`Copy ${label ?? "code"} ${code}`}
+      className={cn(
+        "group inline-flex items-center gap-1.5 rounded-[7px] border px-2.5 py-1 font-mono text-[12px] font-medium transition-colors hover:bg-[var(--ep-bg)]",
+        className
+      )}
+      style={{ borderColor: "var(--ep-border)", color: "var(--ep-text-secondary)" }}
+    >
+      {label && <span className="text-ep-muted not-italic">{label}</span>}
+      <span className="text-[var(--ep-text)]">{code}</span>
+      {copied ? (
+        <Check className="h-3.5 w-3.5" style={{ color: "var(--color-ep-green)" }} />
+      ) : (
+        <Copy className="h-3.5 w-3.5 text-ep-muted group-hover:text-[var(--color-ep-primary)]" />
+      )}
+    </button>
   );
 }
 
@@ -419,13 +466,18 @@ function Sidebar({ profile }: { profile: CollegeProfile }) {
         )}
         style={saved ? { background: "rgba(30,77,140,0.08)" } : { background: "var(--color-ep-primary)", borderColor: "var(--color-ep-primary)" }}
       >
-        <Heart
+        <Bookmark
           className="h-4 w-4 transition-all"
           fill={saved ? "var(--color-ep-primary)" : "none"}
           stroke="currentColor"
         />
-        {saved ? "Saved to shortlist" : "Save to shortlist"}
+        {saved ? "Saved" : "Save"}
       </motion.button>
+
+      <CompareButton
+        college={{ code: profile.college_code, name: profile.college_name }}
+        variant="full"
+      />
 
       {profile.contact.website_url && (
         <a
@@ -458,7 +510,7 @@ function Sidebar({ profile }: { profile: CollegeProfile }) {
         className="block text-center text-xs pt-1 hover:underline"
         style={{ color: "var(--color-ep-primary)" }}
       >
-        View your full shortlist →
+        View your full bookmarks →
       </Link>
 
       {/* Toast */}
@@ -472,7 +524,7 @@ function Sidebar({ profile }: { profile: CollegeProfile }) {
             style={{ background: "var(--color-ep-green)", color: "white" }}
           >
             {saved && <Check className="h-3.5 w-3.5" />}
-            {saved ? "Added to shortlist" : "Removed from shortlist"}
+            {saved ? "Added to bookmarks" : "Removed from bookmarks"}
           </motion.div>
         )}
       </AnimatePresence>
@@ -527,6 +579,14 @@ function CollegeProfileView({
                 {identity.year_established &&
                   ` · Est. ${identity.year_established}`}
               </p>
+              <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                <CopyableCode code={profile.college_code} label="Institute code" />
+                {profile.paired_codes
+                  ?.filter((c) => c !== profile.college_code)
+                  .map((c) => (
+                    <CopyableCode key={c} code={c} label="Also" />
+                  ))}
+              </div>
             </div>
             <div className="flex flex-wrap gap-2 mt-1">
               {accreditation.naac_grade && (
@@ -570,14 +630,12 @@ function CollegeProfileView({
               mono: true,
             },
             {
-              label: "Autonomous",
+              label: "Campus size",
               value:
-                identity.is_autonomous === 1
-                  ? "Yes"
-                  : identity.is_autonomous === 0
-                  ? "No"
-                  : "—",
-              mono: false,
+                facilities.campus_area_acres != null
+                  ? `${facilities.campus_area_acres} acres`
+                  : "N/A",
+              mono: true,
             },
             {
               label: "University",
@@ -606,8 +664,9 @@ function CollegeProfileView({
               </p>
               <p
                 className={cn(
-                  "text-[16px] font-semibold text-[var(--ep-text)] truncate",
-                  mono && "font-mono"
+                  "text-[16px] font-semibold truncate",
+                  mono && "font-mono",
+                  value === "N/A" ? "text-ep-muted" : "text-[var(--ep-text)]"
                 )}
                 title={value}
               >
@@ -783,10 +842,23 @@ function CollegeProfileView({
                 <thead>
                   <tr className="text-left" style={{ background: "var(--ep-bg)" }}>
                     <th
-                      className="font-mono py-2.5 px-5 font-semibold text-[11px] uppercase text-ep-muted w-[55%]"
+                      className="font-mono py-2.5 px-5 font-semibold text-[11px] uppercase text-ep-muted w-[42%]"
                       style={{ letterSpacing: "0.05em" }}
                     >
                       Branch
+                    </th>
+                    <th
+                      className="font-mono py-2.5 px-4 font-semibold text-[11px] uppercase text-ep-muted text-left"
+                      style={{ letterSpacing: "0.05em" }}
+                      title="Official CET course code"
+                    >
+                      Code
+                    </th>
+                    <th
+                      className="font-mono py-2.5 px-4 font-semibold text-[11px] uppercase text-ep-muted text-right"
+                      style={{ letterSpacing: "0.05em" }}
+                    >
+                      2025 close
                     </th>
                     <th
                       className="font-mono py-2.5 px-4 font-semibold text-[11px] uppercase text-ep-muted text-right"
@@ -799,6 +871,13 @@ function CollegeProfileView({
                       style={{ letterSpacing: "0.05em" }}
                     >
                       Confidence
+                    </th>
+                    <th
+                      className="font-mono py-2.5 px-4 font-semibold text-[11px] uppercase text-ep-muted text-right"
+                      style={{ letterSpacing: "0.05em" }}
+                      title="General intake + TFWS intake"
+                    >
+                      Seats
                     </th>
                     <th className="py-2.5 px-4 w-8" />
                   </tr>
@@ -819,8 +898,18 @@ function CollegeProfileView({
                           {b.branch_name}
                         </Link>
                       </td>
+                      <td className="py-3 px-4">
+                        {b.branch_code ? (
+                          <CopyableCode code={b.branch_code} />
+                        ) : (
+                          <span className="text-ep-muted text-xs">—</span>
+                        )}
+                      </td>
                       <td className="font-mono py-3 px-4 text-right text-[var(--ep-text)]">
-                        {b.pred_close != null ? b.pred_close.toFixed(1) : "—"}
+                        {b.close_2025 != null ? fmtPercentile(b.close_2025) : "—"}
+                      </td>
+                      <td className="font-mono py-3 px-4 text-right text-[var(--ep-text)]">
+                        {b.pred_close != null ? fmtPercentile(b.pred_close) : "—"}
                       </td>
                       <td className="py-3 px-4 text-center">
                         {b.confidence ? (
@@ -830,6 +919,13 @@ function CollegeProfileView({
                         ) : (
                           <span className="text-ep-muted text-xs">—</span>
                         )}
+                      </td>
+                      <td className="font-mono py-3 px-4 text-right text-[var(--ep-text)]">
+                        {b.general_intake != null
+                          ? b.tfws_intake != null
+                            ? `${b.general_intake} + ${b.tfws_intake}`
+                            : `${b.general_intake}`
+                          : <span className="text-ep-muted text-xs">—</span>}
                       </td>
                       <td className="py-3 px-4">
                         <Link
@@ -998,7 +1094,7 @@ function MobileShortlistBar({ profile }: { profile: CollegeProfile }) {
         {saved ? (
           <Check className="h-4 w-4" />
         ) : (
-          <Heart className="h-4 w-4" fill="none" stroke="currentColor" />
+          <Bookmark className="h-4 w-4" fill="none" stroke="currentColor" />
         )}
         {saved ? "Saved" : "Save"}
       </button>
@@ -1006,7 +1102,7 @@ function MobileShortlistBar({ profile }: { profile: CollegeProfile }) {
         href="/my-shortlist"
         className="px-4 py-2.5 rounded-[10px] border border-[var(--ep-border)] text-sm text-[var(--ep-text-secondary)] hover:bg-[var(--ep-bg)] transition-colors"
       >
-        Shortlist
+        Bookmarks
       </Link>
     </div>
   );

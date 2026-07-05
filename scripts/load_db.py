@@ -214,32 +214,19 @@ def load_data():
 
     conn.commit()
 
-    # 5. Restore Y-set scores from college_subset_scores (survives table drop — separate table)
+    # 5. Restore Y-set scores from college_subset_scores (survives table drop — separate table).
+    # Delegates to setup_college_profiles.compute_college_scores() — the ONLY place the
+    # quality-score formula is implemented. A duplicate flat-AVG formula used to live here
+    # inline (missing the x10 scale AND the fixed-weight pillar blend), which silently
+    # reverted colleges.score to a wrong 1-10-scale number every time load_db.py re-ran
+    # after score_colleges.py had already computed the real score.
     try:
-        cursor.execute("""
-            UPDATE colleges SET
-                score = (
-                    SELECT ROUND(AVG(css.score), 2)
-                    FROM college_subset_scores css
-                    WHERE css.college_code = colleges.college_code
-                ),
-                completeness = (
-                    SELECT ROUND(COUNT(css.score) * 100.0 /
-                        (SELECT COUNT(*) FROM subset_definitions), 1)
-                    FROM college_subset_scores css
-                    WHERE css.college_code = colleges.college_code
-                )
-            WHERE EXISTS (
-                SELECT 1 FROM college_subset_scores css
-                WHERE css.college_code = colleges.college_code
-            )
-        """)
-        restored = cursor.rowcount
+        from setup_college_profiles import compute_college_scores
+        restored = compute_college_scores(conn)
         if restored:
             print(f"  Y-set scores restored for {restored} colleges from college_subset_scores.")
-        conn.commit()
     except sqlite3.OperationalError:
-        pass  # college_subset_scores doesn't exist yet on first-time setup
+        pass  # college_subset_scores / subset_definitions don't exist yet on first-time setup
 
     # 6. Summary
     cursor.execute("SELECT COUNT(*) FROM colleges;")

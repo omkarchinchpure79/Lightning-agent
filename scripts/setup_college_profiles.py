@@ -14,7 +14,7 @@ Tables added/managed:
 import sqlite3
 import os
 
-from constants import TOTAL_SUBSETS, ensure_predictions_table
+from constants import TOTAL_SUBSETS, ensure_predictions_table, canonical_college_key
 
 DB_PATH = "db/edupath.db"
 
@@ -47,13 +47,19 @@ HOME_UNIVERSITY_DATA = [
     ("Gondia",                    "RTMNU",  "Rashtrasant Tukadoji Maharaj Nagpur University"),
     ("Bhandara",                  "RTMNU",  "Rashtrasant Tukadoji Maharaj Nagpur University"),
     # Dr. Babasaheb Ambedkar Marathwada University (BAMU), Chh. Sambhajinagar — 4 districts
-    # Both old and new district names kept for backward compatibility with PDF data
+    # Aurangabad and Osmanabad are the SAME two districts as Chhatrapati Sambhajinagar
+    # and Dharashiv — both renamed by the same Maharashtra government decision
+    # (Gazette notification, Aurangabad -> Chhatrapati Sambhajinagar and
+    # Osmanabad -> Dharashiv, effective 2023). These are not 4 extra districts;
+    # listing the old names as their own rows double-counted them everywhere
+    # this table feeds (list_districts(), the homepage district_count stat,
+    # the Location filter dropdown). The old names are still recognized as
+    # INPUT (DISTRICT_ALIASES / CITY_TO_DISTRICT normalize them to the current
+    # name below) — they just don't get their own row in the canonical list.
     ("Chhatrapati Sambhajinagar", "BAMU",   "Dr. Babasaheb Ambedkar Marathwada University"),
-    ("Aurangabad",                "BAMU",   "Dr. Babasaheb Ambedkar Marathwada University"),
     ("Jalna",                     "BAMU",   "Dr. Babasaheb Ambedkar Marathwada University"),
     ("Beed",                      "BAMU",   "Dr. Babasaheb Ambedkar Marathwada University"),
     ("Dharashiv",                 "BAMU",   "Dr. Babasaheb Ambedkar Marathwada University"),
-    ("Osmanabad",                 "BAMU",   "Dr. Babasaheb Ambedkar Marathwada University"),
     # Swami Ramanand Teerth Marathwada University (SRTMUN), Nanded — 4 districts
     # Distinct H-seat region from BAMU (confirmed against official CAP jurisdiction)
     ("Nanded",                    "SRTMUN", "Swami Ramanand Teerth Marathwada University"),
@@ -75,6 +81,8 @@ HOME_UNIVERSITY_DATA = [
 ]
 
 SUBSET_DEFINITIONS = [
+    # Demand (always computable from real cutoff data — no manual entry needed)
+    ("selectivity",     "Selectivity / Demand (cutoff-based)", "demand"),
     # Academic
     ("naac",            "NAAC Grade/Score",         "academic"),
     ("nirf",            "NIRF Ranking",              "academic"),
@@ -105,6 +113,160 @@ SUBSET_DEFINITIONS = [
 assert len(SUBSET_DEFINITIONS) == TOTAL_SUBSETS, \
     f"SUBSET_DEFINITIONS has {len(SUBSET_DEFINITIONS)} entries but TOTAL_SUBSETS={TOTAL_SUBSETS} in constants.py — update one of them."
 
+# ---------------------------------------------------------------------------
+# Quality score = fixed-weight blend of three pillars. THE weights below never
+# change based on how much data a college has — that was the old bug (a flat
+# AVG() over only the subsets present let 6-of-20 "easy" facts outscore a
+# college with real placement data dragged down by one weak field, and let
+# colleges with zero placement/infra data score as if that silence meant
+# nothing). Each pillar ALWAYS contributes at its fixed weight: if a pillar
+# has no real subsets for a college, it is backfilled with the best available
+# proxy (never simply dropped from the denominator), so two colleges with
+# wildly different data completeness are judged on the same rubric.
+#
+#   SELECTIVITY (30%)     — from real CET cutoff demand. Virtually every
+#                            college has this (no manual entry required), so
+#                            it is the one pillar that is almost never a proxy
+#                            itself — making it the reliable backbone the
+#                            other two pillars fall back on when they're empty.
+#   ACADEMIC_OUTCOMES (45%) — accreditation + placement track record. Weighted
+#                            heaviest because this is what "how good is this
+#                            college" means for a career-oriented degree.
+#   INFRASTRUCTURE (25%)  — campus/labs/hostel/sports/internet.
+#
+# fee / tfws / scholarships / city_tier / inst_type are deliberately EXCLUDED
+# from the quality score — they describe affordability/convenience/type, not
+# how good the college is, and blending them in was conflating two different
+# questions a counsellor asks ("is it good" vs "can my student get in/afford
+# it"). They stay in college_subset_scores for other consumers (fee filters,
+# UI badges) — just not averaged into the quality number.
+# ---------------------------------------------------------------------------
+PILLAR_WEIGHTS = {
+    "selectivity": 0.30,
+    "academic_outcomes": 0.45,
+    "infrastructure": 0.25,
+}
+
+# year_estd (age) and affiliation (which university) are NOT academic quality —
+# they are metadata, and counting them let a data-poor OLD college earn a free
+# "10" from year_estd that outscored a college with real but imperfect NAAC/NIRF
+# (e.g. PICT's lone year_estd=10 beat VJTI's real NAAC A + NIRF 125 — audit
+# 2026-07-05). They stay as stored subsets for other consumers but are OUT of the
+# quality pillar, exactly like campus size was removed from infrastructure.
+ACADEMIC_OUTCOMES_SUBSETS = (
+    "naac", "nirf", "nba", "autonomous",
+    "placement_pct", "avg_package", "highest_package", "recruiters",
+)
+
+# When a college has NO real academic subset, its academic quality is ESTIMATED
+# from real-world demand (selectivity) — but DISCOUNTED, so a college with actual
+# strong credentials (NAAC A, NIRF rank) ranks above an equally-selective college
+# we merely lack data for. Without the discount, a data-less top college got a
+# perfect academic proxy (=selectivity) that real-but-imperfect credentials could
+# never beat — the inversion this fixes. Applied only to the no-data case, so
+# "same values, more subsets => same score" (completeness-invariance) still holds.
+ACADEMIC_PROXY_DISCOUNT = 2.0
+# "campus" (campus size in acres) is deliberately NOT in this list even though
+# a campus subset score is still computed and stored for display. Campus AREA is
+# a biased proxy for infrastructure QUALITY: it systematically penalises elite,
+# compact urban colleges (VJTI/ICT 16 ac, VIT Pune 7 ac would bucket to 2-4/10)
+# and rewards large rural land banks, which is the opposite of "how good is this
+# college". Worse, since these flagships have no OTHER infra subset, feeding
+# campus in would drop their pillar from the neutral 5.0 backfill down to 2-4 —
+# i.e. adding real data would LOWER a good college's score, the exact
+# completeness-violation the pillar model exists to prevent (audit 2026-07-05).
+# So campus_area_acres is a displayed profile fact only, never a quality input.
+INFRASTRUCTURE_SUBSETS = ("labs", "hostel", "sports", "internet")
+
+NEUTRAL_PILLAR_DEFAULT = 5.0  # 1-10 scale: "unknown", not "bad" — used when a pillar has zero signal at all
+NEUTRAL_INFRA_DEFAULT = 6.0   # infra facilities are near-universal + recorded only when PRESENT; assume basic facilities exist
+
+# Academic sub-groups. Accreditation (NAAC/NIRF) is taken as the college's BEST
+# credential (max), NOT averaged, so being NIRF-ranked ON TOP of a NAAC grade can
+# never DILUTE the grade — the flaw where VJTI's real NIRF 125 (8.5) dragged it
+# below PICT's lone NAAC A (9), and COEP's NAAC A++ (10) was pulled down by its
+# autonomous flag (8). Outcomes (placements) are separate real evidence, averaged.
+# Flags (NBA/autonomous) are secondary corroboration at low weight.
+_ACCRED_SUBSETS = ("naac", "nirf")
+_OUTCOME_SUBSETS = ("placement_pct", "avg_package", "highest_package", "recruiters")
+_FLAG_SUBSETS = ("nba", "autonomous")
+
+
+def _academic_pillar(subset_scores, selectivity):
+    """Return (academic_score_1_10, estimated_bool). Best-credential model — see
+    the sub-group comment above. Falls back to a discounted selectivity proxy only
+    when there is NO real accreditation/outcome/flag data at all."""
+    accred = [subset_scores[s] for s in _ACCRED_SUBSETS if s in subset_scores]
+    outcomes = [subset_scores[s] for s in _OUTCOME_SUBSETS if s in subset_scores]
+    flags = [subset_scores[s] for s in _FLAG_SUBSETS if s in subset_scores]
+
+    comps = []  # (value, weight)
+    if accred:
+        comps.append((max(accred), 3))            # best accreditation dominates
+    if outcomes:
+        comps.append((sum(outcomes) / len(outcomes), 2))
+    if flags:
+        comps.append((sum(flags) / len(flags), 1))
+
+    if comps:
+        num = sum(v * w for v, w in comps)
+        den = sum(w for _, w in comps)
+        academic = num / den
+        # Accreditation is a FLOOR: a secondary positive (autonomous/NBA, mapped
+        # at 8) must never drag a college below its actual NAAC/NIRF grade (e.g.
+        # COEP's A++ = 10 was being averaged down to 9.5 by its autonomous flag).
+        # Outcomes/flags can only RAISE academic above the grade, never lower it.
+        if accred:
+            academic = max(academic, max(accred))
+        return academic, False
+    # No real academic evidence: estimate from demand, discounted so genuine
+    # credentials elsewhere can outrank a college we merely lack data for.
+    return max(1.0, min(10.0, selectivity - ACADEMIC_PROXY_DISCOUNT)), True
+
+
+def pillar_score(subset_scores):
+    """
+    Turn a {subset_name: 1-10 score} dict into a single 0-100 quality score
+    using the fixed PILLAR_WEIGHTS — regardless of how many subsets are
+    present. Returns (score_0_100, estimated_pillars) where estimated_pillars
+    lists which pillars had zero real data and were backfilled by proxy.
+
+    This is the ONLY place the quality formula is implemented — both
+    compute_college_scores() (single college_code) and
+    sync_paired_code_scores() (union across paired codes) call this so the
+    two paths can never drift apart.
+    """
+    estimated = []
+
+    selectivity = subset_scores.get("selectivity")
+    if selectivity is None:
+        selectivity = NEUTRAL_PILLAR_DEFAULT
+        estimated.append("selectivity")
+
+    academic_outcomes, academic_estimated = _academic_pillar(subset_scores, selectivity)
+    if academic_estimated:
+        estimated.append("academic_outcomes")
+
+    infra_vals = [subset_scores[s] for s in INFRASTRUCTURE_SUBSETS if s in subset_scores]
+    if infra_vals:
+        infrastructure = sum(infra_vals) / len(infra_vals)
+    else:
+        # Infra subsets are recorded only when a facility is PRESENT (hostel/
+        # sports/wifi -> 6-8), never as an absence, and these facilities are
+        # near-universal at engineering colleges. So a college with NO recorded
+        # infra almost certainly HAS basic facilities — we just lack the data.
+        # Backfilling at the modal "has basic facilities" value (6.0) instead of
+        # 5.0 stops mere DOCUMENTATION of facilities from lifting a college above
+        # an equally-equipped peer whose data we simply never collected (GCE
+        # Nagpur was outranking VJTI purely on recorded wifi/hostel). audit 2026-07-05.
+        infrastructure = NEUTRAL_INFRA_DEFAULT
+        estimated.append("infrastructure")
+
+    raw = (PILLAR_WEIGHTS["selectivity"] * selectivity
+           + PILLAR_WEIGHTS["academic_outcomes"] * academic_outcomes
+           + PILLAR_WEIGHTS["infrastructure"] * infrastructure)
+    return round(raw * 10, 1), estimated
+
 
 def setup(conn):
     cur = conn.cursor()
@@ -116,6 +278,16 @@ def setup(conn):
     try:
         cur.execute("ALTER TABLE colleges ADD COLUMN completeness REAL")
         print("  Added completeness column to colleges.")
+    except sqlite3.OperationalError:
+        pass  # already exists
+
+    # Raw closing-percentile backbone of the selectivity subset (1-10 bucket lives in
+    # college_subset_scores; this is the actual number, e.g. 99.9) — surfaced to the
+    # web UI so counsellors can filter/sort colleges by real cutoff percentile, not
+    # just the derived quality score.
+    try:
+        cur.execute("ALTER TABLE colleges ADD COLUMN top_percentile REAL")
+        print("  Added top_percentile column to colleges.")
     except sqlite3.OperationalError:
         pass  # already exists
 
@@ -263,6 +435,24 @@ def setup(conn):
     )
     """)
 
+    # Per-branch sanctioned seat intake — parsed by parse_seat_intake.py from the
+    # official CET Cell CAPR-I "Provisional Allotment List" PDFs (a document type
+    # distinct from the cutoff PDFs; the only source with real intake numbers).
+    # Keyed by canonical_code (not college_code) since that's the stable branch
+    # identity predictions_2026/cutoffs already use across CET's annual re-coding.
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS branch_intake (
+        canonical_code   TEXT PRIMARY KEY,
+        college_code     TEXT NOT NULL,
+        branch_name      TEXT NOT NULL,
+        general_intake   INTEGER,
+        tfws_intake      INTEGER,
+        year             INTEGER NOT NULL,
+        round            INTEGER NOT NULL,
+        source_file      TEXT NOT NULL
+    )
+    """)
+
     # predictions_2026 schema lives in constants.ensure_predictions_table (single
     # source of truth) so it can never drift from generate_predictions.py again.
     if ensure_predictions_table(conn):
@@ -340,6 +530,17 @@ def setup(conn):
 
     print("Tables created (or already exist).")
 
+    # Remove rows for districts no longer in HOME_UNIVERSITY_DATA (e.g. the old
+    # "Aurangabad"/"Osmanabad" rows retired 2026-07-05) — INSERT OR REPLACE alone
+    # only touches keys present in the current list, so a removed row would
+    # otherwise sit stale in the table forever, silently double-counting it in
+    # list_districts() and every stat/dropdown built on it.
+    current_districts = [d for d, _, _ in HOME_UNIVERSITY_DATA]
+    placeholders = ",".join("?" * len(current_districts))
+    cur.execute(
+        f"DELETE FROM home_university_map WHERE district NOT IN ({placeholders})",
+        current_districts
+    )
     cur.executemany(
         "INSERT OR REPLACE INTO home_university_map (district, university_code, university_name) VALUES (?,?,?)",
         HOME_UNIVERSITY_DATA
@@ -389,25 +590,26 @@ def populate_university_codes(conn):
 def compute_college_scores(conn):
     """
     Recompute overall college score and data completeness from college_subset_scores.
-    Score = average of all subset scores scaled to 0-100 (raw 1-10 average × 10).
-    Completeness = (subsets scored / TOTAL_SUBSETS) * 100.
-    Updates colleges.score and colleges.completeness.
+    Score = pillar_score() over each college_code's own subsets (fixed-weight
+    blend, proxy-filled — see pillar_score docstring; NOT a flat average).
+    Completeness = (subsets scored / TOTAL_SUBSETS) * 100 — informational only,
+    it no longer affects the score itself.
+    Updates colleges.score and colleges.completeness, then unifies paired codes.
     """
     cur = conn.cursor()
 
-    cur.execute("""
-        SELECT college_code, AVG(score), COUNT(score)
-        FROM college_subset_scores
-        GROUP BY college_code
-    """)
-    rows = cur.fetchall()
+    cur.execute("SELECT college_code, subset_name, score FROM college_subset_scores")
+    by_college = {}
+    for college_code, subset_name, score in cur.fetchall():
+        by_college.setdefault(college_code, {})[subset_name] = score
 
     updated = 0
-    for college_code, avg_score, count in rows:
-        completeness = round(count / TOTAL_SUBSETS * 100, 1)
+    for college_code, subset_scores in by_college.items():
+        score, _estimated = pillar_score(subset_scores)
+        completeness = round(len(subset_scores) / TOTAL_SUBSETS * 100, 1)
         cur.execute(
             "UPDATE colleges SET score = ?, completeness = ? WHERE college_code = ?",
-            (round(avg_score * 10, 1), completeness, college_code)
+            (score, completeness, college_code)
         )
         updated += 1
 
@@ -419,36 +621,44 @@ def compute_college_scores(conn):
 
 def sync_paired_code_scores(conn):
     """
-    The same physical college holds subset scores under BOTH its legacy 4-digit
-    and current 5-digit code, usually with different coverage — which left 115
-    colleges showing a different score depending on which code a caller used
-    (gaps up to 25 pts). Score each college NAME over the UNION of its paired
-    codes' subsets (best value per subset — the same rule get_college_profile
-    displays) and write the same score/completeness to every paired code.
-    Idempotent.
+    The same physical college can hold subset scores under multiple codes
+    (legacy 4-digit vs current 5-digit, or a code that persisted through a
+    district/name change — e.g. Aurangabad -> Chhatrapati Sambhajinagar).
+    Grouping by exact college_name missed these whenever the name text also
+    drifted, leaving one fragment's real data invisible to the other. Group by
+    canonical_college_key() instead (code-identity, not name-identity), score
+    the UNION of each group's subsets (best value per subset), and write the
+    same score/completeness to every code in the group. Idempotent.
     """
     cur = conn.cursor()
-    groups = cur.execute("""
-        SELECT college_name, GROUP_CONCAT(college_code)
-        FROM colleges GROUP BY college_name HAVING COUNT(*) > 1
-    """).fetchall()
+    all_colleges = cur.execute("SELECT college_code, college_name FROM colleges").fetchall()
+    groups = {}
+    for code, name in all_colleges:
+        groups.setdefault(canonical_college_key(code, name), []).append(code)
+
     synced = 0
-    for name, codes_csv in groups:
-        codes = codes_csv.split(",")
+    for codes in groups.values():
+        if len(codes) < 2:
+            continue
         ph = ",".join("?" * len(codes))
         rows = cur.execute(
             f"SELECT subset_name, MAX(score) FROM college_subset_scores "
             f"WHERE college_code IN ({ph}) GROUP BY subset_name", codes).fetchall()
-        if not rows:
+        top_pct_row = cur.execute(
+            f"SELECT MAX(top_percentile) FROM colleges WHERE college_code IN ({ph})", codes
+        ).fetchone()
+        top_pct = top_pct_row[0] if top_pct_row else None
+        if not rows and top_pct is None:
             continue
-        score = round(sum(r[1] for r in rows) / len(rows) * 10, 1)
-        completeness = round(len(rows) / TOTAL_SUBSETS * 100, 1)
+        subset_scores = dict(rows)
+        score, _estimated = pillar_score(subset_scores)
+        completeness = round(len(subset_scores) / TOTAL_SUBSETS * 100, 1)
         cur.execute(
-            f"UPDATE colleges SET score=?, completeness=? WHERE college_code IN ({ph})",
-            [score, completeness] + codes)
+            f"UPDATE colleges SET score=?, completeness=?, top_percentile=? WHERE college_code IN ({ph})",
+            [score, completeness, top_pct] + codes)
         synced += 1
     conn.commit()
-    print(f"  Paired-code score sync: {synced} college name groups unified.")
+    print(f"  Paired-code score sync: {synced} college identity groups unified.")
     return synced
 
 

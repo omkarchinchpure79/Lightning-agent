@@ -62,11 +62,23 @@ export async function fetchBranchKeywords(): Promise<string[]> {
 export async function fetchNaacGrades(): Promise<string[]> {
   return request<string[]>("/api/lookups/naac-grades");
 }
+export interface SiteStats {
+  college_count: number;
+  district_count: number;
+  cutoff_year_min: number;
+  cutoff_year_max: number;
+  cutoff_year_count: number;
+}
+export async function fetchSiteStats(): Promise<SiteStats> {
+  return request<SiteStats>("/api/lookups/stats");
+}
 export interface FilterRanges {
   score_min: number | null;
   score_max: number | null;
   year_min: number | null;
   year_max: number | null;
+  percentile_min: number | null;
+  percentile_max: number | null;
 }
 export async function fetchFilterRanges(): Promise<FilterRanges> {
   return request<FilterRanges>("/api/lookups/filter-ranges");
@@ -88,6 +100,7 @@ export interface StudentCreate {
   defense_status?: boolean;
   tfws_eligible?: boolean;
   orphan_status?: boolean;
+  ews_eligible?: boolean;
   family_income_bracket?: string | null;
   preferred_branches?: string[];
   preferred_locations?: string[];
@@ -124,9 +137,13 @@ export interface FeeInfo {
 
 export interface PredictionRow {
   canonical_code: string;
+  entry_key: string;
   college_code: string;
   college_name: string;
   branch_name: string;
+  branch_code: string | null;
+  general_intake: number | null;
+  tfws_intake: number | null;
   city: string;
   college_score: number | null;
   seat_type: string;
@@ -180,6 +197,9 @@ export interface ShortlistItem {
   category_used?: string | null;
   seat_type?: string | null;
   fee_text?: string | null;
+  branch_code?: string | null;
+  college_score?: number | null;
+  seat_pool?: string | null;
 }
 
 export interface ShortlistResponse {
@@ -246,6 +266,7 @@ export interface CollegeSearchResult {
   college_name: string;
   city: string | null;
   score: number | null;
+  top_percentile: number | null;
   district: string | null;
   institution_type: string | null;
   naac_grade: string | null;
@@ -336,9 +357,13 @@ export interface CollegeProfile {
 export interface CollegeBranch {
   canonical_code: string;
   branch_name: string;
+  branch_code: string | null;
   pred_close: number | null;
   confidence: string | null;
   years_used: number | null;
+  close_2025: number | null;
+  general_intake: number | null;
+  tfws_intake: number | null;
 }
 
 export interface CollegeBranchesResponse {
@@ -371,11 +396,15 @@ export interface BranchDeepDive {
   college_name: string;
   branch_name: string;
   branch_codes: string[];
+  general_intake: number | null;
+  tfws_intake: number | null;
   cutoff_trends: HistoricalCutoff[];
   predictions_2026: Prediction2026[];
 }
 
 // ─── College + branch API calls ───────────────────────────────────────────────
+
+export type CollegeSortBy = "score" | "percentile";
 
 export interface CollegeSearchFilters {
   q?: string;
@@ -387,7 +416,10 @@ export interface CollegeSearchFilters {
   yearMax?: number;
   scoreMin?: number;
   scoreMax?: number;
+  percentileMin?: number;
+  percentileMax?: number;
   branch?: string;
+  sortBy?: CollegeSortBy;
 }
 
 export async function searchColleges(
@@ -409,7 +441,10 @@ export async function searchColleges(
   if (extra?.yearMax != null) params.set("year_max", String(extra.yearMax));
   if (extra?.scoreMin != null) params.set("score_min", String(extra.scoreMin));
   if (extra?.scoreMax != null) params.set("score_max", String(extra.scoreMax));
+  if (extra?.percentileMin != null) params.set("percentile_min", String(extra.percentileMin));
+  if (extra?.percentileMax != null) params.set("percentile_max", String(extra.percentileMax));
   if (extra?.branch) params.set("branch", extra.branch);
+  if (extra?.sortBy) params.set("sort_by", extra.sortBy);
   params.set("limit", String(limit));
   params.set("offset", String(offset));
   return request<CollegeSearchResult[]>(`/api/colleges/search?${params}`);

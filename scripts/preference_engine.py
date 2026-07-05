@@ -142,22 +142,28 @@ def compute_preference_list(percentile, base_category, home_district,
             SELECT p.canonical_code, p.college_code, p.college_name, p.branch_name,
                    p.category, p.predicted_pct, p.predicted_low, p.predicted_high,
                    p.confidence, p.trend_slope,
-                   p.years_used, cd.university_code, col.city, col.score, cd.district
+                   p.years_used, cd.university_code, col.city, col.score, cd.district,
+                   p.branch_code, bi.general_intake, bi.tfws_intake
             FROM predictions_2026 p
             JOIN college_details cd ON cd.college_code = p.college_code
             LEFT JOIN colleges col  ON col.college_code = p.college_code
+            LEFT JOIN branch_intake bi ON bi.canonical_code = p.canonical_code
             WHERE p.round = ? AND p.category IN ({placeholders})
         """, [round_num] + candidate_cats).fetchall()
 
         # Group by physical branch; keep every category variant available for it.
         branches = {}
         for (canon, ccode, cname, bname, cat, pred, pred_low, pred_high, conf, slope,
-             yrs, univ, city, score, district) in rows:
+             yrs, univ, city, score, district, bcode, gen_intake, tfws_intake) in rows:
             g = branches.setdefault(canon, {
                 "college_code": ccode, "college_name": cname, "branch_name": bname,
                 "college_univ": univ, "city": city, "score": score,
-                "district": district, "cats": {},
+                "district": district, "branch_code": bcode,
+                "general_intake": gen_intake, "tfws_intake": tfws_intake, "cats": {},
             })
+            # Prefer a non-null representative branch_code across category variants.
+            if g["branch_code"] is None and bcode is not None:
+                g["branch_code"] = bcode
             g["cats"][cat] = {"predicted_pct": pred, "predicted_low": pred_low,
                               "predicted_high": pred_high, "confidence": conf,
                               "slope": slope, "years_used": yrs}
@@ -188,6 +194,9 @@ def compute_preference_list(percentile, base_category, home_district,
                 "college_code":   g["college_code"],
                 "college_name":   g["college_name"],
                 "branch_name":    g["branch_name"],
+                "branch_code":    g["branch_code"],
+                "general_intake": g["general_intake"],
+                "tfws_intake":    g["tfws_intake"],
                 "city":           g["city"] or "",
                 "district":       g["district"] or "",
                 "college_score":  g["score"],

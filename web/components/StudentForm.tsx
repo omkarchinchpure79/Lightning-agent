@@ -3,7 +3,7 @@
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ArrowRight, Check } from "lucide-react";
@@ -35,6 +35,7 @@ const schema = z.object({
   defense_status: z.boolean().optional(),
   tfws_eligible: z.boolean().optional(),
   orphan_status: z.boolean().optional(),
+  ews_eligible: z.boolean().optional(),
   family_income_bracket: z.string().optional().nullable(),
   preferred_branches: z.array(z.string()).optional(),
   preferred_locations: z.array(z.string()).optional(),
@@ -113,6 +114,7 @@ function toDefaultValues(student?: Student): Partial<FormValues> {
     defense_status: student.defense_status ?? false,
     tfws_eligible: student.tfws_eligible ?? false,
     orphan_status: student.orphan_status ?? false,
+    ews_eligible: student.ews_eligible ?? false,
     family_income_bracket: student.family_income_bracket ?? null,
     preferred_branches: student.preferred_branches ?? [],
     preferred_locations: student.preferred_locations ?? [],
@@ -129,6 +131,7 @@ interface Props {
 
 export function StudentForm({ student }: Props) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [serverError, setServerError] = useState<string | null>(null);
   const isEdit = !!student;
 
@@ -176,6 +179,13 @@ export function StudentForm({ student }: Props) {
       } else {
         saved = await createStudent(payload as Parameters<typeof createStudent>[0]);
       }
+      // Bust cached student + predictions so the results page re-runs against the
+      // edited profile instead of serving the stale (5-min) cache — without this,
+      // saving an edit appeared to do nothing ("one time thing"). Predictions are
+      // cached per (studentId, round), so drop all rounds for this student.
+      await queryClient.invalidateQueries({ queryKey: ["student", saved.id] });
+      await queryClient.invalidateQueries({ queryKey: ["predictions", saved.id] });
+      await queryClient.invalidateQueries({ queryKey: ["shortlist", saved.id] });
       router.push(`/students/${saved.id}/results`);
     } catch (e) {
       setServerError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
@@ -328,6 +338,7 @@ export function StudentForm({ student }: Props) {
                 ["defense_status", "Defense quota"],
                 ["tfws_eligible", "TFWS (tuition fee waiver)"],
                 ["orphan_status", "Orphan quota"],
+                ["ews_eligible", "EWS (economically weaker section)"],
               ] as const
             ).map(([name, label]) => (
               <div key={name} className="flex items-center gap-3">

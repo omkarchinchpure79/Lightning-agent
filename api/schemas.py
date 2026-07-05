@@ -30,6 +30,7 @@ class StudentCreate(BaseModel):
     defense_status: bool = False
     tfws_eligible: bool = False
     orphan_status: bool = False
+    ews_eligible: bool = False
     family_income_bracket: Optional[str] = None
     preferred_branches: Optional[list[str]] = None
     preferred_locations: Optional[list[str]] = None
@@ -60,6 +61,7 @@ class StudentUpdate(BaseModel):
     defense_status: Optional[bool] = None
     tfws_eligible: Optional[bool] = None
     orphan_status: Optional[bool] = None
+    ews_eligible: Optional[bool] = None
     family_income_bracket: Optional[str] = None
     preferred_branches: Optional[list[str]] = None
     preferred_locations: Optional[list[str]] = None
@@ -99,6 +101,7 @@ class StudentResponse(BaseModel):
     defense_status: bool
     tfws_eligible: bool
     orphan_status: bool
+    ews_eligible: bool = False
     family_income_bracket: Optional[str]
     preferred_branches: Optional[list[str]]
     preferred_locations: Optional[list[str]]
@@ -124,6 +127,9 @@ class ShortlistItem(BaseModel):
     category_used: Optional[str] = None
     seat_type: Optional[str] = None
     fee_text: Optional[str] = None
+    branch_code: Optional[str] = None
+    college_score: Optional[float] = None
+    seat_pool: Optional[str] = None
 
 
 class ShortlistRequest(BaseModel):
@@ -146,7 +152,7 @@ class AdHocPredictionRequest(BaseModel):
     branch_preferences: Optional[list[str]] = None
     preferred_locations: Optional[list[str]] = None
     fee_budget: Optional[int] = None
-    round_num: int = Field(1, ge=1, le=3)
+    round_num: int = Field(1, ge=1, le=4)
     # Reserved-pool eligibility (C1): when set, the engine additionally surfaces
     # that pool's seats (e.g. TFWS) merged into the same SAFE/PROBABLE/REACH bands,
     # tagged with seat_pool. Mirrors student_profiles' stored flags so the ad-hoc
@@ -155,11 +161,12 @@ class AdHocPredictionRequest(BaseModel):
     defense_status: bool = False
     pwd_status: bool = False
     orphan_status: bool = False
+    ews_eligible: bool = False
     family_income_bracket: Optional[str] = None
 
 
 class StudentPredictionRequest(BaseModel):
-    round_num: int = Field(1, ge=1, le=3)
+    round_num: int = Field(1, ge=1, le=4)
 
 
 # ---------------------------------------------------------------------------
@@ -171,6 +178,7 @@ class CollegeSearchResult(BaseModel):
     college_name: str
     city: Optional[str]
     score: Optional[float]
+    top_percentile: Optional[float] = None
     district: Optional[str]
     institution_type: Optional[str]
     naac_grade: Optional[str] = None

@@ -197,17 +197,18 @@ _PWD_VARIANT_BY_BASE = {
     "GOPEN": "PWDOPEN", "GOBC": "PWDOBC", "GSC": "PWDSC", "GSEBC": "PWDSEBC",
 }
 
-# EWS eligibility is legally an income test (<= Rs 8 lakh/yr, central govt norm).
-# family_income_bracket is a counsellor-entered hint, not a verified certificate,
-# so this only ever ADDS an EWS pool to consider — never a hard verdict — per
-# the roadmap's explicit instruction not to over-promise from self-reported income.
-_EWS_INELIGIBLE_BRACKETS = {"Above ₹8 lakh"}
-
-_BAND_RANK = {"SAFE": 0, "PROBABLE": 1, "REACH": 2}
+# EWS (Economically Weaker Section) is a reservation ONLY for candidates in the
+# Open/General category — a student already in a reserved category (SC/ST/OBC/
+# SEBC/VJ/NT) is legally NOT EWS-eligible. It is added ONLY when the counsellor
+# explicitly ticks ews_eligible AND the base category is open. Historically it
+# was auto-added from a low family_income_bracket, which surfaced a phantom "EWS
+# pool" on students who never selected it (e.g. an SEBC student) — a real glitch
+# the counsellor flagged (2026-07-05). Income alone never triggers EWS now.
+_EWS_ELIGIBLE_BASES = {"GOPEN", "LOPEN"}
 
 
 def _eligible_pools(base_category, tfws_eligible, defense_status, pwd_status,
-                     orphan_status, family_income_bracket):
+                     orphan_status, ews_eligible):
     """(pool_label, base_category) pairs this student should ALSO be shown,
     beyond their primary category. Never duplicates the primary category itself."""
     pools = []
@@ -221,44 +222,37 @@ def _eligible_pools(base_category, tfws_eligible, defense_status, pwd_status,
         pwd_cat = _PWD_VARIANT_BY_BASE.get(base_category.upper())
         if pwd_cat:
             pools.append(("PwD", pwd_cat))
-    if family_income_bracket and family_income_bracket not in _EWS_INELIGIBLE_BRACKETS:
+    if ews_eligible and base_category.upper() in _EWS_ELIGIBLE_BASES:
         pools.append(("EWS", "EWS"))
     return [(label, cat) for label, cat in pools if cat != base_category.upper()]
 
 
 def _merge_pool(primary, extra, pool_label):
-    """Merge one extra pool's engine result into `primary`'s bands, tagging every
-    extra row with seat_pool=pool_label. De-duplicates by canonical_code, keeping
-    whichever band is best (SAFE > PROBABLE > REACH) when the same physical branch
-    is eligible under both the primary category and this pool."""
+    """Append one extra pool's rows as DISTINCT selectable entries, tagged
+    seat_pool=pool_label.
+
+    A pool seat (e.g. TFWS's separate ~6-seat quota) is a genuinely different
+    seat a student opts into — not an alternate view of the general seat — so it
+    is NOT de-duplicated against the primary-category row for the same branch.
+    The counsellor sees both the general entry and the TFWS entry for a college
+    and can shortlist either independently (counsellor request 2026-07-05).
+    Distinct identity for the frontend/shortlist is canonical_code + seat_pool
+    (set as entry_key in preference_list)."""
     if "error" in extra:
         return
-    located = {r["canonical_code"]: (band, r)
-               for band in ("safe", "probable", "reach") for r in primary[band]}
     for band in ("safe", "probable", "reach"):
         for row in extra[band]:
             row["seat_pool"] = pool_label
-            code = row["canonical_code"]
-            cur = located.get(code)
-            if cur is None:
-                primary[band].append(row)
-                primary["counts"][band] += 1
-                located[code] = (band, row)
-            elif _BAND_RANK[band.upper()] < _BAND_RANK[cur[0].upper()]:
-                cur_band, cur_row = cur
-                primary[cur_band].remove(cur_row)
-                primary["counts"][cur_band] -= 1
-                primary[band].append(row)
-                primary["counts"][band] += 1
-                located[code] = (band, row)
-            # else: existing entry's band is already as good or better — drop this row.
+            primary[band].append(row)
+            primary["counts"][band] += 1
 
 
 def preference_list(percentile, category_label, home_district,
                     branch_preferences=None, fee_budget=None,
                     round_num=1, top_per_band=None, preferred_locations=None,
                     tfws_eligible=False, defense_status=False, pwd_status=False,
-                    orphan_status=False, family_income_bracket=None):
+                    orphan_status=False, family_income_bracket=None,
+                    ews_eligible=False):
     base_category = category_code(category_label)
     out = _pe.compute_preference_list(
         percentile=percentile,
@@ -279,7 +273,7 @@ def preference_list(percentile, category_label, home_district,
 
     for pool_label, pool_category in _eligible_pools(
         base_category, tfws_eligible, defense_status, pwd_status,
-        orphan_status, family_income_bracket
+        orphan_status, ews_eligible
     ):
         extra = _pe.compute_preference_list(
             percentile=percentile,
@@ -294,6 +288,14 @@ def preference_list(percentile, category_label, home_district,
         if "error" not in extra:
             extra = _annotate_seat_data(extra, pool_category)
         _merge_pool(out, extra, pool_label)
+
+    # Distinct selectable identity: a pool seat (TFWS/EWS/…) shares canonical_code
+    # with the general seat for the same branch but is a different entry, so the
+    # frontend keys, selection, and shortlist de-dup on entry_key, not canonical_code.
+    for band in ("safe", "probable", "reach"):
+        for row in out[band]:
+            pool = row.get("seat_pool")
+            row["entry_key"] = f"{row['canonical_code']}::{pool}" if pool else row["canonical_code"]
 
     # Re-sort by desirability (same key preference_engine.py uses): merging appends
     # extra-pool rows out of order, and callers rely on array order for "top N"
