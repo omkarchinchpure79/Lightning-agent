@@ -115,10 +115,10 @@ function toDefaultValues(student?: Student): Partial<FormValues> {
     name: student.name,
     gender: student.gender ?? undefined,
     admission_type: student.admission_type ?? "fe",
-    percentile: student.percentile,
-    diploma_pct: student.diploma_pct ?? null,
-    jee_main_rank: student.jee_main_rank ?? null,
-    board_pct: student.board_pct ?? null,
+    percentile: student.percentile ?? undefined,
+    diploma_pct: student.diploma_pct ?? undefined,
+    jee_main_rank: student.jee_main_rank ?? undefined,
+    board_pct: student.board_pct ?? undefined,
     category_base: student.category_base,
     category_variant: student.category_variant ?? null,
     home_district: student.home_district ?? null,
@@ -131,7 +131,7 @@ function toDefaultValues(student?: Student): Partial<FormValues> {
     family_income_bracket: student.family_income_bracket ?? null,
     preferred_branches: student.preferred_branches ?? [],
     preferred_locations: student.preferred_locations ?? [],
-    max_fee: student.max_fee ?? null,
+    max_fee: student.max_fee ?? undefined,
     notes: student.notes ?? null,
   };
 }
@@ -352,7 +352,7 @@ export function StudentForm({ student }: Props) {
                 placeholder="e.g. 88.40"
                 className="font-mono font-semibold border-[1.5px] bg-white"
                 style={{ borderColor: "var(--color-ep-primary)" }}
-                {...register("diploma_pct", { valueAsNumber: true })}
+                {...register("diploma_pct", { setValueAs: toNumber })}
               />
               {errors.diploma_pct && (
                 <p className="text-xs text-ep-red">{errors.diploma_pct.message}</p>
@@ -375,7 +375,7 @@ export function StudentForm({ student }: Props) {
                 placeholder="e.g. 87.5"
                 className="font-mono font-semibold border-[1.5px] bg-white"
                 style={{ borderColor: "var(--color-ep-primary)" }}
-                {...register("percentile", { valueAsNumber: true })}
+                {...register("percentile", { setValueAs: toNumber })}
               />
               {errors.percentile && (
                 <p className="text-xs text-ep-red">{errors.percentile.message}</p>
@@ -389,10 +389,11 @@ export function StudentForm({ student }: Props) {
                 id="jee_main_rank"
                 type="number"
                 placeholder="Optional"
-                {...register("jee_main_rank", {
-                  setValueAs: (v) => (v === "" ? null : parseInt(v, 10)),
-                })}
+                {...register("jee_main_rank", { setValueAs: toInt })}
               />
+              {errors.jee_main_rank && (
+                <p className="text-xs text-ep-red">{errors.jee_main_rank.message}</p>
+              )}
             </div>
           )}
           <div className="space-y-1.5">
@@ -402,10 +403,11 @@ export function StudentForm({ student }: Props) {
               type="number"
               step="0.01"
               placeholder="Optional, 0–100"
-              {...register("board_pct", {
-                setValueAs: (v) => (v === "" ? null : parseFloat(v)),
-              })}
+              {...register("board_pct", { setValueAs: toNumber })}
             />
+            {errors.board_pct && (
+              <p className="text-xs text-ep-red">{errors.board_pct.message}</p>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -668,9 +670,12 @@ export function StudentForm({ student }: Props) {
               min={0}
               placeholder="0 = no limit"
               {...register("max_fee", {
-                setValueAs: (v) => (v === "" || v === "0" ? null : parseInt(v, 10)),
+                setValueAs: (v) => (v === "0" ? null : toInt(v)),
               })}
             />
+            {errors.max_fee && (
+              <p className="text-xs text-ep-red">{errors.max_fee.message}</p>
+            )}
           </div>
         </CardContent>
       </Card>
