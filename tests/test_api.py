@@ -198,6 +198,23 @@ class TestDseStudentCRUD(unittest.TestCase):
         resp = _client.post(f"/api/students/{sid}/predictions", json={"round_num": 3})
         self.assertEqual(resp.status_code, 400, resp.text)
 
+    def test_patch_category_to_tfws_rejected_for_existing_dse_student(self):
+        # admission_type isn't in this PATCH body — the check must fall back
+        # to the student's CURRENT admission_type (still 'dse'), not skip
+        # validation just because admission_type wasn't touched.
+        sid, _ = self._create_dse()
+        resp = _client.patch(f"/api/students/{sid}", json={"category_base": "TFWS"})
+        self.assertEqual(resp.status_code, 422, resp.text)
+        self.assertIn("no seat quota in DSE", resp.text)
+
+    def test_patch_dse_back_to_fe_preserves_merit_mark(self):
+        sid, _ = self._create_dse(diploma_pct=85.0)
+        resp = _client.patch(f"/api/students/{sid}", json={"admission_type": "fe"})
+        self.assertEqual(resp.status_code, 200, resp.text)
+        data = resp.json()
+        self.assertEqual(data["admission_type"], "fe")
+        self.assertAlmostEqual(data["percentile"], 85.0)
+
 
 class TestShortlist(unittest.TestCase):
     _created: list[int] = []
