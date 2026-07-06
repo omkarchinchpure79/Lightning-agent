@@ -155,10 +155,46 @@ unrelated re-renders). Verified end-to-end: DSE student created, results page re
 all three bands from `dse_predictions`, shortlist add/list works, edit page reloads
 correctly into DSE mode.
 
+## 4.6 College profile DSE tab + predict.py CLI parity — DONE, verified 2026-07-06
+
+Closed the last two gaps for full symmetry between the FE and DSE planes across every
+surface (not just the primary web workflow):
+
+- **College profile page** (`app/colleges/[code]/page.tsx`): a "Direct Second Year
+  (diploma) cutoffs" section, sourced from `college_card_api.get_college_profile()`'s new
+  `dse_cutoff_trends` field (mirrors `_cutoff_trends` exactly: GOPEN category, round 1
+  only -- same reasoning as FE, a later round's close is always lower and would make the
+  trend line lie -- across all paired college codes). Renders only when the college has
+  DSE data (`.length > 0`); silently absent otherwise, since not offering DSE is the
+  common case, not a fault. Verified in-browser both ways: GCOE Amravati (1002) shows 7
+  branches matching the parser spot-check (CSE 93.32/93.21/94.00, matches
+  `tests/test_dse.py`'s known value); Vidya Prasarak Mandal's College of Engineering,
+  Thane (03257, confirmed zero DSE rows across paired codes) shows no DSE section at all
+  while its FE branches table still renders normally.
+- **`predict.py` CLI**: added `--admission-type {fe,dse}` (default `fe`). DSE path reads
+  `dse_cutoffs`/`dse_predictions` directly (no `branches` join needed -- unlike FE,
+  `dse_cutoffs` already carries college_code/college_name/course_name per row), validates
+  `--category` against `DSE_CATEGORY_LEGEND`, and validates `--round` against
+  `DSE_VALID_ROUNDS` (1-2, not 1-4). City filtering still works via a `LEFT JOIN`
+  against `colleges` (DSE college_code values are the same institute codes FE uses).
+  Reuses `compute_probability()` (the k=0.25 sigmoid) unchanged -- confirmed during this
+  work that the web app's `preference_engine`/`dse_engine` never compute a numeric
+  probability at all (only SAFE/PROBABLE/REACH bands from margin), so the "recalibrate
+  the sigmoid for DSE" item in section 3.2 only ever applied to this standalone CLI tool,
+  which wasn't wired to admission_type before now. The CLI's probability is explicitly
+  documented as directional/uncalibrated for DSE (not backtested against real DSE
+  outcomes the way FE's k/clamp values were) rather than presented as equally precise.
+
 ## 5. Open items
 - 2024-25/2025-26 Round III: never published publicly; predictions for rounds beyond II
   in those seasons must say "no data", not extrapolate.
 - DSE seat-intake (lateral quota per branch): no official per-branch PDF found yet;
   display "N/A" until an authoritative source is found.
-- The ~25 ten-digit choice codes in the 2025 PDF need a look during parser development
-  (5-digit college codes for a handful of institutes).
+- The ~25 ten-digit choice codes in the 2025 PDF: verified non-issue (2026-07-06) -- the
+  parser derives `college_code` from the college header line, not the choice code, and
+  validates every choice code starts with its college's code (0 flags across all 71,034
+  rows), so these are legitimate longer codes, not a parsing bug.
+- DSE probability sigmoid (predict.py CLI only): reuses FE's k=0.25/93% clamp as-is,
+  not independently calibrated against DSE outcomes. Low priority -- the CLI is a
+  secondary surface; the primary web workflow doesn't expose a numeric probability at
+  all for either plane.

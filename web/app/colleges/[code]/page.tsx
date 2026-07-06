@@ -944,6 +944,81 @@ function CollegeProfileView({
           )}
         </Section>
 
+        {/* Direct Second Year (DSE) cutoffs — only shown when this college has DSE data */}
+        {profile.dse_cutoff_trends.length > 0 && (
+          <Section
+            title="Direct Second Year (diploma) cutoffs"
+            icon={<GraduationCap className="h-4 w-4" />}
+          >
+            <div className="overflow-x-auto -mx-5 -mb-5">
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="text-left" style={{ background: "var(--ep-bg)" }}>
+                    <th
+                      className="font-mono py-2.5 px-5 font-semibold text-[11px] uppercase text-ep-muted w-[42%]"
+                      style={{ letterSpacing: "0.05em" }}
+                    >
+                      Branch
+                    </th>
+                    <th
+                      className="font-mono py-2.5 px-4 font-semibold text-[11px] uppercase text-ep-muted text-right"
+                      style={{ letterSpacing: "0.05em" }}
+                    >
+                      2023
+                    </th>
+                    <th
+                      className="font-mono py-2.5 px-4 font-semibold text-[11px] uppercase text-ep-muted text-right"
+                      style={{ letterSpacing: "0.05em" }}
+                    >
+                      2024
+                    </th>
+                    <th
+                      className="font-mono py-2.5 px-4 font-semibold text-[11px] uppercase text-ep-muted text-right"
+                      style={{ letterSpacing: "0.05em" }}
+                    >
+                      2025
+                    </th>
+                    <th
+                      className="font-mono py-2.5 px-4 font-semibold text-[11px] uppercase text-ep-muted text-right"
+                      style={{ letterSpacing: "0.05em" }}
+                      title="Latest-round carry-forward prediction"
+                    >
+                      Predicted next
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {profile.dse_cutoff_trends.map((t) => (
+                    <tr
+                      key={t.branch_name}
+                      className="border-t hover:bg-[var(--ep-bg)] transition-colors"
+                      style={{ borderColor: "#EEEAE0" }}
+                    >
+                      <td className="py-3 px-5 font-semibold text-sm">{t.branch_name}</td>
+                      <td className="font-mono py-3 px-4 text-right text-[var(--ep-text)]">
+                        {t.close_2023 != null ? fmtPercentile(t.close_2023) : "—"}
+                      </td>
+                      <td className="font-mono py-3 px-4 text-right text-[var(--ep-text)]">
+                        {t.close_2024 != null ? fmtPercentile(t.close_2024) : "—"}
+                      </td>
+                      <td className="font-mono py-3 px-4 text-right text-[var(--ep-text)]">
+                        {t.close_2025 != null ? fmtPercentile(t.close_2025) : "—"}
+                      </td>
+                      <td className="font-mono py-3 px-4 text-right text-[var(--ep-text)]">
+                        {t.pred_next != null ? fmtPercentile(t.pred_next) : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-3 text-xs text-ep-muted">
+              Diploma-holder lateral entry (2nd year). Closing values are diploma aggregate %, not
+              CET percentile — not comparable to the first-year table above.
+            </p>
+          </Section>
+        )}
+
         {/* Contact */}
         <Section title="Contact" icon={<Phone className="h-4 w-4" />}>
           {!contact.website_url &&

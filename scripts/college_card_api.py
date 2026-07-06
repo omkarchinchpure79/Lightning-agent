@@ -140,6 +140,56 @@ def _cutoff_trends(conn, codes):
     return out
 
 
+DSE_TREND_CATEGORY = "GOPEN"
+
+
+def _dse_cutoff_trends(conn, codes):
+    """
+    DSE twin of _cutoff_trends: per-branch (course_name) closing % across
+    years for the representative GOPEN category, plus the latest-round
+    carry-forward prediction from dse_predictions. Round 1 only, same
+    reasoning as FE (a later round's close is always lower and would make
+    the trend line lie). Returns [] (not an error) for colleges with no
+    DSE data at all -- absence of DSE offerings is a normal, common case,
+    not a fault condition.
+    """
+    placeholders = ",".join("?" * len(codes))
+
+    hist = {}
+    for cname, year, pct in conn.execute(f"""
+        SELECT course_name, year, MIN(merit_pct)
+        FROM dse_cutoffs
+        WHERE college_code IN ({placeholders})
+          AND category = ?
+          AND round = 1
+        GROUP BY course_name, year
+    """, codes + [DSE_TREND_CATEGORY]):
+        if year in hist.get(cname, {}):
+            pct = min(pct, hist[cname][year])
+        hist.setdefault(cname, {})[year] = round(pct, 2)
+
+    pred = {}
+    for cname, pp in conn.execute(f"""
+        SELECT branch_name, MIN(predicted_pct) FROM dse_predictions
+        WHERE college_code IN ({placeholders}) AND round=1 AND category=?
+        GROUP BY branch_name
+    """, codes + [DSE_TREND_CATEGORY]):
+        pred[cname] = round(pp, 2)
+
+    branches = sorted(set(hist) | set(pred),
+                      key=lambda b: hist.get(b, {}).get(2025, 0), reverse=True)
+    out = []
+    for b in branches:
+        out.append({
+            "branch_name": b,
+            "close_2023": hist.get(b, {}).get(2023),
+            "close_2024": hist.get(b, {}).get(2024),
+            "close_2025": hist.get(b, {}).get(2025),
+            "pred_next": pred.get(b),
+        })
+    return out
+
+
 def get_college_profile(college_code):
     conn = sqlite3.connect(DB_PATH)
     conn.execute("PRAGMA journal_mode=WAL")
@@ -225,6 +275,7 @@ def get_college_profile(college_code):
             "images": images,
             "image_count": len(images),
             "cutoff_trends": _cutoff_trends(conn, codes),
+            "dse_cutoff_trends": _dse_cutoff_trends(conn, codes),
         }
     finally:
         conn.close()

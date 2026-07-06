@@ -359,6 +359,13 @@ export interface CollegeProfile {
     close_2025: number | null;
     pred_2026: number | null;
   }>;
+  dse_cutoff_trends: Array<{
+    branch_name: string;
+    close_2023: number | null;
+    close_2024: number | null;
+    close_2025: number | null;
+    pred_next: number | null;
+  }>;
   image_warning: string;
 }
 
