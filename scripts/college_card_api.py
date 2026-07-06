@@ -17,7 +17,7 @@ import json
 import os
 import sqlite3
 
-from constants import BRANCH_NAME_ALIASES, OPEN_CATEGORIES, canonical_college_key
+from constants import BRANCH_NAME_ALIASES, OPEN_CATEGORIES, canonical_branch_key, canonical_college_key
 from fee_calculator import compute_fee
 
 DB_PATH = "db/edupath.db"
@@ -156,8 +156,9 @@ def _dse_cutoff_trends(conn, codes):
     placeholders = ",".join("?" * len(codes))
 
     hist = {}
-    for cname, year, pct in conn.execute(f"""
-        SELECT course_name, year, MIN(merit_pct)
+    identity = {}   # course_name -> (max_year_seen, canonical_code) for linking
+    for cname, year, pct, college_name, choice_code in conn.execute(f"""
+        SELECT course_name, year, MIN(merit_pct), college_name, choice_code
         FROM dse_cutoffs
         WHERE college_code IN ({placeholders})
           AND category = ?
@@ -167,6 +168,12 @@ def _dse_cutoff_trends(conn, codes):
         if year in hist.get(cname, {}):
             pct = min(pct, hist[cname][year])
         hist.setdefault(cname, {})[year] = round(pct, 2)
+        # Keep the newest year's identity for the canonical_code, same rule
+        # generate_dse_predictions.py uses ("meta" dict) -- so this link
+        # resolves to the SAME canonical_code the DSE predictions were stored
+        # under, never a mismatched one computed from stale-year fields.
+        if cname not in identity or year >= identity[cname][0]:
+            identity[cname] = (year, canonical_branch_key(college_name, cname, choice_code))
 
     pred = {}
     for cname, pp in conn.execute(f"""
@@ -182,6 +189,7 @@ def _dse_cutoff_trends(conn, codes):
     for b in branches:
         out.append({
             "branch_name": b,
+            "canonical_code": identity.get(b, (None, None))[1],
             "close_2023": hist.get(b, {}).get(2023),
             "close_2024": hist.get(b, {}).get(2024),
             "close_2025": hist.get(b, {}).get(2025),

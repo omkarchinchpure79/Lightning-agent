@@ -857,14 +857,16 @@ function CollegeProfileView({
                     <th
                       className="font-mono py-2.5 px-4 font-semibold text-[11px] uppercase text-ep-muted text-right"
                       style={{ letterSpacing: "0.05em" }}
+                      title="Toughest of the Home/Other/State open-seat variants — a specific student's own eligible variant (shown on their results page) can be a few points lower"
                     >
-                      2025 close
+                      2025 close (H/O/S)
                     </th>
                     <th
                       className="font-mono py-2.5 px-4 font-semibold text-[11px] uppercase text-ep-muted text-right"
                       style={{ letterSpacing: "0.05em" }}
+                      title="Toughest of the Home/Other/State open-seat variants — a specific student's own eligible variant (shown on their results page) can be a few points lower"
                     >
-                      2026 pred. close
+                      2026 pred. close (H/O/S)
                     </th>
                     <th
                       className="font-mono py-2.5 px-4 font-semibold text-[11px] uppercase text-ep-muted text-center"
@@ -985,6 +987,7 @@ function CollegeProfileView({
                     >
                       Predicted next
                     </th>
+                    <th className="py-2.5 px-4 w-8" />
                   </tr>
                 </thead>
                 <tbody>
@@ -994,7 +997,19 @@ function CollegeProfileView({
                       className="border-t hover:bg-[var(--ep-bg)] transition-colors"
                       style={{ borderColor: "#EEEAE0" }}
                     >
-                      <td className="py-3 px-5 font-semibold text-sm">{t.branch_name}</td>
+                      <td className="py-3 px-5">
+                        {t.canonical_code ? (
+                          <Link
+                            href={`/branches/dse/${encodeURIComponent(t.canonical_code)}`}
+                            className="font-semibold text-sm hover:underline"
+                            style={{ color: "var(--color-ep-primary)" }}
+                          >
+                            {t.branch_name}
+                          </Link>
+                        ) : (
+                          <span className="font-semibold text-sm">{t.branch_name}</span>
+                        )}
+                      </td>
                       <td className="font-mono py-3 px-4 text-right text-[var(--ep-text)]">
                         {t.close_2023 != null ? fmtPercentile(t.close_2023) : "—"}
                       </td>
@@ -1007,14 +1022,26 @@ function CollegeProfileView({
                       <td className="font-mono py-3 px-4 text-right text-[var(--ep-text)]">
                         {t.pred_next != null ? fmtPercentile(t.pred_next) : "—"}
                       </td>
+                      <td className="py-3 px-4">
+                        {t.canonical_code && (
+                          <Link
+                            href={`/branches/dse/${encodeURIComponent(t.canonical_code)}`}
+                            className="text-ep-muted hover:text-[var(--color-ep-primary)] transition-colors"
+                            aria-label="View DSE branch forecast"
+                          >
+                            <TrendingUp className="h-3.5 w-3.5" />
+                          </Link>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
             <p className="mt-3 text-xs text-ep-muted">
-              Diploma-holder lateral entry (2nd year). Closing values are diploma aggregate %, not
-              CET percentile — not comparable to the first-year table above.
+              Diploma-holder lateral entry (2nd year), GOPEN category shown. Closing values are
+              diploma aggregate %, not CET percentile — a different merit system, not comparable to
+              the first-year table above even where the numbers look similar.
             </p>
           </Section>
         )}

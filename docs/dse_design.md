@@ -185,6 +185,59 @@ surface (not just the primary web workflow):
   documented as directional/uncalibrated for DSE (not backtested against real DSE
   outcomes the way FE's k/clamp values were) rather than presented as equally precise.
 
+## 4.7 DSE branch forecast page + FE/DSE canonical-code collision fix — 2026-07-06
+
+User report: clicking a branch in the college profile's DSE table did nothing (no
+link existed yet), and separately, summary numbers on the FE branch/college pages
+(a "toughest of H/O/S variants" min) looked inconsistent against a specific
+student's own matched-category prediction on their results page -- read by the
+user as "wrong data" even though both numbers were individually correct for what
+they represented.
+
+Investigating surfaced a real latent bug risk: DSE's `canonical_code` (computed by
+`canonical_branch_key()`, the SAME function FE uses, over DSE's `choice_code`
+instead of FE's `branch_code`) can be IDENTICAL to an FE canonical_code for a
+different admission plane at the same college -- confirmed concretely at GCOE
+Amravati, where `CODE::1002242` is the canonical_code for BOTH the FE and DSE
+"Computer Science and Engineering" branch. Had the DSE table's links reused FE's
+existing `/branches/{code}` route/endpoint (which resolves purely by
+canonical_code string against `predictions_2026`), clicking a DSE branch at this
+college would have silently rendered FE percentile data instead -- exactly the
+"shows a different/wrong cutoff" failure mode reported.
+
+Fix: a fully separate DSE branch plane, not a shared route with a discriminator
+flag:
+- `api/routes/dse_branches.py` (`GET /api/dse-branches/{canonical_code}`) --
+  queries ONLY `dse_cutoffs`/`dse_predictions`, mirrors `branches.py`'s shape.
+- `web/app/branches/dse/[canonicalCode]/page.tsx` -- DSE twin of the FE branch
+  forecast page: CAP round I-II only, GOPEN as the representative category (DSE
+  has no H/O/S split to take a min across, so a single GOPEN reading is the
+  correct generic number, not a family-min), category tree via a new
+  `parseDseCategory()` (below).
+- `college_card_api._dse_cutoff_trends()` now also resolves each branch's
+  `canonical_code` (same newest-year-identity rule `generate_dse_predictions.py`
+  uses) so the college profile's DSE table can link to it.
+- Verified live against the actual collision case: `/api/branches/CODE::1002242`
+  and `/api/dse-branches/CODE::1002242` return their own plane's data with no
+  cross-contamination, confirming the route separation actually prevents the bug
+  rather than just moving it.
+- `web/lib/categories.ts::parseDseCategory()` -- a DEDICATED DSE category-tree
+  grouper, not a patch onto FE's `parseCategory()`. Reusing the FE parser would
+  have mis-grouped DSE data two ways: (a) DSE's hyphenated codes (`PWD-OBC`,
+  `DEFR-SEBC`) would parse the hyphen as part of the base category and fall into
+  an "Other" catch-all instead of PwD/Defence; (b) DSE's NTA-D lettering doesn't
+  match FE's VJ/NT1-3 keys and would also fall to "Other" instead of grouping
+  with VJ/NT-B/C/D the way FE's tree does. Verified in-browser: GOPEN family
+  shows "Open / General", GNTB correctly groups under "NT-B" (not "Other"),
+  GSEBC under "SEBC".
+- Clarifying labels added (not a calculation change) to resolve the "82 vs 84"
+  perception: FE's college-profile branches table and the FE branch forecast
+  page's summary boxes are now labeled "(H/O/S)" with a tooltip explaining the
+  shown number is the toughest of the three open-seat variants, and that a
+  specific student's own matched category (shown on their results page) can
+  read a few points lower -- both numbers were already correct, they just
+  weren't visibly explained as measuring different things.
+
 ## 5. Open items
 - 2024-25/2025-26 Round III: never published publicly; predictions for rounds beyond II
   in those seasons must say "no data", not extrapolate.

@@ -361,6 +361,7 @@ export interface CollegeProfile {
   }>;
   dse_cutoff_trends: Array<{
     branch_name: string;
+    canonical_code: string | null;
     close_2023: number | null;
     close_2024: number | null;
     close_2025: number | null;
@@ -475,6 +476,20 @@ export async function getCollegeBranches(code: string): Promise<CollegeBranchesR
 
 export async function getBranchDeepDive(canonicalCode: string): Promise<BranchDeepDive> {
   return request<BranchDeepDive>(`/api/branches/${encodeURIComponent(canonicalCode)}`);
+}
+
+export interface DseBranchDeepDive {
+  canonical_code: string;
+  college_code: string;
+  college_name: string;
+  branch_name: string;
+  choice_codes: string[];
+  cutoff_trends: HistoricalCutoff[];
+  predictions_2026: Prediction2026[];
+}
+
+export async function getDseBranchDeepDive(canonicalCode: string): Promise<DseBranchDeepDive> {
+  return request<DseBranchDeepDive>(`/api/dse-branches/${encodeURIComponent(canonicalCode)}`);
 }
 
 // ─── AI College description ───────────────────────────────────────────────────

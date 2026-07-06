@@ -12,7 +12,6 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
-  Armchair,
 } from "lucide-react";
 import {
   BarChart,
@@ -26,16 +25,17 @@ import {
   LabelList,
 } from "recharts";
 
-import { getBranchDeepDive, type BranchDeepDive } from "@/lib/api";
-import { parseCategory } from "@/lib/categories";
+import { getDseBranchDeepDive, type DseBranchDeepDive } from "@/lib/api";
+import { parseDseCategory } from "@/lib/categories";
 import { fmtPercentile, cn } from "@/lib/utils";
 import { NavHeader } from "@/components/NavHeader";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 
-// ── Constants ─────────────────────────────────────────────────────────────────
-
-const OPEN_CATS = new Set(["GOPENH", "GOPENS", "GOPENO"]);
+// DSE's representative "toughest general seat" category -- there's no H/O/S
+// split to take a min across (unlike FE's GOPENH/GOPENS/GOPENO), so a single
+// GOPEN close is the true generic reading here, not a min-of-several.
+const REP_CAT = "GOPEN";
 const HIST_YEARS = [2023, 2024, 2025];
 
 interface PredCell {
@@ -44,41 +44,35 @@ interface PredCell {
   high: number | null;
 }
 
-// ── Chart data helpers ────────────────────────────────────────────────────────
-
 interface ChartPoint {
   year: string;
   close: number | null;
   predicted: boolean;
 }
 
-/** Round-1-style open-category trend for whichever CAP round is selected. */
-function buildChartData(data: BranchDeepDive, round: number): ChartPoint[] {
+function buildChartData(data: DseBranchDeepDive, round: number): ChartPoint[] {
   const histByYear: Record<number, number> = {};
   for (const row of data.cutoff_trends) {
-    if (row.round !== round || !OPEN_CATS.has(row.category)) continue;
+    if (row.round !== round || row.category !== REP_CAT) continue;
     if (histByYear[row.year] == null || row.percentile < histByYear[row.year]) {
       histByYear[row.year] = row.percentile;
     }
   }
 
-  let pred2026: number | null = null;
+  let predNext: number | null = null;
   for (const row of data.predictions_2026) {
-    if (row.round !== round || !OPEN_CATS.has(row.category)) continue;
-    if (pred2026 == null || row.predicted_pct < pred2026) pred2026 = row.predicted_pct;
+    if (row.round !== round || row.category !== REP_CAT) continue;
+    if (predNext == null || row.predicted_pct < predNext) predNext = row.predicted_pct;
   }
 
   const points: ChartPoint[] = [];
   for (const yr of HIST_YEARS) {
     if (histByYear[yr] != null) points.push({ year: String(yr), close: histByYear[yr], predicted: false });
   }
-  points.push({ year: "2026*", close: pred2026, predicted: true });
+  points.push({ year: "Next*", close: predNext, predicted: true });
   return points;
 }
 
-// The point estimate is at its accuracy ceiling (backtest MAE ~8 pts) — showing
-// 2 decimals implies precision the model doesn't have. One decimal (via
-// fmtPercentile so a sub-100 value never renders as "100") + calibrated range.
 function predictedText(pct: number, low: number | null, high: number | null): string {
   const point = fmtPercentile(pct);
   if (low == null || high == null) return point;
@@ -90,8 +84,6 @@ function computeTrend(chartData: ChartPoint[]): number | null {
   if (hist.length < 2) return null;
   return Math.round((hist[hist.length - 1].close! - hist[0].close!) * 100) / 100;
 }
-
-// ── Category tree ─────────────────────────────────────────────────────────────
 
 interface VariantRow {
   raw: string;
@@ -111,7 +103,7 @@ interface FamilyGroup {
   repPred: PredCell | null;
 }
 
-function buildCategoryTree(data: BranchDeepDive, round: number): FamilyGroup[] {
+function buildCategoryTree(data: DseBranchDeepDive, round: number): FamilyGroup[] {
   const histByCat: Record<string, Record<number, number>> = {};
   for (const row of data.cutoff_trends) {
     if (row.round !== round) continue;
@@ -129,7 +121,7 @@ function buildCategoryTree(data: BranchDeepDive, round: number): FamilyGroup[] {
   const allCats = new Set([...Object.keys(histByCat), ...Object.keys(predByCat)]);
   const famMap: Record<string, FamilyGroup> = {};
   for (const cat of allCats) {
-    const p = parseCategory(cat);
+    const p = parseDseCategory(cat);
     const fam = (famMap[p.familyKey] ??= {
       key: p.familyKey,
       label: p.familyLabel,
@@ -152,8 +144,6 @@ function buildCategoryTree(data: BranchDeepDive, round: number): FamilyGroup[] {
   const families = Object.values(famMap);
   for (const fam of families) {
     fam.variants.sort((a, b) => a.order - b.order || a.raw.localeCompare(b.raw));
-    // Representative row = the "general merit" seats (min = closing floor), so
-    // the collapsed row shows the number counsellors quote for that category.
     const general = fam.variants.filter((v) => v.audience === "General" || v.audience === "Open");
     const src = general.length ? general : fam.variants;
     for (const yr of HIST_YEARS) {
@@ -167,7 +157,7 @@ function buildCategoryTree(data: BranchDeepDive, round: number): FamilyGroup[] {
   return families;
 }
 
-function CategoryTree({ data, round }: { data: BranchDeepDive; round: number }) {
+function CategoryTree({ data, round }: { data: DseBranchDeepDive; round: number }) {
   const families = useMemo(() => buildCategoryTree(data, round), [data, round]);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [showMore, setShowMore] = useState(false);
@@ -200,7 +190,7 @@ function CategoryTree({ data, round }: { data: BranchDeepDive; round: number }) 
               </th>
             ))}
             <th className="font-mono py-2.5 px-[22px] font-semibold text-[11px] uppercase text-right" style={{ letterSpacing: "0.05em", color: "var(--color-ep-primary)" }}>
-              2026*
+              Predicted next
             </th>
           </tr>
         </thead>
@@ -232,8 +222,8 @@ function CategoryTree({ data, round }: { data: BranchDeepDive; round: number }) 
       )}
 
       <p className="px-[22px] pt-2 pb-[14px] text-[11px] text-ep-muted border-t" style={{ borderColor: "var(--ep-border)" }}>
-        Click a category to see its Home / Other / State and Ladies variants. * 2026 values are model
-        forecasts based on 2023–2025 CAP data — verify against official rounds before advising.
+        Diploma-holder lateral entry (2nd year) — closing values are diploma aggregate %, not CET
+        percentile. No Home/Other/State seat-type split exists in DSE, unlike first-year admission.
       </p>
     </div>
   );
@@ -306,10 +296,7 @@ function FamilyRows({
   );
 }
 
-// ── Branch detail view ────────────────────────────────────────────────────────
-
-function BranchView({ data }: { data: BranchDeepDive }) {
-  // Rounds this branch actually has data for (cutoffs or predictions).
+function DseBranchView({ data }: { data: DseBranchDeepDive }) {
   const availableRounds = useMemo(() => {
     const rs = new Set<number>();
     for (const r of data.cutoff_trends) rs.add(r.round);
@@ -323,19 +310,16 @@ function BranchView({ data }: { data: BranchDeepDive }) {
   const hasChartData = chartData.some((p) => p.close != null);
   const trend = computeTrend(chartData);
 
-  const primaryPred = data.predictions_2026.find((p) => p.round === round && OPEN_CATS.has(p.category));
+  const primaryPred = data.predictions_2026.find((p) => p.round === round && p.category === REP_CAT);
 
-  // Actual latest-year (2025) open-category close for the selected round.
-  const close2025 = useMemo(() => {
+  const closeLatest = useMemo(() => {
     let m: number | null = null;
     for (const r of data.cutoff_trends) {
-      if (r.round !== round || r.year !== 2025 || !OPEN_CATS.has(r.category)) continue;
+      if (r.round !== round || r.year !== 2025 || r.category !== REP_CAT) continue;
       if (m == null || r.percentile < m) m = r.percentile;
     }
     return m;
   }, [data, round]);
-
-  const hasIntake = data.general_intake != null;
 
   const yMin = chartData.filter((p) => p.close != null).reduce((m, p) => Math.min(m, p.close!), Infinity) - 2;
   const yMax = chartData.filter((p) => p.close != null).reduce((m, p) => Math.max(m, p.close!), -Infinity) + 2;
@@ -347,15 +331,17 @@ function BranchView({ data }: { data: BranchDeepDive }) {
     <div className="space-y-6">
       <div>
         <div className="font-mono text-xs uppercase mb-2.5" style={{ letterSpacing: "0.14em", color: "var(--color-ep-green)" }}>
-          Branch forecast
+          Direct Second Year branch forecast
         </div>
         <h1 className="font-display text-[36px] leading-[1.1] text-[var(--ep-text)] mb-1.5">{data.branch_name}</h1>
         <Link href={`/colleges/${data.college_code}`} className="text-sm text-ep-muted hover:text-[var(--color-ep-primary)] transition-colors">
           {data.college_name} · Canonical {data.canonical_code}
         </Link>
+        <p className="mt-2 text-xs text-ep-muted">
+          Diploma aggregate % merit — not comparable to first-year MHT-CET percentile.
+        </p>
       </div>
 
-      {/* CAP round selector ─────────────────────────────────────────────────── */}
       {availableRounds.length > 1 && (
         <div className="flex items-center gap-2 flex-wrap">
           <span className="font-mono text-[11px] uppercase text-ep-muted" style={{ letterSpacing: "0.08em" }}>
@@ -377,50 +363,27 @@ function BranchView({ data }: { data: BranchDeepDive }) {
             ))}
           </div>
           <span className="text-[12px] text-ep-muted">
-            Showing closing percentiles for CAP Round {round}
+            Showing closing % for CAP Round {round}
           </span>
         </div>
       )}
 
-      {/* Summary strip ─────────────────────────────────────────────────────── */}
-      <div className="rounded-[13px] border grid grid-cols-2 lg:grid-cols-4 overflow-hidden" style={{ background: "var(--ep-surface)", borderColor: "var(--ep-border)" }}>
-        <div
-          className="px-[22px] py-[18px] border-r border-b lg:border-b-0"
-          style={{ borderColor: "var(--ep-border)" }}
-          title="Toughest of the GOPENH/GOPENS/GOPENO open-seat variants. A specific student's own eligible variant (see their results page) can read a few points lower."
-        >
+      <div className="rounded-[13px] border grid grid-cols-2 lg:grid-cols-3 overflow-hidden" style={{ background: "var(--ep-surface)", borderColor: "var(--ep-border)" }}>
+        <div className="px-[22px] py-[18px] border-r border-b lg:border-b-0" style={{ borderColor: "var(--ep-border)" }}>
           <p className="font-mono text-[10px] uppercase mb-1.5" style={{ letterSpacing: "0.08em", color: "#9A968B" }}>
-            2026 predicted close (H/O/S)
+            Predicted next close (GOPEN)
           </p>
           <p className="font-mono text-[20px] font-semibold text-[var(--ep-text)]">
             {primaryPred ? predictedText(primaryPred.predicted_pct, primaryPred.predicted_low, primaryPred.predicted_high) : "—"}
           </p>
         </div>
-        <div
-          className="px-[22px] py-[18px] border-b lg:border-b-0 lg:border-r"
-          style={{ borderColor: "var(--ep-border)" }}
-          title="Toughest of the GOPENH/GOPENS/GOPENO open-seat variants. A specific student's own eligible variant (see their results page) can read a few points lower."
-        >
+        <div className="px-[22px] py-[18px] border-b lg:border-b-0 lg:border-r" style={{ borderColor: "var(--ep-border)" }}>
           <p className="font-mono text-[10px] uppercase mb-1.5" style={{ letterSpacing: "0.08em", color: "#9A968B" }}>
-            2025 actual close (H/O/S)
+            2025 actual close (GOPEN)
           </p>
           <p className="font-mono text-[20px] font-semibold text-[var(--ep-text)]">
-            {close2025 != null ? fmtPercentile(close2025, 2) : "—"}
+            {closeLatest != null ? fmtPercentile(closeLatest, 2) : "—"}
           </p>
-        </div>
-        <div className="px-[22px] py-[18px] border-r" style={{ borderColor: "var(--ep-border)" }}>
-          <p className="font-mono text-[10px] uppercase mb-1.5" style={{ letterSpacing: "0.08em", color: "#9A968B" }}>
-            Seat intake
-          </p>
-          {hasIntake ? (
-            <p className="font-mono text-[20px] font-semibold text-[var(--ep-text)] flex items-baseline gap-1.5">
-              <Armchair className="h-4 w-4 self-center text-ep-muted" />
-              {data.tfws_intake != null ? `${data.general_intake} + ${data.tfws_intake}` : `${data.general_intake}`}
-              {data.tfws_intake != null && <span className="text-[11px] font-sans text-ep-muted">gen + TFWS</span>}
-            </p>
-          ) : (
-            <p className="text-[13px] text-ep-muted">Not available</p>
-          )}
         </div>
         <div className="px-[22px] py-[18px]">
           <p className="font-mono text-[10px] uppercase mb-1.5" style={{ letterSpacing: "0.08em", color: "#9A968B" }}>
@@ -438,16 +401,15 @@ function BranchView({ data }: { data: BranchDeepDive }) {
         </div>
       </div>
 
-      {/* Cutoff trend chart ─────────────────────────────────────────────────── */}
       <div className="rounded-[13px] border overflow-hidden" style={{ background: "var(--ep-surface)", borderColor: "var(--ep-border)" }}>
         <div className="px-[22px] py-3.5 border-b" style={{ borderColor: "var(--ep-border)" }}>
           <h2 className="font-semibold text-[13px] text-[var(--ep-text)]">
-            Round-{round} open-category closing percentile
+            Round-{round} GOPEN closing %
           </h2>
         </div>
         <div className="px-[26px] pt-7 pb-5">
           {!hasChartData ? (
-            <p className="text-sm text-ep-muted italic">No open-category data for CAP Round {round} at this branch.</p>
+            <p className="text-sm text-ep-muted italic">No GOPEN data for CAP Round {round} at this branch.</p>
           ) : (
             <>
               <ResponsiveContainer width="100%" height={220}>
@@ -463,7 +425,7 @@ function BranchView({ data }: { data: BranchDeepDive }) {
                   />
                   <Tooltip
                     contentStyle={{ background: "var(--ep-surface)", border: "1px solid var(--ep-border)", borderRadius: 8, fontSize: 12, fontFamily: "var(--font-mono)" }}
-                    formatter={(value) => [typeof value === "number" ? value.toFixed(2) : value, "Closing %ile"]}
+                    formatter={(value) => [typeof value === "number" ? value.toFixed(2) : value, "Closing %"]}
                     cursor={{ fill: "var(--ep-bg)", opacity: 0.5 }}
                   />
                   <Bar dataKey="close" radius={[4, 4, 0, 0]} maxBarSize={64}>
@@ -487,7 +449,7 @@ function BranchView({ data }: { data: BranchDeepDive }) {
                 </span>
                 <span className="inline-flex items-center gap-[7px] text-xs text-ep-muted">
                   <span className="h-[11px] w-[11px] rounded-[3px]" style={{ background: "#1E4D8C" }} />
-                  2026 forecast
+                  Next-round forecast
                 </span>
               </div>
             </>
@@ -495,41 +457,28 @@ function BranchView({ data }: { data: BranchDeepDive }) {
         </div>
       </div>
 
-      {/* Category tree ──────────────────────────────────────────────────────── */}
       <div className="rounded-[13px] border overflow-hidden" style={{ background: "var(--ep-surface)", borderColor: "var(--ep-border)" }}>
         <div className="px-[22px] py-3.5 border-b" style={{ borderColor: "var(--ep-border)" }}>
           <h2 className="font-semibold text-[13px] text-[var(--ep-text)]">
-            Closing percentile by category · CAP Round {round}
+            Closing % by category · CAP Round {round}
           </h2>
         </div>
         <div className="pt-0">
           <CategoryTree data={data} round={round} />
         </div>
       </div>
-
-      {/* Seat intake note ───────────────────────────────────────────────────── */}
-      <div className="rounded-[10px] border px-4 py-3 text-xs text-ep-muted" style={{ background: "var(--ep-surface)", borderColor: "var(--ep-border)" }}>
-        <p className="font-semibold text-[var(--ep-text-secondary)] mb-0.5">About seat intake</p>
-        <p>
-          {hasIntake
-            ? "Sanctioned intake (general + TFWS) is the fixed institutional capacity from the official CET Cell CAP Round-I seat matrix; it does not change round to round."
-            : "Sanctioned seat intake is not available in the current dataset for this branch — check the college's official prospectus or the CET Cell seat matrix."}
-        </p>
-      </div>
     </div>
   );
 }
 
-// ── Page shell ────────────────────────────────────────────────────────────────
-
-export default function BranchPage() {
+export default function DseBranchPage() {
   const { canonicalCode: rawCanonicalCode } = useParams<{ canonicalCode: string }>();
   const router = useRouter();
   const canonicalCode = rawCanonicalCode ? decodeURIComponent(rawCanonicalCode) : rawCanonicalCode;
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["branch", canonicalCode],
-    queryFn: () => getBranchDeepDive(canonicalCode),
+    queryKey: ["dse-branch", canonicalCode],
+    queryFn: () => getDseBranchDeepDive(canonicalCode),
     enabled: !!canonicalCode,
     staleTime: 10 * 60 * 1000,
   });
@@ -561,13 +510,13 @@ export default function BranchPage() {
           <div className="rounded-[10px] border px-5 py-4 text-sm flex items-start gap-3" style={{ borderColor: "#E8BFBD", background: "#F8E7E5", color: "var(--color-ep-red-ink)" }}>
             <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
             <div>
-              <p className="font-semibold">Could not load branch data</p>
+              <p className="font-semibold">Could not load DSE branch data</p>
               <p className="mt-0.5 opacity-80">{error instanceof Error ? error.message : "Unknown error"}</p>
             </div>
           </div>
         )}
 
-        {data && <BranchView data={data} />}
+        {data && <DseBranchView data={data} />}
       </main>
     </div>
   );

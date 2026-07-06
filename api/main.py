@@ -20,6 +20,7 @@ from api.routes import (
     branches,
     colleges,
     counselor,
+    dse_branches,
     health,
     lookups,
     predictions,
@@ -59,6 +60,7 @@ app.include_router(students.router,    prefix="/api/students", tags=["students"]
 app.include_router(predictions.router, prefix="/api",          tags=["predictions"])
 app.include_router(colleges.router,    prefix="/api/colleges", tags=["colleges"])
 app.include_router(branches.router,    prefix="/api/branches", tags=["branches"])
+app.include_router(dse_branches.router, prefix="/api/dse-branches", tags=["dse-branches"])
 app.include_router(counselor.router,   prefix="/api/me",       tags=["counselor"])
 
 # Locally-downloaded college campus photos (permanent replacement for hotlinked

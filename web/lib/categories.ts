@@ -126,3 +126,90 @@ export function parseCategory(raw: string): CategoryParts {
   const variantLabel = [audience, seatText].filter(Boolean).join(" · ");
   return mk(base, audience, seat, variantLabel, audienceOrder + seatOrder);
 }
+
+/**
+ * DSE category grouping. DSE has NO Home/Other/State seat-type suffix (that
+ * whole H/O/S layer doesn't exist for Direct Second Year admission) and its
+ * own NT lettering (NTA-D instead of FE's VJ/NT1-3), plus hyphenated PWD- and
+ * DEF- codes -- reusing parseCategory() would either mis-parse the hyphen
+ * (PWD-OBC -> base "-OBC", not found -> dumped in OTHER) or miss the NTA-D
+ * family match entirely (falls to OTHER instead of grouping with VJ/NT-B/C/D
+ * the way FE does), so this is a dedicated parser over the fixed, verified
+ * DSE_CATEGORY_LEGEND (34 tokens, see scripts/constants.py) rather than a
+ * patch onto the FE one.
+ */
+const DSE_BASE_FAMILY: Record<string, FamilyMeta> = {
+  OPEN: { label: "Open / General", order: 1, primary: true },
+  OBC: { label: "OBC", order: 2, primary: true },
+  SC: { label: "SC", order: 3, primary: true },
+  ST: { label: "ST", order: 4, primary: true },
+  EWS: { label: "EWS", order: 5, primary: true },
+  NTA: { label: "VJ / DT (NT-A)", order: 6, primary: false },
+  NTB: { label: "NT-B", order: 7, primary: false },
+  NTC: { label: "NT-C", order: 8, primary: false },
+  NTD: { label: "NT-D", order: 9, primary: false },
+  SEBC: { label: "SEBC", order: 10, primary: false },
+  MI: { label: "Minority", order: 11, primary: false },
+  ORPHAN: { label: "Orphan", order: 12, primary: false },
+  DEF: { label: "Defence", order: 13, primary: false },
+  PWD: { label: "PwD", order: 14, primary: false },
+  OTHER: { label: "Other", order: 99, primary: false },
+};
+
+export function parseDseCategory(raw: string): CategoryParts {
+  const code = (raw ?? "").toUpperCase().trim();
+
+  const mk = (
+    familyKey: string,
+    audience: CategoryParts["audience"],
+    variantLabel: string,
+    variantOrder: number,
+  ): CategoryParts => {
+    const fam = DSE_BASE_FAMILY[familyKey] ?? DSE_BASE_FAMILY.OTHER;
+    return {
+      raw,
+      familyKey,
+      familyLabel: fam.label,
+      familyOrder: fam.order,
+      primary: fam.primary,
+      audience,
+      seat: null,
+      variantLabel,
+      variantOrder,
+    };
+  };
+
+  if (code === "EWS") return mk("EWS", "Open", "EWS", 0);
+  if (code === "ORP") return mk("ORPHAN", "Open", "Orphan", 0);
+  if (code === "MI") return mk("MI", "Open", "Minority", 0);
+  if (code === "MI-MH") return mk("MI", "Open", "Minority (Maharashtra)", 1);
+
+  // Defence: DEF-O, DEF-OBC, DEFR-NTA/NTB/OBC/SC/SEBC/ST
+  if (code.startsWith("DEF")) {
+    const reserved = code.startsWith("DEFR-");
+    const suffix = code.slice(reserved ? 5 : 4); // after "DEFR-" or "DEF-"
+    const label = [suffix === "O" ? "Open" : suffix, reserved ? "Reserved" : null]
+      .filter(Boolean).join(" · ");
+    return mk("DEF", "Defence", label, reserved ? 1 : 0);
+  }
+
+  // PwD: PWD-O, PWD-OBC, PWDR-OBC/SC/SEBC/ST
+  if (code.startsWith("PWD")) {
+    const reserved = code.startsWith("PWDR-");
+    const suffix = code.slice(reserved ? 5 : 4); // after "PWDR-" or "PWD-"
+    const label = [suffix === "O" ? "Open" : suffix, reserved ? "Reserved" : null]
+      .filter(Boolean).join(" · ");
+    return mk("PWD", "PwD", label, reserved ? 1 : 0);
+  }
+
+  // Audience prefix: G (General) / L (Ladies).
+  let audience: CategoryParts["audience"];
+  let rest = code;
+  if (code.startsWith("L")) { audience = "Ladies"; rest = code.slice(1); }
+  else if (code.startsWith("G")) { audience = "General"; rest = code.slice(1); }
+  else { audience = "Open"; rest = code; }
+
+  const base = DSE_BASE_FAMILY[rest] ? rest : "OTHER";
+  const audienceOrder = audience === "General" ? 0 : audience === "Ladies" ? 1 : 2;
+  return mk(base, audience, audience, audienceOrder);
+}
