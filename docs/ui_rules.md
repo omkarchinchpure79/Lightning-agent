@@ -28,26 +28,25 @@ Present on every page except Login/Signup:
 - Omnipresent college quick-search (type-ahead, min 2 characters, navigates straight to
   that college's profile on pick).
 - Theme toggle (light/dark).
-- **When logged out:** a "Log in" action, visible and reachable from every page.
-- **When logged in:** **Students** link and **Dashboard** link both appear (they must
-  NOT be reachable/visible when logged out); a counsellor identity indicator (name/initials)
-  and a **Log out** action that returns the user to Discover.
+- **Students** link and **Dashboard** link, a counsellor identity indicator
+  (name/initials), and a **Log out** action that returns the user to Login. (All pages
+  with the nav bar are logged-in pages under the hard gate — see §1.2.)
 
 ### 1.2 Auth gating
-- **Dashboard** and **Students** (list, new, edit, results, shortlist) pages require a
-  logged-in counsellor. An unauthenticated visit must redirect to **Login**, not show an
-  empty/broken page.
+- **Every page except Login and Signup requires a logged-in counsellor** (hard gate,
+  product-owner decision 2026-07-06). An unauthenticated visit to any other route must
+  redirect to **Login**, not show an empty/broken page.
 - **Login** and **Signup** succeed by logging the user in and returning them to Discover.
 - **Login → Signup** and **Signup → Login** links must be present on each auth page.
-- **Anonymous-to-account bookmark merge**: if a visitor bookmarked colleges before logging
-  in (local, unauthenticated storage) and then logs in, they must be asked whether to save
-  those bookmarks to their new account or discard them — never silently merged, never
-  silently dropped.
+- The anonymous-bookmark + merge-on-login flow that exists in code (`useShortlist`'s
+  localStorage path, login-page merge prompt) is currently unreachable because of the
+  hard gate. It is kept as-is in case browsing is ever made public again, but it is NOT
+  a required behavior while the hard gate stands.
 
 ### 1.3 Two distinct saved-list concepts — do not merge them
 - **Bookmarks** ("My Shortlist" in code) — a counsellor-level saved-college list, independent
-  of any student. Anonymous users get a local (device-only) version; logging in switches to
-  an account-backed version reachable from any device.
+  of any student, account-backed and reachable from any device. (A local device-only
+  variant for anonymous users exists in code but is dormant under the hard gate, §1.2.)
 - **Compare list** — a separate, always-local (never account-synced) pick-list of 2–4
   colleges for side-by-side comparison. Adding a college to Compare must never add it to
   Bookmarks, and vice versa. A global floating "Compare tray" must stay visible across the
@@ -345,6 +344,5 @@ Must include:
 - Signup: full name, email, password + confirm-password (must match), inline validation,
   a server-error surface, and a link to Login.
 - Both: password visibility toggle.
-- Successful auth logs the counsellor in and returns them to Discover, **except** when the
-  visitor has pre-login bookmarks — then the merge prompt (§1.2) must appear before
-  finishing login.
+- Successful auth logs the counsellor in and returns them to Discover. (The pre-login
+  bookmark merge prompt is dormant while the hard login gate stands — see §1.2.)
