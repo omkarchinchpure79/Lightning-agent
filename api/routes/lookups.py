@@ -5,7 +5,7 @@ from fastapi import APIRouter
 
 import engine_adapter as ea
 from api.db import get_conn
-from constants import canonical_college_key, YEAR_WEIGHTS
+from constants import canonical_college_key, DSE_CATEGORY_MAP, YEAR_WEIGHTS
 
 router = APIRouter()
 
@@ -16,8 +16,14 @@ async def districts() -> list[str]:
 
 
 @router.get("/categories")
-async def categories() -> list[dict[str, str]]:
-    return [{"label": label, "code": code} for label, code in ea.CATEGORY_OPTIONS]
+async def categories() -> list[dict[str, Any]]:
+    """Category dropdown options. dse_supported tells the student form which
+    categories exist in the DSE data plane (e.g. TFWS is first-year only)."""
+    return [
+        {"label": label, "code": code,
+         "dse_supported": DSE_CATEGORY_MAP.get(code) is not None}
+        for label, code in ea.CATEGORY_OPTIONS
+    ]
 
 
 @router.get("/branches")

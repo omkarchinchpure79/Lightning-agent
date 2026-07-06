@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowRight, Check } from "lucide-react";
 
 import { fetchDistricts, fetchCategories, fetchBranchKeywords, createStudent, updateStudent, type Student } from "@/lib/api";
@@ -24,7 +24,9 @@ import { cn } from "@/lib/utils";
 const schema = z.object({
   name: z.string().min(1, "Name is required"),
   gender: z.enum(["M", "F", "Other"]).optional().nullable(),
-  percentile: z.number().min(0).max(100),
+  admission_type: z.enum(["fe", "dse"]),
+  percentile: z.number().min(0).max(100).optional().nullable(),
+  diploma_pct: z.number().min(0).max(100).optional().nullable(),
   jee_main_rank: z.number().int().positive().optional().nullable(),
   board_pct: z.number().min(0).max(100).optional().nullable(),
   category_base: z.string().min(1, "Category is required"),
@@ -41,6 +43,15 @@ const schema = z.object({
   preferred_locations: z.array(z.string()).optional(),
   max_fee: z.number().int().min(0).optional().nullable(),
   notes: z.string().optional().nullable(),
+}).superRefine((v, ctx) => {
+  if (v.admission_type === "fe" && (v.percentile === null || v.percentile === undefined)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["percentile"],
+      message: "MHT-CET percentile is required" });
+  }
+  if (v.admission_type === "dse" && (v.diploma_pct === null || v.diploma_pct === undefined)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["diploma_pct"],
+      message: "Diploma aggregate percentage is required" });
+  }
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -99,11 +110,13 @@ function SelectableChip({
 }
 
 function toDefaultValues(student?: Student): Partial<FormValues> {
-  if (!student) return { preferred_branches: [], preferred_locations: [] };
+  if (!student) return { admission_type: "fe", preferred_branches: [], preferred_locations: [] };
   return {
     name: student.name,
     gender: student.gender ?? undefined,
+    admission_type: student.admission_type ?? "fe",
     percentile: student.percentile,
+    diploma_pct: student.diploma_pct ?? null,
     jee_main_rank: student.jee_main_rank ?? null,
     board_pct: student.board_pct ?? null,
     category_base: student.category_base,
@@ -153,6 +166,7 @@ export function StudentForm({ student }: Props) {
     handleSubmit,
     control,
     watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -160,14 +174,51 @@ export function StudentForm({ student }: Props) {
   });
 
   const pwdStatus = watch("pwd_status");
+  const admissionType = watch("admission_type");
+  const isDse = admissionType === "dse";
   const selectedBranches = watch("preferred_branches") ?? [];
   const selectedLocations = watch("preferred_locations") ?? [];
+  const categoryBase = watch("category_base");
+
+  // Switching to DSE can leave a category selected that has no DSE seat pool
+  // (TFWS / PwD-Open / Defence-Open) — clear it so the hidden option can't be
+  // submitted.
+  useEffect(() => {
+    if (
+      isDse && categoryBase && categories.length > 0 &&
+      !categories.some((c) => c.code === categoryBase && c.dse_supported)
+    ) {
+      setValue("category_base", "");
+    }
+  }, [isDse, categoryBase, categories, setValue]);
+
+  // Switching admission type unmounts the OTHER mode's merit-mark input
+  // (percentile <-> diploma_pct), but react-hook-form does NOT clear an
+  // unmounted field's value by default — an untouched number input resolves
+  // to NaN via valueAsNumber, which fails z.number() validation. Because
+  // each field's error message is only rendered inside its OWN branch, a
+  // stale NaN error on the now-hidden field is invisible and silently blocks
+  // submission (confirmed: "Create & run predictions" did nothing, no error
+  // shown, no network request). Clearing the inactive field explicitly on
+  // every toggle is safer than useForm's shouldUnregister, which would also
+  // reset OTHER conditionally-rendered Controllers (category/home-district)
+  // on unrelated re-renders.
+  useEffect(() => {
+    if (isDse) {
+      setValue("percentile", null);
+    } else {
+      setValue("diploma_pct", null);
+    }
+  }, [isDse, setValue]);
 
   async function onSubmit(values: FormValues) {
     setServerError(null);
     try {
       const payload = {
         ...values,
+        // For DSE the merit mark is diploma_pct; the API mirrors it into the
+        // percentile column server-side. Never send a stale CET percentile.
+        percentile: values.admission_type === "dse" ? undefined : values.percentile,
         home_district: values.home_district === "Other / Not listed" ? null : values.home_district,
         preferred_branches: values.preferred_branches ?? [],
         preferred_locations: values.preferred_locations ?? [],
@@ -196,6 +247,55 @@ export function StudentForm({ student }: Props) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      {/* ── Admission type ── */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Admission type</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Controller
+            name="admission_type"
+            control={control}
+            render={({ field }) => (
+              <div className="grid grid-cols-2 gap-3">
+                {(
+                  [
+                    ["fe", "First year", "MHT-CET percentile · CAP rounds I–IV"],
+                    ["dse", "Direct second year (DSE)", "Diploma lateral entry · diploma % merit · CAP rounds I–II"],
+                  ] as const
+                ).map(([value, title, subtitle]) => {
+                  const selected = field.value === value;
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => field.onChange(value)}
+                      className={cn(
+                        "text-left rounded-[10px] border px-4 py-3 transition-colors",
+                        selected ? "border-[1.5px]" : ""
+                      )}
+                      style={
+                        selected
+                          ? { borderColor: "var(--color-ep-primary)", background: "rgba(30,77,140,.06)" }
+                          : { borderColor: "var(--ep-border-strong)" }
+                      }
+                    >
+                      <span
+                        className={cn("block text-sm", selected ? "font-semibold" : "font-medium")}
+                        style={selected ? { color: "var(--color-ep-primary)" } : undefined}
+                      >
+                        {title}
+                      </span>
+                      <span className="block text-xs text-ep-muted mt-0.5">{subtitle}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          />
+        </CardContent>
+      </Card>
+
       {/* ── Personal ── */}
       <Card>
         <CardHeader>
@@ -238,36 +338,63 @@ export function StudentForm({ student }: Props) {
           <CardTitle>Academic scores</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-3 gap-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="percentile">
-              MHT-CET percentile <span className="text-ep-red">*</span>
-            </Label>
-            <Input
-              id="percentile"
-              type="number"
-              step="0.01"
-              min={0}
-              max={100}
-              placeholder="e.g. 87.5"
-              className="font-mono font-semibold border-[1.5px] bg-white"
-              style={{ borderColor: "var(--color-ep-primary)" }}
-              {...register("percentile", { valueAsNumber: true })}
-            />
-            {errors.percentile && (
-              <p className="text-xs text-ep-red">{errors.percentile.message}</p>
-            )}
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="jee_main_rank">JEE Main rank</Label>
-            <Input
-              id="jee_main_rank"
-              type="number"
-              placeholder="Optional"
-              {...register("jee_main_rank", {
-                setValueAs: (v) => (v === "" ? null : parseInt(v, 10)),
-              })}
-            />
-          </div>
+          {isDse ? (
+            <div className="space-y-1.5">
+              <Label htmlFor="diploma_pct">
+                Diploma aggregate % <span className="text-ep-red">*</span>
+              </Label>
+              <Input
+                id="diploma_pct"
+                type="number"
+                step="0.01"
+                min={0}
+                max={100}
+                placeholder="e.g. 88.40"
+                className="font-mono font-semibold border-[1.5px] bg-white"
+                style={{ borderColor: "var(--color-ep-primary)" }}
+                {...register("diploma_pct", { valueAsNumber: true })}
+              />
+              {errors.diploma_pct && (
+                <p className="text-xs text-ep-red">{errors.diploma_pct.message}</p>
+              )}
+              <p className="text-xs text-ep-muted">
+                Final-year diploma marks percentage — the DSE merit basis (not a CET percentile).
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              <Label htmlFor="percentile">
+                MHT-CET percentile <span className="text-ep-red">*</span>
+              </Label>
+              <Input
+                id="percentile"
+                type="number"
+                step="0.01"
+                min={0}
+                max={100}
+                placeholder="e.g. 87.5"
+                className="font-mono font-semibold border-[1.5px] bg-white"
+                style={{ borderColor: "var(--color-ep-primary)" }}
+                {...register("percentile", { valueAsNumber: true })}
+              />
+              {errors.percentile && (
+                <p className="text-xs text-ep-red">{errors.percentile.message}</p>
+              )}
+            </div>
+          )}
+          {!isDse && (
+            <div className="space-y-1.5">
+              <Label htmlFor="jee_main_rank">JEE Main rank</Label>
+              <Input
+                id="jee_main_rank"
+                type="number"
+                placeholder="Optional"
+                {...register("jee_main_rank", {
+                  setValueAs: (v) => (v === "" ? null : parseInt(v, 10)),
+                })}
+              />
+            </div>
+          )}
           <div className="space-y-1.5">
             <Label htmlFor="board_pct">Board percentage</Label>
             <Input
@@ -300,20 +427,26 @@ export function StudentForm({ student }: Props) {
                 <Controller
                   name="category_base"
                   control={control}
-                  render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((c) => (
-                          <SelectItem key={c.code} value={c.code}>
-                            {c.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
+                  render={({ field }) => {
+                    // DSE has no TFWS / PwD-Open / Defence-Open quota — hide
+                    // categories with no DSE seat pool (an invalid selection
+                    // is cleared by the effect below the form setup).
+                    const options = categories.filter((c) => !isDse || c.dse_supported);
+                    return (
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {options.map((c) => (
+                            <SelectItem key={c.code} value={c.code}>
+                              {c.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    );
+                  }}
                 />
                 {errors.category_base && (
                   <p className="text-xs text-ep-red">{errors.category_base.message}</p>
@@ -330,7 +463,19 @@ export function StudentForm({ student }: Props) {
             </div>
           )}
 
-          {/* Toggles */}
+          {/* Toggles — FE only. DSE has no TFWS quota and no extra reserved
+              pools to merge: PwD/Defence/Orphan/EWS seats exist in DSE as
+              plain categories, chosen directly in the Category dropdown. */}
+          {isDse ? (
+            <p
+              className="rounded-[8px] border px-4 py-2.5 text-xs"
+              style={{ borderColor: "var(--ep-border)", color: "var(--ep-text-secondary)", background: "var(--ep-bg)" }}
+            >
+              In DSE, reserved seats (EWS, Orphan, PwD-reserved, Defence-reserved) are
+              their own cutoff categories — pick the matching category above. There is
+              no TFWS quota in DSE.
+            </p>
+          ) : (
           <div className="grid grid-cols-2 gap-4 pt-1">
             {(
               [
@@ -359,9 +504,10 @@ export function StudentForm({ student }: Props) {
               </div>
             ))}
           </div>
+          )}
 
           {/* PwD type (conditional) */}
-          {pwdStatus && (
+          {!isDse && pwdStatus && (
             <div className="space-y-1.5">
               <Label htmlFor="pwd_type">PwD type</Label>
               <Input
@@ -397,7 +543,9 @@ export function StudentForm({ student }: Props) {
         </CardContent>
       </Card>
 
-      {/* ── Location ── */}
+      {/* ── Location — FE only: DSE seat allotment has no Home/Other/State
+             university split, so home district plays no role there. ── */}
+      {!isDse && (
       <Card>
         <CardHeader>
           <CardTitle>Home district</CardTitle>
@@ -431,6 +579,7 @@ export function StudentForm({ student }: Props) {
           </p>
         </CardContent>
       </Card>
+      )}
 
       {/* ── Preferences ── */}
       <Card>

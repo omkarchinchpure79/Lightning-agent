@@ -62,20 +62,37 @@ bookmarks), counsellor accounts, students CRUD, shortlists, the band model
 
 What is new / different:
 
-### 3.1 Data pipeline (new scripts, FE pipeline untouched)
-- `scripts/download_dse_pdfs.py` — DONE (verified sources above).
-- `scripts/parse_dse_cutoffs.py` — parse the 7 PDFs → same validation gates as FE
-  (`category_count == pair_count`, 0≤value≤100, known category legend — the **DSE** legend,
-  known institute code) → flagged rows go to `flagged_reviews` with a `source='dse'` marker.
-- `scripts/load_dse_db.py` → new table `dse_cutoffs` (mirror of `cutoffs` minus seat-type,
-  plus `merit_marks_pct` semantics). DSE data NEVER mixes into the `cutoffs` table —
-  percentile and percentage must be un-joinable by construction.
-- `dse_predictions_2026` via the same carry-forward model (`predicted = latest year's close`),
-  schema owned by one function in `constants.py` (same single-source rule as
-  `ensure_predictions_table`). Backtest before ever doing anything fancier — same rule as FE.
-- Category canonicalisation: extend `constants.py` with `DSE_CATEGORY_LEGEND` and the
-  NTA/NTB/NTC/NTD ↔ VJ/NT1/NT2/NT3 family mapping so the frontend's category-family tree
-  (`web/lib/categories.ts`) can group DSE categories with the same UX.
+### 3.1 Data pipeline (new scripts, FE pipeline untouched) — DONE, verified 2026-07-06
+- `scripts/download_dse_pdfs.py` — downloads + header-verifies all 7 PDFs.
+- `scripts/parse_dse_cutoffs.py` — column-aligned parser (values are assigned to
+  categories by x-coordinate, never reading order — a stage row can cover any
+  subset of categories). 71,034 rows parsed, 0 flagged after three real-world
+  fixes: (1) a course name can wrap onto its own line BEFORE the Choice Code
+  line — only recognised via 1-line lookahead (a genuine single-category header
+  is always followed by a merit number, a wrapped title by a Choice Code line;
+  465/7679 sampled blocks are genuinely single-category, so this can't be
+  guessed without the lookahead); (2) choice codes can carry a trailing
+  seat-sub-type letter (F/U/L, e.g. `303524550F` at a women's-university
+  college); (3) stage labels are not a closed set (`Stage-I`, `Stage-VII`,
+  `Stage-MI`, `I-Non PWD / DEF` all observed) — stored as free-text `stage`,
+  never matched against a hardcoded roman-numeral list.
+- `scripts/load_dse_db.py` → `dse_cutoffs` table (mirror of `cutoffs` minus seat-type,
+  `merit_pct` = diploma percentage). DSE data NEVER mixes into the `cutoffs` table.
+  **Does NOT apply FE's impossible-percentile monotonicity gate** — verified
+  (2026-07-06) that DSE `merit_no` is a PER-BRANCH waitlist rank, not one
+  statewide list per category like FE's; running the FE gate flagged 17
+  legitimate rows as false positives because it compared unrelated branches'
+  independent rank sequences. See the long comment in `load_dse_db.py`.
+- `dse_predictions` via the same carry-forward model (`predicted = latest year's
+  close`) and the same empirically-calibrated interval method
+  (`constants.interval_offsets_from_groups`, factored out of
+  `compute_interval_offsets` so both planes share one implementation).
+  33,089 predictions generated (6,559 high / 8,085 medium / 18,445 low confidence).
+- Category canonicalisation: `constants.py` has `DSE_CATEGORY_LEGEND` (34 tokens,
+  frozen from a full-corpus census) and `DSE_CATEGORY_MAP` (FE base category →
+  DSE cutoff category, NTA/NTB/NTC/NTD ↔ VJ/NT1/NT2/NT3). Confirmed via census:
+  DSE prints NO TFWS at all; PwD-Open and Defence-Open DO exist in DSE (`PWD-O`,
+  `DEF-O`) alongside the per-reservation `PWDR-*`/`DEFR-*` variants.
 
 ### 3.2 Engine
 - `preference_engine` gets a DSE path with the H/O/S seat-eligibility resolution **disabled**
@@ -112,6 +129,31 @@ What is new / different:
   branch develops.
 - Cross-check twice: every pipeline number spot-checked against the source PDF after
   parsing AND after DB load.
+
+## 4.5 Frontend integration — DONE, verified 2026-07-06
+
+Per-student `admission_type` toggle on `StudentForm` (First year / Direct Second Year):
+DSE mode swaps percentile→diploma %, hides TFWS/PwD/Defence/Orphan/EWS toggles (DSE
+selects those as plain categories instead) and the Home district card (no H/O/S layer
+in DSE), and filters the category dropdown to `dse_supported` codes only. Results page
+labels the header correctly ("% diploma" vs "%ile"), shows a "Direct Second Year
+(diploma merit)" tag, and offers only CAP rounds I–II. Students list/shortlist/edit
+pages all display the right unit label per student.
+
+**Real bug found and fixed during click-through testing** (not a tooling artifact):
+switching `admission_type` unmounts the other mode's merit-mark input
+(`percentile`/`diploma_pct`), but react-hook-form does not clear an unmounted field's
+value by default. An untouched number input resolves to `NaN` via `valueAsNumber`,
+which fails `z.number()` validation — and because each field's error message is only
+rendered inside its own conditional branch, a stale error on the now-hidden field was
+completely invisible: "Create & run predictions" did nothing, no error text, no network
+request. Fixed with a `useEffect` that explicitly `setValue`s the inactive field to
+`null` on every admission-type toggle (chosen over `useForm({ shouldUnregister: true })`,
+which was tried first but has a wider blast radius — it also resets other
+conditionally-rendered Controllers, like the category/home-district selects, on
+unrelated re-renders). Verified end-to-end: DSE student created, results page renders
+all three bands from `dse_predictions`, shortlist add/list works, edit page reloads
+correctly into DSE mode.
 
 ## 5. Open items
 - 2024-25/2025-26 Round III: never published publicly; predictions for rounds beyond II

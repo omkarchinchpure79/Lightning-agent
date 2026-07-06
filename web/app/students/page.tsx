@@ -183,7 +183,10 @@ export default function StudentsPage() {
                   <Link href={`/students/${s.id}/results`} className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-[var(--ep-text)] line-clamp-1">{s.name}</p>
                     <p className="font-mono mt-0.5 text-xs text-ep-muted">
-                      {s.percentile}%ile · {s.category_base}
+                      {s.admission_type === "dse"
+                        ? `${s.percentile}% diploma · DSE`
+                        : `${s.percentile}%ile`}
+                      {" · "}{s.category_base}
                       {s.home_district ? ` · ${s.home_district}` : ""}
                     </p>
                   </Link>

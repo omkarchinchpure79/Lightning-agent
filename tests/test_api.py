@@ -132,6 +132,73 @@ class TestStudentCRUD(unittest.TestCase):
         self.assertEqual(resp.status_code, 404)
 
 
+class TestDseStudentCRUD(unittest.TestCase):
+    """Session 2 (Direct Second Year admission) — API-level checks."""
+    _created: list[int] = []
+
+    @classmethod
+    def tearDownClass(cls):
+        for sid in cls._created:
+            _client.delete(f"/api/students/{sid}")
+        cls._created.clear()
+
+    def _create_dse(self, **overrides) -> tuple[int, dict]:
+        payload = {"name": "API Test — DSE", "admission_type": "dse",
+                   "diploma_pct": 88.0, "category_base": "GOPEN", **overrides}
+        resp = _client.post("/api/students", json=payload)
+        self.assertEqual(resp.status_code, 201, resp.text)
+        data = resp.json()
+        self._created.append(data["id"])
+        return data["id"], data
+
+    def test_create_dse_mirrors_diploma_pct_into_percentile(self):
+        sid, created = self._create_dse(diploma_pct=91.25)
+        self.assertEqual(created["admission_type"], "dse")
+        self.assertAlmostEqual(created["diploma_pct"], 91.25)
+        self.assertAlmostEqual(created["percentile"], 91.25)
+
+    def test_create_dse_requires_diploma_pct(self):
+        payload = {"name": "API Test — DSE no mark", "admission_type": "dse",
+                   "category_base": "GOPEN"}
+        resp = _client.post("/api/students", json=payload)
+        self.assertEqual(resp.status_code, 422, resp.text)
+
+    def test_create_dse_rejects_tfws(self):
+        payload = {"name": "API Test — DSE TFWS", "admission_type": "dse",
+                   "diploma_pct": 80.0, "category_base": "TFWS"}
+        resp = _client.post("/api/students", json=payload)
+        self.assertEqual(resp.status_code, 422, resp.text)
+        self.assertIn("no seat quota in DSE", resp.text)
+
+    def test_patch_to_dse_requires_diploma_pct(self):
+        sid, _ = self._create({"name": "API Test — FE to DSE patch"})
+        resp = _client.patch(f"/api/students/{sid}", json={"admission_type": "dse"})
+        self.assertEqual(resp.status_code, 422, resp.text)
+        self.assertIn("diploma_pct", resp.text)
+
+    def _create(self, payload: dict) -> tuple[int, dict]:
+        full = {**_STUDENT_BASE, **payload}
+        resp = _client.post("/api/students", json=full)
+        self.assertEqual(resp.status_code, 201, resp.text)
+        data = resp.json()
+        self._created.append(data["id"])
+        return data["id"], data
+
+    def test_predictions_route_dse_students_to_dse_engine(self):
+        sid, _ = self._create_dse(diploma_pct=88.0)
+        resp = _client.post(f"/api/students/{sid}/predictions", json={"round_num": 1})
+        self.assertEqual(resp.status_code, 200, resp.text)
+        data = resp.json()
+        self.assertEqual(data["admission_type"], "dse")
+        total = data["counts"]["safe"] + data["counts"]["probable"] + data["counts"]["reach"]
+        self.assertGreater(total, 0)
+
+    def test_predictions_reject_round_3_for_dse(self):
+        sid, _ = self._create_dse(diploma_pct=88.0)
+        resp = _client.post(f"/api/students/{sid}/predictions", json={"round_num": 3})
+        self.assertEqual(resp.status_code, 400, resp.text)
+
+
 class TestShortlist(unittest.TestCase):
     _created: list[int] = []
 

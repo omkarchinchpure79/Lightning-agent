@@ -48,7 +48,7 @@ async function authRequest<T>(path: string, init?: RequestInit): Promise<T> {
 
 // ─── Lookup types ────────────────────────────────────────────────────────────
 
-export type CategoryOption = { label: string; code: string };
+export type CategoryOption = { label: string; code: string; dse_supported: boolean };
 
 export async function fetchDistricts(): Promise<string[]> {
   return request<string[]>("/api/lookups/districts");
@@ -86,10 +86,15 @@ export async function fetchFilterRanges(): Promise<FilterRanges> {
 
 // ─── Student types ───────────────────────────────────────────────────────────
 
+export type AdmissionType = "fe" | "dse";
+
 export interface StudentCreate {
   name: string;
   gender?: "M" | "F" | "Other" | null;
-  percentile: number;
+  // Required for fe; for dse the API mirrors diploma_pct into it.
+  percentile?: number | null;
+  admission_type?: AdmissionType;
+  diploma_pct?: number | null;
   jee_main_rank?: number | null;
   board_pct?: number | null;
   category_base: string;
@@ -113,6 +118,7 @@ export type StudentUpdate = Partial<StudentCreate>;
 
 export interface Student extends StudentCreate {
   id: number;
+  percentile: number; // always set server-side (mirrors diploma_pct for dse)
   created_at: string;
   updated_at: string;
 }
@@ -121,6 +127,7 @@ export interface StudentListItem {
   id: number;
   name: string;
   percentile: number;
+  admission_type: AdmissionType;
   category_base: string;
   home_district: string | null;
   updated_at: string;
@@ -164,7 +171,8 @@ export interface PredictionRow {
 }
 
 export interface PredictionResult {
-  percentile: number;
+  admission_type?: AdmissionType; // "dse" when built from the DSE data plane
+  percentile: number;             // for dse this is the diploma percentage
   base_category: string;
   home_district: string | null;
   resolved_district: string | null;

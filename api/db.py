@@ -130,6 +130,13 @@ def init_tables() -> None:
         # table). Each ALTER is guarded — SQLite has no ADD COLUMN IF NOT EXISTS.
         _migrations = [
             ("student_profiles", "ews_eligible", "INTEGER NOT NULL DEFAULT 0"),
+            # Session 2 (DSE): 'fe' = first year (MHT-CET percentile), 'dse' =
+            # direct second year (diploma lateral entry). For DSE students the
+            # authoritative merit mark is diploma_pct (a diploma aggregate
+            # percentage); the NOT NULL percentile column mirrors it so list
+            # sorting keeps working, but engine routing reads diploma_pct.
+            ("student_profiles", "admission_type", "TEXT NOT NULL DEFAULT 'fe'"),
+            ("student_profiles", "diploma_pct", "REAL"),
             ("student_shortlists", "branch_code", "TEXT"),
             ("student_shortlists", "college_score", "REAL"),
             ("student_shortlists", "seat_pool", "TEXT"),

@@ -29,11 +29,12 @@ import preference_engine as _pe          # noqa: E402
 import cap_round_strategy as _rs          # noqa: E402
 import college_card_api as _cc            # noqa: E402
 import fee_calculator as _fc              # noqa: E402
+import dse_engine as _dse                 # noqa: E402
 from constants import BASE_CATEGORY_VARIANTS  # noqa: E402  (single source of truth)
 
 # Pin every engine module's relative DB_PATH to the absolute file, so the app
 # works regardless of the directory `streamlit run` is launched from.
-for _m in (_pe, _rs, _cc, _fc):
+for _m in (_pe, _rs, _cc, _fc, _dse):
     _m.DB_PATH = _DB
 
 
@@ -304,6 +305,36 @@ def preference_list(percentile, category_label, home_district,
         out[band].sort(key=lambda r: (-r["predicted_close"], -(r["college_score"] or 0)))
         if top_per_band:
             out[band] = out[band][:top_per_band]
+    return out
+
+
+def dse_preference_list(diploma_pct, category_label, branch_preferences=None,
+                        fee_budget=None, round_num=1, top_per_band=None,
+                        preferred_locations=None):
+    """DSE (diploma lateral entry) twin of preference_list.
+
+    No reserved-pool merging (no TFWS in DSE; PWD/DEF/ORPHAN are plain
+    categories selectable as the base category) and no seat-data fallback
+    annotation (DSE has no H/O/S variants, so every match is exact by
+    construction). entry_key == canonical_code: one seat pool per branch."""
+    base_category = category_code(category_label)
+    out = _dse.compute_dse_preference_list(
+        diploma_pct=diploma_pct,
+        base_category=base_category,
+        branch_preferences=branch_preferences or None,
+        fee_budget=fee_budget,
+        round_num=round_num,
+        top_per_band=top_per_band,
+        preferred_locations=preferred_locations or None,
+    )
+    if "error" in out:
+        return out
+    for band in ("safe", "probable", "reach"):
+        for row in out[band]:
+            row["seat_pool"] = None
+            row["entry_key"] = row["canonical_code"]
+            row["seat_data_status"] = "exact"
+            row["expected_category"] = row["category_used"]
     return out
 
 
