@@ -3,6 +3,7 @@ db/*.db
 
 # Raw PDFs (large, re-downloadable)
 data/raw/pdfs/*.pdf
+data/raw/pdfs/**/*.pdf
 
 # Intermediate parsed data (large, regenerable via scripts/parse_cutoffs.py)
 data/processed/cutoffs.json
