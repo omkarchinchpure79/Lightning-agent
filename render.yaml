@@ -1,0 +1,26 @@
+# Render blueprint — deploys the EduPath API with a persistent disk.
+# In the Render dashboard: New + > Blueprint > point at this repo.
+# The Next.js frontend is NOT deployed here — it lives on Vercel.
+services:
+  - type: web
+    name: edupath-api
+    runtime: docker
+    dockerfilePath: ./deploy/Dockerfile.api
+    dockerContext: .
+    plan: starter            # persistent disks require a paid instance (~$7/mo)
+    healthCheckPath: /api/health
+    disk:
+      name: edupath-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: EDUPATH_DB_PATH
+        value: /data/edupath.db
+      - key: JWT_SECRET
+        generateValue: true   # Render generates a strong random secret
+      - key: CORS_ORIGINS
+        value: http://localhost:3000   # CHANGE to the Vercel URL after first deploy
+      # - key: ANTHROPIC_API_KEY      # only needed for AI college descriptions
+      #   sync: false
+      # - key: SEED_IMAGES_URL        # optional college-photos zip (see deploy/start.sh)
+      #   sync: false

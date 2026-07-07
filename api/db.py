@@ -14,9 +14,6 @@ _APP_DIR = os.path.join(_ROOT, "app")
 if _APP_DIR not in sys.path:
     sys.path.insert(0, _APP_DIR)
 
-DB_PATH = os.path.join(_ROOT, "db", "edupath.db")
-
-
 def _load_dotenv() -> None:
     """Load KEY=value from repo-root .env into os.environ (no extra dependencies)."""
     env_path = os.path.join(_ROOT, ".env")
@@ -35,6 +32,10 @@ def _load_dotenv() -> None:
 
 
 _load_dotenv()
+
+# EDUPATH_DB_PATH lets a deployment keep the DB on a persistent disk outside
+# the repo (e.g. /data/edupath.db). Resolved after .env so either source works.
+DB_PATH = os.environ.get("EDUPATH_DB_PATH") or os.path.join(_ROOT, "db", "edupath.db")
 
 
 def get_conn() -> sqlite3.Connection:

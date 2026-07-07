@@ -21,7 +21,9 @@ import sys
 # --- 1. Make engine importable from anywhere, with an absolute DB path ---------
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _SCRIPTS = os.path.join(_PROJECT_ROOT, "scripts")
-_DB = os.path.join(_PROJECT_ROOT, "db", "edupath.db")
+# EDUPATH_DB_PATH lets a deployment keep the DB on a persistent disk outside
+# the repo (e.g. /data/edupath.db); falls back to the in-repo default.
+_DB = os.environ.get("EDUPATH_DB_PATH") or os.path.join(_PROJECT_ROOT, "db", "edupath.db")
 if _SCRIPTS not in sys.path:
     sys.path.insert(0, _SCRIPTS)
 
