@@ -56,3 +56,7 @@ logs/
 
 # Local design reference dumps (extracted handoff, 53MB — not app code)
 hearth_design/
+
+# Vercel CLI project link (contains project/org IDs)
+.vercel/
+web/.vercel/
