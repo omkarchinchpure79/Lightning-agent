@@ -98,8 +98,8 @@ function CollegeRow({ college, index, sortBy }: { college: CollegeSearchResult; 
       exit={{ opacity: 0 }}
       transition={{ duration: 0.15 }}
       onClick={() => router.push(`/colleges/${college.college_code}`)}
-      className="flex items-center gap-5 py-5 px-1.5 border-b cursor-pointer transition-colors hover:bg-[var(--ep-surface)]"
-      style={{ borderColor: "var(--ep-border)" }}
+      className="flex items-center gap-5 py-5 px-5 mb-3 rounded-[22px] border cursor-pointer transition-all hover:shadow-[0_12px_28px_-14px_rgba(36,28,21,0.22)] hover:-translate-y-[1px]"
+      style={{ borderColor: "var(--ep-border)", background: "var(--ep-surface)" }}
     >
       <span
         className="font-display shrink-0 w-10 text-[22px] leading-none"
@@ -263,18 +263,18 @@ export default function HomePage() {
     <div className="min-h-screen" style={{ background: "var(--ep-bg)" }}>
       <NavHeader />
 
-      {/* ── Hero ───────────────────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden px-10 pt-16 pb-8" style={{ background: "var(--ep-bg)" }}>
+      {/* ── Hero — immersive dark-forest section (Hearth) ───────────────────── */}
+      <div className="relative overflow-hidden px-10 pt-20 pb-16 mx-4 mt-4 rounded-[28px]" style={{ background: "#0F2A21" }}>
         <svg
           viewBox="0 0 1160 400"
           preserveAspectRatio="none"
-          className="pointer-events-none absolute inset-0 h-full w-full"
+          className="pointer-events-none absolute inset-0 h-full w-full opacity-40"
           aria-hidden="true"
         >
           <path
             d="M100 380 C 140 140, 380 80, 1080 110"
             fill="none"
-            stroke="#DED8CA"
+            stroke="#3C5A4C"
             strokeWidth="2"
             strokeDasharray="2 9"
             strokeLinecap="round"
@@ -282,48 +282,50 @@ export default function HomePage() {
         </svg>
         <div className="relative max-w-3xl mx-auto sm:mx-0">
           <div
-            className="font-mono text-xs uppercase mb-5"
-            style={{ letterSpacing: "0.18em", color: "var(--color-ep-green)" }}
+            className="font-mono text-xs uppercase mb-5 flex items-center gap-2"
+            style={{ letterSpacing: "0.18em", color: "#8FBFA3" }}
           >
+            <span className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--color-ep-green)" }} />
             Guidance Platform · MHT CET
           </div>
-          <h1 className="font-display text-[42px] sm:text-[58px] leading-[1.03] text-[var(--ep-text)] mb-5">
+          <h1 className="font-display text-[42px] sm:text-[58px] leading-[1.03] mb-5" style={{ color: "#F6F1E7" }}>
             Every student has a<br />
-            <span className="italic" style={{ color: "var(--color-ep-primary)" }}>path.</span> We help you find it.
+            <span className="italic" style={{ color: "var(--color-ep-amber)" }}>path.</span> We help you find it.
           </h1>
-          <p className="text-[17px] leading-relaxed text-[#5B6472] mb-7 max-w-xl">
+          <p className="text-[17px] leading-relaxed mb-7 max-w-xl" style={{ color: "#B8C7BE" }}>
             From a single percentile to a confident admission — mapped with {siteStats ? `${siteStats.cutoff_year_count} years` : "real"} of real CAP cutoff data.
           </p>
 
           <form onSubmit={handleSearch} className="max-w-xl">
             <div
-              className="flex items-center gap-3 pb-3 border-b-[1.5px]"
-              style={{ borderColor: "var(--ep-text)" }}
+              className="flex items-center gap-3 px-5 py-4 rounded-full border backdrop-blur"
+              style={{ borderColor: "rgba(246,241,231,0.18)", background: "rgba(246,241,231,0.06)" }}
             >
-              <Search className="h-[18px] w-[18px] shrink-0" style={{ color: "var(--ep-text)" }} />
+              <Search className="h-[18px] w-[18px] shrink-0" style={{ color: "#F6F1E7" }} />
               <input
                 value={searchQ}
                 onChange={(e) => setSearchQ(e.target.value)}
                 placeholder="Search a college, city, or code…"
-                className="flex-1 bg-transparent text-base outline-none placeholder:text-[#9A968B] text-[var(--ep-text)]"
+                className="flex-1 bg-transparent text-base outline-none placeholder:text-[#7E9187]"
+                style={{ color: "#F6F1E7" }}
               />
-              <button type="submit" className="text-sm font-medium text-[var(--ep-text)] flex items-center gap-1 shrink-0">
+              <button type="submit" className="text-sm font-medium flex items-center gap-1 shrink-0" style={{ color: "var(--color-ep-amber)" }}>
                 Explore <ArrowRight className="h-3.5 w-3.5" />
               </button>
             </div>
           </form>
 
-          <div className="flex items-center gap-6 mt-6 text-[13px] text-[#7A7568] flex-wrap">
+          <div className="flex items-center gap-6 mt-7 text-[13px] flex-wrap" style={{ color: "#8FA895" }}>
             <span>
-              <b className="font-mono text-[15px] font-semibold text-[var(--ep-text)]">{siteStats ? siteStats.college_count : "…"}</b> colleges
+              <b className="font-mono text-[15px] font-semibold" style={{ color: "#F6F1E7" }}>{siteStats ? siteStats.college_count : "…"}</b> colleges
             </span>
-            <span style={{ color: "#CFC9BA" }}>·</span>
+            <span style={{ color: "#3C5A4C" }}>·</span>
             <span>
-              <b className="font-mono text-[15px] font-semibold text-[var(--ep-text)]">{siteStats ? siteStats.cutoff_year_count : "…"} yrs</b> cutoff data
+              <b className="font-mono text-[15px] font-semibold" style={{ color: "#F6F1E7" }}>{siteStats ? siteStats.cutoff_year_count : "…"} yrs</b> cutoff data
             </span>
-            <span style={{ color: "#CFC9BA" }}>·</span>
+            <span style={{ color: "#3C5A4C" }}>·</span>
             <span>
-              <b className="font-mono text-[15px] font-semibold text-[var(--ep-text)]">{siteStats ? siteStats.district_count : "…"}</b> districts
+              <b className="font-mono text-[15px] font-semibold" style={{ color: "#F6F1E7" }}>{siteStats ? siteStats.district_count : "…"}</b> districts
             </span>
           </div>
         </div>
@@ -360,8 +362,8 @@ export default function HomePage() {
                 className="flex items-center gap-1.5 px-[15px] py-2 rounded-full text-[13px] font-medium whitespace-nowrap border transition-colors"
                 style={
                   active
-                    ? { borderColor: "var(--color-ep-primary)", color: "var(--color-ep-primary)", background: "rgba(30,77,140,.06)", fontWeight: 600 }
-                    : { borderColor: "var(--ep-border-strong)", color: "#4A5462" }
+                    ? { borderColor: "var(--color-ep-amber)", color: "#241C15", background: "var(--color-ep-amber)", fontWeight: 600 }
+                    : { borderColor: "var(--ep-border-strong)", color: "var(--ep-text-secondary)" }
                 }
               >
                 <Icon className="h-3.5 w-3.5" />
@@ -512,8 +514,8 @@ export default function HomePage() {
 
             {/* Predictor CTA band */}
             <div
-              className="relative overflow-hidden mt-8 rounded-[16px] px-9 py-8 flex items-center justify-between gap-6 flex-wrap"
-              style={{ background: "#14213A" }}
+              className="relative overflow-hidden mt-8 rounded-[22px] px-9 py-8 flex items-center justify-between gap-6 flex-wrap"
+              style={{ background: "#0F2A21" }}
             >
               <svg
                 viewBox="0 0 900 160"
@@ -524,17 +526,17 @@ export default function HomePage() {
                 <path
                   d="M40 140 C 120 40, 500 30, 880 40"
                   fill="none"
-                  stroke="#2C3A57"
+                  stroke="#3C5A4C"
                   strokeWidth="2"
                   strokeDasharray="2 9"
                   strokeLinecap="round"
                 />
               </svg>
               <div className="relative">
-                <div className="font-display text-2xl mb-1" style={{ color: "#F5F3EE" }}>
+                <div className="font-display text-2xl mb-1" style={{ color: "#F6F1E7" }}>
                   Ready for personalised matches?
                 </div>
-                <div className="text-sm max-w-xl" style={{ color: "#9BA6BA" }}>
+                <div className="text-sm max-w-xl" style={{ color: "#B8C7BE" }}>
                   Enter a student&apos;s percentile and category to get SAFE / PROBABLE / REACH predictions across every branch.
                 </div>
               </div>

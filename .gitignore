@@ -50,3 +50,9 @@ web/playwright-report/
 
 # Obsidian vault workspace config (local editor state)
 .obsidian/
+
+# Local run logs
+logs/
+
+# Local design reference dumps (extracted handoff, 53MB — not app code)
+hearth_design/

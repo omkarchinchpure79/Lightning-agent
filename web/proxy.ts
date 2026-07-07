@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
  */
 const PUBLIC_PATHS = ["/login", "/signup"];
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   const isPublic = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));

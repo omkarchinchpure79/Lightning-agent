@@ -51,7 +51,7 @@ Refer to [url_patterns.md](file:///C:/Lighting%20agent%20VS%20code/docs/url_patt
 
 ## Commands
 ```bash
-python scripts/download_pdfs.py          # Download all CET Cell cutoff PDFs
+python scripts/download_all_pdfs.py          # Download all CET Cell cutoff PDFs
 python scripts/parse_cutoffs.py          # Parse PDFs → structured data with validation
 python scripts/load_db.py               # Load validated data → edupath.db
 python scripts/check_flagged.py         # Review items that failed validation

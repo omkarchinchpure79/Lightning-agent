@@ -1,41 +1,41 @@
 import type { Metadata } from "next";
 import {
-  Instrument_Serif,
-  Newsreader,
-  Public_Sans,
-  IBM_Plex_Mono,
+  DM_Serif_Display,
+  DM_Sans,
+  DM_Mono,
 } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 
-// ── "The Path" type system ──────────────────────────────────────
-// Public Sans  → body / UI
-// Newsreader   → serif accents (college names, descriptions)
-// Instrument   → display headings (h1s, hero)
-// IBM Plex Mono → numbers, codes, labels
-const publicSans = Public_Sans({
+// ── "Hearth" type system ─────────────────────────────────────────
+// DM Sans          → body / UI
+// DM Serif Display → serif accents + display headings (college names, h1s, hero)
+// DM Mono          → numbers, codes, labels
+// Var names kept as before ("--font-public-sans" etc.) so globals.css / no
+// other file needs to change — only the font family swaps.
+const publicSans = DM_Sans({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "700"],
   variable: "--font-public-sans",
   display: "swap",
 });
-const newsreader = Newsreader({
+const newsreader = DM_Serif_Display({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: "400",
   style: ["normal", "italic"],
   variable: "--font-newsreader",
   display: "swap",
 });
-const instrumentSerif = Instrument_Serif({
+const instrumentSerif = DM_Serif_Display({
   subsets: ["latin"],
   weight: "400",
   style: ["normal", "italic"],
   variable: "--font-instrument",
   display: "swap",
 });
-const plexMono = IBM_Plex_Mono({
+const plexMono = DM_Mono({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "500"],
   variable: "--font-plex-mono",
   display: "swap",
 });

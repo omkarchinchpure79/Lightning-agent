@@ -14,7 +14,7 @@ test("signup -> create student -> results render bands -> shortlist persists", a
   await page.goto("/signup");
   await page.getByPlaceholder("Priya Deshmukh").fill("Smoke Test Counsellor");
   await page.getByPlaceholder("you@example.com").fill(email);
-  await page.getByPlaceholder("Min. 8 chars").fill("smoketestpassword123");
+  await page.getByPlaceholder("Min. 8 characters").fill("smoketestpassword123");
   await page.getByPlaceholder("••••••••").fill("smoketestpassword123");
   await page.getByRole("button", { name: "Create account" }).click();
 
