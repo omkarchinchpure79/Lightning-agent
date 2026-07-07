@@ -143,7 +143,7 @@ def compute_preference_list(percentile, base_category, home_district,
                    p.category, p.predicted_pct, p.predicted_low, p.predicted_high,
                    p.confidence, p.trend_slope,
                    p.years_used, cd.university_code, col.city, col.score, cd.district,
-                   p.branch_code, bi.general_intake, bi.tfws_intake
+                   p.branch_code, bi.general_intake, bi.tfws_intake, cd.affiliated_university
             FROM predictions_2026 p
             JOIN college_details cd ON cd.college_code = p.college_code
             LEFT JOIN colleges col  ON col.college_code = p.college_code
@@ -154,12 +154,14 @@ def compute_preference_list(percentile, base_category, home_district,
         # Group by physical branch; keep every category variant available for it.
         branches = {}
         for (canon, ccode, cname, bname, cat, pred, pred_low, pred_high, conf, slope,
-             yrs, univ, city, score, district, bcode, gen_intake, tfws_intake) in rows:
+             yrs, univ, city, score, district, bcode, gen_intake, tfws_intake,
+             affiliated_university) in rows:
             g = branches.setdefault(canon, {
                 "college_code": ccode, "college_name": cname, "branch_name": bname,
                 "college_univ": univ, "city": city, "score": score,
                 "district": district, "branch_code": bcode,
                 "general_intake": gen_intake, "tfws_intake": tfws_intake, "cats": {},
+                "affiliated_university": affiliated_university,
             })
             # Prefer a non-null representative branch_code across category variants.
             if g["branch_code"] is None and bcode is not None:
@@ -195,6 +197,7 @@ def compute_preference_list(percentile, base_category, home_district,
                 "college_name":   g["college_name"],
                 "branch_name":    g["branch_name"],
                 "branch_code":    g["branch_code"],
+                "affiliated_university": g["affiliated_university"],
                 "general_intake": g["general_intake"],
                 "tfws_intake":    g["tfws_intake"],
                 "city":           g["city"] or "",

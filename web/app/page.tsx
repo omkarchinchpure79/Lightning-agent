@@ -21,6 +21,7 @@ import { searchColleges, fetchBranchKeywords, fetchSiteStats, type CollegeSearch
 import { fmtPercentile } from "@/lib/utils";
 import { CompareButton } from "@/components/CompareButton";
 import { NavHeader } from "@/components/NavHeader";
+import { PathMeter } from "@/components/PathMeter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DiscoveryFilters, type SidebarFilterState } from "@/components/DiscoveryFilters";
 
@@ -98,12 +99,12 @@ function CollegeRow({ college, index, sortBy }: { college: CollegeSearchResult; 
       exit={{ opacity: 0 }}
       transition={{ duration: 0.15 }}
       onClick={() => router.push(`/colleges/${college.college_code}`)}
-      className="flex items-center gap-5 py-5 px-1.5 border-b cursor-pointer transition-colors hover:bg-[var(--ep-surface)]"
-      style={{ borderColor: "var(--ep-border)" }}
+      className="flex items-center gap-5 py-5 px-5 mb-3 rounded-[22px] border cursor-pointer transition-all hover:shadow-[0_12px_28px_-14px_rgba(36,28,21,0.22)] hover:-translate-y-[1px]"
+      style={{ borderColor: "var(--ep-border)", background: "var(--ep-surface)" }}
     >
       <span
         className="font-display shrink-0 w-10 text-[22px] leading-none"
-        style={{ color: "#B7B1A2" }}
+        style={{ color: "#98A2B3" }}
       >
         {String(index + 1).padStart(2, "0")}
       </span>
@@ -122,7 +123,7 @@ function CollegeRow({ college, index, sortBy }: { college: CollegeSearchResult; 
           <div className="font-mono text-xl font-semibold text-[var(--ep-text)]">
             {sortBy === "percentile" ? fmtPercentile(metricValue) : metricValue.toFixed(0)}
           </div>
-          <div className="font-mono text-[10px] uppercase tracking-wide" style={{ color: "#9A968B" }}>
+          <div className="font-mono text-[10px] uppercase tracking-wide" style={{ color: "var(--color-ep-muted)" }}>
             {metricLabel}
           </div>
         </div>
@@ -132,7 +133,7 @@ function CollegeRow({ college, index, sortBy }: { college: CollegeSearchResult; 
         variant="chip"
         className="shrink-0"
       />
-      <ChevronRight className="h-4 w-4 shrink-0" style={{ color: "#C4BCA9" }} />
+      <ChevronRight className="h-4 w-4 shrink-0" style={{ color: "#98A2B3" }} />
     </motion.div>
   );
 }
@@ -263,68 +264,64 @@ export default function HomePage() {
     <div className="min-h-screen" style={{ background: "var(--ep-bg)" }}>
       <NavHeader />
 
-      {/* ── Hero ───────────────────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden px-10 pt-16 pb-8" style={{ background: "var(--ep-bg)" }}>
-        <svg
-          viewBox="0 0 1160 400"
-          preserveAspectRatio="none"
-          className="pointer-events-none absolute inset-0 h-full w-full"
-          aria-hidden="true"
-        >
-          <path
-            d="M100 380 C 140 140, 380 80, 1080 110"
-            fill="none"
-            stroke="#DED8CA"
-            strokeWidth="2"
-            strokeDasharray="2 9"
-            strokeLinecap="round"
-          />
-        </svg>
+      {/* ── Hero — deep navy, brand-driven (no decorative squiggle) ─────────── */}
+      <div className="relative overflow-hidden px-10 pt-20 pb-16 mx-4 mt-4 rounded-[28px]" style={{ background: "#0E2A4D" }}>
         <div className="relative max-w-3xl mx-auto sm:mx-0">
           <div
-            className="font-mono text-xs uppercase mb-5"
-            style={{ letterSpacing: "0.18em", color: "var(--color-ep-green)" }}
+            className="font-mono text-xs uppercase mb-5 flex items-center gap-2"
+            style={{ letterSpacing: "0.18em", color: "#8FB0DC" }}
           >
+            <span className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--color-ep-green)" }} />
             Guidance Platform · MHT CET
           </div>
-          <h1 className="font-display text-[42px] sm:text-[58px] leading-[1.03] text-[var(--ep-text)] mb-5">
-            Every student has a<br />
-            <span className="italic" style={{ color: "var(--color-ep-primary)" }}>path.</span> We help you find it.
+          <h1 className="font-display text-[42px] sm:text-[58px] leading-[1.03] mb-5" style={{ color: "#EAF0FA" }}>
+            Every percentile has a{" "}
+            <span style={{ color: "var(--color-ep-green)" }}>path.</span> We help you map it.
           </h1>
-          <p className="text-[17px] leading-relaxed text-[#5B6472] mb-7 max-w-xl">
+          <p className="text-[17px] leading-relaxed mb-7 max-w-xl" style={{ color: "#B7C7DE" }}>
             From a single percentile to a confident admission — mapped with {siteStats ? `${siteStats.cutoff_year_count} years` : "real"} of real CAP cutoff data.
           </p>
 
           <form onSubmit={handleSearch} className="max-w-xl">
             <div
-              className="flex items-center gap-3 pb-3 border-b-[1.5px]"
-              style={{ borderColor: "var(--ep-text)" }}
+              className="flex items-center gap-3 px-5 py-4 rounded-full border backdrop-blur"
+              style={{ borderColor: "rgba(234,240,250,0.18)", background: "rgba(234,240,250,0.06)" }}
             >
-              <Search className="h-[18px] w-[18px] shrink-0" style={{ color: "var(--ep-text)" }} />
+              <Search className="h-[18px] w-[18px] shrink-0" style={{ color: "#EAF0FA" }} />
               <input
                 value={searchQ}
                 onChange={(e) => setSearchQ(e.target.value)}
                 placeholder="Search a college, city, or code…"
-                className="flex-1 bg-transparent text-base outline-none placeholder:text-[#9A968B] text-[var(--ep-text)]"
+                className="flex-1 bg-transparent text-base outline-none placeholder:text-[#7488A8]"
+                style={{ color: "#EAF0FA" }}
               />
-              <button type="submit" className="text-sm font-medium text-[var(--ep-text)] flex items-center gap-1 shrink-0">
+              <button type="submit" className="text-sm font-medium flex items-center gap-1 shrink-0" style={{ color: "var(--color-ep-green)" }}>
                 Explore <ArrowRight className="h-3.5 w-3.5" />
               </button>
             </div>
           </form>
 
-          <div className="flex items-center gap-6 mt-6 text-[13px] text-[#7A7568] flex-wrap">
+          <div className="flex items-center gap-6 mt-7 text-[13px] flex-wrap" style={{ color: "#8FA6C4" }}>
             <span>
-              <b className="font-mono text-[15px] font-semibold text-[var(--ep-text)]">{siteStats ? siteStats.college_count : "…"}</b> colleges
+              <b className="font-mono text-[15px] font-semibold" style={{ color: "#EAF0FA" }}>{siteStats ? siteStats.college_count : "…"}</b> colleges
             </span>
-            <span style={{ color: "#CFC9BA" }}>·</span>
+            <span style={{ color: "#22385C" }}>·</span>
             <span>
-              <b className="font-mono text-[15px] font-semibold text-[var(--ep-text)]">{siteStats ? siteStats.cutoff_year_count : "…"} yrs</b> cutoff data
+              <b className="font-mono text-[15px] font-semibold" style={{ color: "#EAF0FA" }}>{siteStats ? siteStats.cutoff_year_count : "…"} yrs</b> cutoff data
             </span>
-            <span style={{ color: "#CFC9BA" }}>·</span>
+            <span style={{ color: "#22385C" }}>·</span>
             <span>
-              <b className="font-mono text-[15px] font-semibold text-[var(--ep-text)]">{siteStats ? siteStats.district_count : "…"}</b> districts
+              <b className="font-mono text-[15px] font-semibold" style={{ color: "#EAF0FA" }}>{siteStats ? siteStats.district_count : "…"}</b> districts
             </span>
+          </div>
+
+          {/* Signature — the brand mark's curve, literalized as the shape of every
+              shortlist: a start (green), the path, a destination (blue ring). */}
+          <div className="mt-9 max-w-md">
+            <div className="font-mono text-[10px] uppercase mb-2.5" style={{ letterSpacing: "0.1em", color: "#7488A8" }}>
+              The shape of a shortlist
+            </div>
+            <PathMeter safe={40} probable={35} reach={25} dark />
           </div>
         </div>
       </div>
@@ -332,7 +329,7 @@ export default function HomePage() {
       {/* Branch quick-filter (real, backed by the branches table join in /api/colleges/search) */}
       <div className="border-t border-b px-10 py-3.5" style={{ borderColor: "var(--ep-border)" }}>
         <div className="max-w-7xl mx-auto flex items-center gap-2">
-          <GraduationCap className="h-4 w-4 shrink-0" style={{ color: "#9A968B" }} />
+          <GraduationCap className="h-4 w-4 shrink-0" style={{ color: "var(--color-ep-muted)" }} />
           <select
             value={sidebarFilters.branch ?? ""}
             onChange={(e) => handleSidebarChange({ ...sidebarFilters, branch: e.target.value || undefined })}
@@ -360,8 +357,8 @@ export default function HomePage() {
                 className="flex items-center gap-1.5 px-[15px] py-2 rounded-full text-[13px] font-medium whitespace-nowrap border transition-colors"
                 style={
                   active
-                    ? { borderColor: "var(--color-ep-primary)", color: "var(--color-ep-primary)", background: "rgba(30,77,140,.06)", fontWeight: 600 }
-                    : { borderColor: "var(--ep-border-strong)", color: "#4A5462" }
+                    ? { borderColor: "var(--color-ep-amber)", color: "#101828", background: "var(--color-ep-amber)", fontWeight: 600 }
+                    : { borderColor: "var(--ep-border-strong)", color: "var(--ep-text-secondary)" }
                 }
               >
                 <Icon className="h-3.5 w-3.5" />
@@ -372,7 +369,7 @@ export default function HomePage() {
               </motion.button>
             );
           })}
-          <label className="ml-auto flex items-center gap-1.5 font-mono text-xs" style={{ color: "#8A867B" }}>
+          <label className="ml-auto flex items-center gap-1.5 font-mono text-xs" style={{ color: "var(--color-ep-muted)" }}>
             Sort
             <select
               value={sortBy}
@@ -461,7 +458,7 @@ export default function HomePage() {
                 )}
                 <span
                   className="font-mono text-[11px] uppercase hidden sm:inline"
-                  style={{ letterSpacing: "0.06em", color: "#9A968B" }}
+                  style={{ letterSpacing: "0.06em", color: "var(--color-ep-muted)" }}
                 >
                   sorted by {sortBy === "percentile" ? "cutoff percentile" : "score"}
                 </span>
@@ -512,36 +509,21 @@ export default function HomePage() {
 
             {/* Predictor CTA band */}
             <div
-              className="relative overflow-hidden mt-8 rounded-[16px] px-9 py-8 flex items-center justify-between gap-6 flex-wrap"
-              style={{ background: "#14213A" }}
+              className="relative overflow-hidden mt-8 rounded-[22px] px-9 py-8 flex items-center justify-between gap-6 flex-wrap"
+              style={{ background: "#0E2A4D" }}
             >
-              <svg
-                viewBox="0 0 900 160"
-                preserveAspectRatio="none"
-                className="pointer-events-none absolute inset-0 h-full w-full opacity-50"
-                aria-hidden="true"
-              >
-                <path
-                  d="M40 140 C 120 40, 500 30, 880 40"
-                  fill="none"
-                  stroke="#2C3A57"
-                  strokeWidth="2"
-                  strokeDasharray="2 9"
-                  strokeLinecap="round"
-                />
-              </svg>
               <div className="relative">
-                <div className="font-display text-2xl mb-1" style={{ color: "#F5F3EE" }}>
+                <div className="font-display text-2xl mb-1" style={{ color: "#EAF0FA" }}>
                   Ready for personalised matches?
                 </div>
-                <div className="text-sm max-w-xl" style={{ color: "#9BA6BA" }}>
+                <div className="text-sm max-w-xl" style={{ color: "#B7C7DE" }}>
                   Enter a student&apos;s percentile and category to get SAFE / PROBABLE / REACH predictions across every branch.
                 </div>
               </div>
               <Link
                 href="/students/new"
                 className="relative flex items-center gap-2 px-6 py-3.5 rounded-[11px] text-sm font-semibold whitespace-nowrap transition-opacity hover:opacity-90"
-                style={{ background: "var(--color-ep-green)", color: "#0E1729" }}
+                style={{ background: "var(--color-ep-green)", color: "#0E2A4D" }}
               >
                 Get predictions
                 <ArrowRight className="h-4 w-4" />

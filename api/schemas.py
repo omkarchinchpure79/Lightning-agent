@@ -147,6 +147,7 @@ class StudentResponse(BaseModel):
 
 class ShortlistItem(BaseModel):
     canonical_code: str
+    college_code: Optional[str] = None
     college_name: Optional[str] = None
     branch_name: Optional[str] = None
     band: Optional[str] = None
@@ -159,6 +160,7 @@ class ShortlistItem(BaseModel):
     branch_code: Optional[str] = None
     college_score: Optional[float] = None
     seat_pool: Optional[str] = None
+    affiliated_university: Optional[str] = None
 
 
 class ShortlistRequest(BaseModel):

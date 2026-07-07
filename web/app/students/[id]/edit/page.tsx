@@ -53,7 +53,7 @@ export default function EditStudentPage() {
         {error && (
           <div
             className="rounded-[8px] border px-4 py-3 text-sm"
-            style={{ borderColor: "#E8BFBD", background: "#F8E7E5", color: "var(--color-ep-red-ink)" }}
+            style={{ borderColor: "var(--color-ep-red-border)", background: "var(--color-ep-red-tint)", color: "var(--color-ep-red-ink)" }}
           >
             Failed to load student.{" "}
             {error instanceof Error ? error.message : "Unknown error."}

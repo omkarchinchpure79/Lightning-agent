@@ -43,7 +43,7 @@ export function CompareButton({ college, variant = "chip", className }: CompareB
         )}
         style={{
           borderColor: active ? "var(--color-ep-primary)" : "var(--ep-border-strong)",
-          background: active ? "rgba(30,77,140,0.08)" : "transparent",
+          background: active ? "var(--color-ep-primary-tint)" : "transparent",
         }}
       >
         {active ? <Check className="h-4 w-4" /> : <GitCompareArrows className="h-4 w-4" />}
@@ -71,7 +71,7 @@ export function CompareButton({ college, variant = "chip", className }: CompareB
       )}
       style={
         active
-          ? { borderColor: "var(--color-ep-primary)", color: "var(--color-ep-primary)", background: "rgba(30,77,140,0.08)" }
+          ? { borderColor: "var(--color-ep-primary)", color: "var(--color-ep-primary)", background: "var(--color-ep-primary-tint)" }
           : { borderColor: "var(--ep-border-strong)", color: "var(--ep-text-secondary)" }
       }
     >

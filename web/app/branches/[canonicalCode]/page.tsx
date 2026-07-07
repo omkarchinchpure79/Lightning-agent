@@ -254,7 +254,7 @@ function FamilyRows({
     <>
       <tr
         className={cn("border-t transition-colors", !single && "cursor-pointer hover:bg-[var(--ep-bg)]")}
-        style={{ borderColor: "#EEEAE0" }}
+        style={{ borderColor: "var(--ep-border)" }}
         onClick={onToggle}
       >
         <td className="py-[11px] px-[22px]">
@@ -285,7 +285,7 @@ function FamilyRows({
       {isOpen &&
         !single &&
         fam.variants.map((v) => (
-          <tr key={v.raw} className="border-t" style={{ borderColor: "#F3F0E8", background: "var(--ep-bg)" }}>
+          <tr key={v.raw} className="border-t" style={{ borderColor: "var(--ep-border)", background: "var(--ep-bg)" }}>
             <td className="py-2 pl-[46px] pr-[22px]">
               <span className="flex items-center gap-2 text-[12.5px] text-[var(--ep-text-secondary)]">
                 {v.label || v.raw}
@@ -385,7 +385,7 @@ function BranchView({ data }: { data: BranchDeepDive }) {
       {/* Summary strip ─────────────────────────────────────────────────────── */}
       <div className="rounded-[13px] border grid grid-cols-2 lg:grid-cols-4 overflow-hidden" style={{ background: "var(--ep-surface)", borderColor: "var(--ep-border)" }}>
         <div className="px-[22px] py-[18px] border-r border-b lg:border-b-0" style={{ borderColor: "var(--ep-border)" }}>
-          <p className="font-mono text-[10px] uppercase mb-1.5" style={{ letterSpacing: "0.08em", color: "#9A968B" }}>
+          <p className="font-mono text-[10px] uppercase mb-1.5" style={{ letterSpacing: "0.08em", color: "var(--color-ep-muted)" }}>
             2026 predicted close
           </p>
           <p className="font-mono text-[20px] font-semibold text-[var(--ep-text)]">
@@ -393,7 +393,7 @@ function BranchView({ data }: { data: BranchDeepDive }) {
           </p>
         </div>
         <div className="px-[22px] py-[18px] border-b lg:border-b-0 lg:border-r" style={{ borderColor: "var(--ep-border)" }}>
-          <p className="font-mono text-[10px] uppercase mb-1.5" style={{ letterSpacing: "0.08em", color: "#9A968B" }}>
+          <p className="font-mono text-[10px] uppercase mb-1.5" style={{ letterSpacing: "0.08em", color: "var(--color-ep-muted)" }}>
             2025 actual close
           </p>
           <p className="font-mono text-[20px] font-semibold text-[var(--ep-text)]">
@@ -401,7 +401,7 @@ function BranchView({ data }: { data: BranchDeepDive }) {
           </p>
         </div>
         <div className="px-[22px] py-[18px] border-r" style={{ borderColor: "var(--ep-border)" }}>
-          <p className="font-mono text-[10px] uppercase mb-1.5" style={{ letterSpacing: "0.08em", color: "#9A968B" }}>
+          <p className="font-mono text-[10px] uppercase mb-1.5" style={{ letterSpacing: "0.08em", color: "var(--color-ep-muted)" }}>
             Seat intake
           </p>
           {hasIntake ? (
@@ -415,7 +415,7 @@ function BranchView({ data }: { data: BranchDeepDive }) {
           )}
         </div>
         <div className="px-[22px] py-[18px]">
-          <p className="font-mono text-[10px] uppercase mb-1.5" style={{ letterSpacing: "0.08em", color: "#9A968B" }}>
+          <p className="font-mono text-[10px] uppercase mb-1.5" style={{ letterSpacing: "0.08em", color: "var(--color-ep-muted)" }}>
             3-yr trend · confidence
           </p>
           <div className="flex items-center gap-2.5">
@@ -444,11 +444,11 @@ function BranchView({ data }: { data: BranchDeepDive }) {
             <>
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={chartData} margin={{ top: 20, right: 12, left: 0, bottom: 4 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#EEEAE0" vertical={false} />
-                  <XAxis dataKey="year" tick={{ fontSize: 12, fill: "#8A867B", fontFamily: "var(--font-mono)" }} axisLine={false} tickLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--ep-border)" vertical={false} />
+                  <XAxis dataKey="year" tick={{ fontSize: 12, fill: "var(--color-ep-muted)", fontFamily: "var(--font-mono)" }} axisLine={false} tickLine={false} />
                   <YAxis
                     domain={[Math.max(0, Math.floor(yMin)), Math.min(100, Math.ceil(yMax))]}
-                    tick={{ fontSize: 11, fill: "#9A968B", fontFamily: "var(--font-mono)" }}
+                    tick={{ fontSize: 11, fill: "var(--color-ep-muted)", fontFamily: "var(--font-mono)" }}
                     axisLine={false}
                     tickLine={false}
                     width={38}
@@ -460,7 +460,7 @@ function BranchView({ data }: { data: BranchDeepDive }) {
                   />
                   <Bar dataKey="close" radius={[4, 4, 0, 0]} maxBarSize={64}>
                     {chartData.map((entry, i) => (
-                      <Cell key={i} fill={entry.predicted ? "#1E4D8C" : "#C6D2DF"} />
+                      <Cell key={i} fill={entry.predicted ? "var(--color-ep-primary)" : "var(--ep-border-strong)"} />
                     ))}
                     <LabelList
                       dataKey="close"
@@ -474,11 +474,11 @@ function BranchView({ data }: { data: BranchDeepDive }) {
               </ResponsiveContainer>
               <div className="flex items-center gap-[18px] mt-1.5 pl-2">
                 <span className="inline-flex items-center gap-[7px] text-xs text-ep-muted">
-                  <span className="h-[11px] w-[11px] rounded-[3px]" style={{ background: "#C6D2DF" }} />
+                  <span className="h-[11px] w-[11px] rounded-[3px]" style={{ background: "var(--ep-border-strong)" }} />
                   Historical (actual)
                 </span>
                 <span className="inline-flex items-center gap-[7px] text-xs text-ep-muted">
-                  <span className="h-[11px] w-[11px] rounded-[3px]" style={{ background: "#1E4D8C" }} />
+                  <span className="h-[11px] w-[11px] rounded-[3px]" style={{ background: "var(--color-ep-primary)" }} />
                   2026 forecast
                 </span>
               </div>
@@ -550,7 +550,7 @@ export default function BranchPage() {
         )}
 
         {error && (
-          <div className="rounded-[10px] border px-5 py-4 text-sm flex items-start gap-3" style={{ borderColor: "#E8BFBD", background: "#F8E7E5", color: "var(--color-ep-red-ink)" }}>
+          <div className="rounded-[10px] border px-5 py-4 text-sm flex items-start gap-3" style={{ borderColor: "var(--color-ep-red-border)", background: "var(--color-ep-red-tint)", color: "var(--color-ep-red-ink)" }}>
             <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
             <div>
               <p className="font-semibold">Could not load branch data</p>

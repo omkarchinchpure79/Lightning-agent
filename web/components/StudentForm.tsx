@@ -88,7 +88,7 @@ function SelectableChip({
       )}
       style={
         selected
-          ? { borderColor: "var(--color-ep-primary)", color: "var(--color-ep-primary)", background: "rgba(30,77,140,.06)" }
+          ? { borderColor: "var(--color-ep-primary)", color: "var(--color-ep-primary)", background: "var(--color-ep-primary-tint)" }
           : { borderColor: "var(--ep-border-strong)" }
       }
     >
@@ -544,7 +544,7 @@ export function StudentForm({ student }: Props) {
       {serverError && (
         <div
           className="rounded-[8px] border px-4 py-3 text-sm"
-          style={{ borderColor: "#E8BFBD", background: "#F8E7E5", color: "var(--color-ep-red-ink)" }}
+          style={{ borderColor: "var(--color-ep-red-border)", background: "var(--color-ep-red-tint)", color: "var(--color-ep-red-ink)" }}
         >
           {serverError}
         </div>

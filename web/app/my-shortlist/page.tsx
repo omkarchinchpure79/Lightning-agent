@@ -29,7 +29,7 @@ function ShortlistRow({
       dragListener={reorderMode}
     >
       {reorderMode && (
-        <GripVertical className="h-3.5 w-3.5 shrink-0 cursor-grab" style={{ color: "#C4BCA9" }} />
+        <GripVertical className="h-3.5 w-3.5 shrink-0 cursor-grab" style={{ color: "#98A2B3" }} />
       )}
 
       <div
@@ -121,7 +121,7 @@ export default function ShortlistPage() {
               <Link
                 href="/students/new"
                 className="flex items-center gap-1.5 px-4 py-2 rounded-[9px] text-sm font-semibold transition-opacity hover:opacity-90"
-                style={{ background: "var(--color-ep-green)", color: "#0E1729" }}
+                style={{ background: "var(--color-ep-green)", color: "#0E2A4D" }}
               >
                 Get predictions
                 <ArrowRight className="h-3.5 w-3.5" />

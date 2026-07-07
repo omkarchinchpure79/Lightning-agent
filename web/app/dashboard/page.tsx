@@ -157,7 +157,7 @@ export default function DashboardPage() {
                   >
                     <div
                       className="h-[38px] w-[38px] rounded-full flex items-center justify-center shrink-0 font-display text-[15px]"
-                      style={{ background: "#EDEAE1", color: "var(--color-ep-primary)" }}
+                      style={{ background: "var(--ep-input)", color: "var(--color-ep-primary)" }}
                     >
                       {s.name.charAt(0).toUpperCase()}
                     </div>
@@ -170,7 +170,7 @@ export default function DashboardPage() {
                         {s.home_district ? ` · ${s.home_district}` : ""}
                       </p>
                     </div>
-                    <ChevronRight className="h-4 w-4 shrink-0" style={{ color: "#C4BCA9" }} />
+                    <ChevronRight className="h-4 w-4 shrink-0" style={{ color: "#98A2B3" }} />
                   </Link>
                 </motion.div>
               ))}

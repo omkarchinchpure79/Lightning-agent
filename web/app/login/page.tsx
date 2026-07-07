@@ -13,6 +13,10 @@ import { useAuth } from "@/lib/useAuth";
 import { readLocalShortlist } from "@/lib/useShortlist";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { EduPathLogo } from "@/components/EduPathLogo";
+import { PathMeter } from "@/components/PathMeter";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 const schema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -83,10 +87,10 @@ export default function LoginPage() {
   // ── Merge dialog ────────────────────────────────────────────────────────────
   if (mergeItems !== null) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--ep-bg)" }}>
+      <div className="min-h-screen flex items-center justify-center px-6" style={{ background: "var(--ep-bg)" }}>
         <div
-          className="w-full max-w-md rounded-[16px] border border-[var(--ep-border)] p-8"
-          style={{ background: "var(--ep-surface)" }}
+          className="w-full max-w-md rounded-[22px] border p-8 shadow-[0_20px_50px_-24px_rgba(36,28,21,0.25)]"
+          style={{ background: "var(--ep-surface)", borderColor: "var(--ep-border)" }}
         >
           <h2 className="font-display text-xl text-[var(--ep-text)] mb-2">
             Save your bookmarks?
@@ -95,143 +99,137 @@ export default function LoginPage() {
             You have <strong>{mergeItems.length} college{mergeItems.length !== 1 ? "s" : ""}</strong> saved before logging in. Save them to your account?
           </p>
           <div className="flex gap-3">
-            <button
-              onClick={() => handleMerge(true)}
-              disabled={merging}
-              className="flex-1 py-2.5 rounded-[10px] text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-              style={{ background: "var(--color-ep-primary)" }}
-            >
+            <Button onClick={() => handleMerge(true)} disabled={merging} className="flex-1">
               {merging ? "Saving…" : "Yes, save them"}
-            </button>
-            <button
-              onClick={() => handleMerge(false)}
-              disabled={merging}
-              className="flex-1 py-2.5 rounded-[10px] text-sm font-medium border border-[var(--ep-border-strong)] text-[var(--ep-text-secondary)] hover:bg-[var(--ep-bg)] transition-colors disabled:opacity-50"
-            >
+            </Button>
+            <Button onClick={() => handleMerge(false)} disabled={merging} variant="outline" className="flex-1">
               Start fresh
-            </button>
+            </Button>
           </div>
         </div>
       </div>
     );
   }
 
-  // ── Login form ──────────────────────────────────────────────────────────────
+  // ── Login — split panel: trust/context left, focused task right ─────────────
+  // A counselor logging in mid-call needs speed + zero doubt they're in the
+  // right place. Left panel carries the brand + the "why trust this" signal;
+  // it never competes with the form for attention.
   return (
-    <div
-      className="relative min-h-screen flex flex-col items-center justify-center px-6 py-16 overflow-hidden"
-      style={{ background: "var(--ep-bg)" }}
-    >
-      <svg
-        viewBox="0 0 600 520"
-        preserveAspectRatio="none"
-        className="pointer-events-none absolute inset-0 h-full w-full"
-        aria-hidden="true"
-      >
-        <path
-          d="M-20 470 C 80 180, 360 120, 640 150"
-          fill="none"
-          stroke="#DED8CA"
-          strokeWidth="2"
-          strokeDasharray="2 9"
-          strokeLinecap="round"
-        />
-      </svg>
-
-      <div className="absolute top-6 right-6">
-        <ThemeToggle />
-      </div>
-
-      <div className="relative w-full max-w-[460px] flex flex-col items-center mb-8">
-        <EduPathLogo size={40} />
-        <p
-          className="font-mono mt-3 text-[11px] uppercase"
-          style={{ letterSpacing: "0.14em", color: "#9A968B" }}
-        >
-          MHT CET Counsellor Portal
-        </p>
-      </div>
-
+    <div className="min-h-screen flex" style={{ background: "var(--ep-bg)" }}>
+      {/* Trust panel */}
       <div
-        className="relative w-full max-w-[460px] rounded-[16px] border p-[30px]"
-        style={{ background: "var(--ep-surface)", borderColor: "var(--ep-border)" }}
+        className="hidden lg:flex lg:w-[46%] relative overflow-hidden flex-col justify-between p-12"
+        style={{ background: "#0E2A4D" }}
       >
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <label className="block text-xs font-medium text-[var(--ep-text-secondary)] mb-1.5">
-              Email
-            </label>
-            <input
-              type="email"
-              autoComplete="email"
-              {...register("email")}
-              className="w-full rounded-[10px] border px-4 py-3 text-sm text-[var(--ep-text)] outline-none focus:border-[var(--color-ep-primary)] transition-colors"
-              style={{ background: "var(--ep-input)", borderColor: "var(--ep-border-strong)" }}
-              placeholder="you@example.com"
-            />
-            {errors.email && (
-              <p className="mt-1 text-xs text-[var(--color-ep-red)]">{errors.email.message}</p>
-            )}
-          </div>
+        <EduPathLogo size={32} />
 
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-medium text-[var(--ep-text-secondary)]">
-                Password
-              </label>
-              <span className="text-xs font-medium cursor-default" style={{ color: "var(--color-ep-primary)" }}>
-                Forgot?
-              </span>
-            </div>
-            <div className="relative">
-              <input
-                type={showPw ? "text" : "password"}
-                autoComplete="current-password"
-                {...register("password")}
-                className="w-full rounded-[10px] border px-4 py-3 pr-10 text-sm text-[var(--ep-text)] outline-none focus:border-[var(--color-ep-primary)] transition-colors"
-                style={{ background: "var(--ep-input)", borderColor: "var(--ep-border-strong)" }}
-                placeholder="••••••••"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPw((p) => !p)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-ep-muted hover:text-[var(--ep-text)]"
-                tabIndex={-1}
-              >
-                {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-            {errors.password && (
-              <p className="mt-1 text-xs text-[var(--color-ep-red)]">{errors.password.message}</p>
-            )}
-          </div>
-
-          {errors.root && (
-            <p
-              className="text-xs rounded-[8px] px-3 py-2"
-              style={{ color: "var(--color-ep-red-ink)", background: "#F8E1DF" }}
-            >
-              {errors.root.message}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-[10px] text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50 mt-2"
-            style={{ background: "var(--color-ep-primary)" }}
+        <div className="relative">
+          <div
+            className="font-mono text-xs uppercase mb-4 flex items-center gap-2"
+            style={{ letterSpacing: "0.18em", color: "#8FB0DC" }}
           >
-            {isSubmitting ? "Logging in…" : "Log in"}
-            <ArrowRight className="h-4 w-4" />
-          </button>
-        </form>
+            <span className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--color-ep-green)" }} />
+            MHT CET Counsellor Portal
+          </div>
+          <h1 className="font-display text-[38px] leading-[1.08] mb-4" style={{ color: "#EAF0FA" }}>
+            Every seat allotment,<br />
+            <span style={{ color: "var(--color-ep-green)" }}>backed by data.</span>
+          </h1>
+          <p className="text-[15px] leading-relaxed max-w-sm mb-8" style={{ color: "#B7C7DE" }}>
+            Sign in to pick up your students right where you left off — predictions, shortlists, and CAP strategy in one place.
+          </p>
+          <PathMeter safe={40} probable={35} reach={25} dark className="max-w-xs" />
+        </div>
 
-        <p className="mt-6 text-center text-sm text-ep-muted">
-          No account yet?{" "}
-          <Link href="/signup" className="font-semibold hover:underline" style={{ color: "var(--color-ep-primary)" }}>
-            Create one
-          </Link>
-        </p>
+        <div className="relative flex items-center gap-6 text-[13px]" style={{ color: "#8FA6C4" }}>
+          <span><b className="font-mono text-[15px] font-semibold" style={{ color: "#EAF0FA" }}>408</b> colleges</span>
+          <span style={{ color: "#22385C" }}>·</span>
+          <span><b className="font-mono text-[15px] font-semibold" style={{ color: "#EAF0FA" }}>3 yrs</b> cutoff data</span>
+        </div>
+      </div>
+
+      {/* Form panel */}
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-16 relative">
+        <div className="absolute top-6 right-6">
+          <ThemeToggle />
+        </div>
+
+        <div className="w-full max-w-[380px]">
+          <div className="lg:hidden flex flex-col items-center mb-8">
+            <EduPathLogo size={36} />
+          </div>
+
+          <h2 className="font-display text-2xl text-[var(--ep-text)] mb-1">Welcome back</h2>
+          <p className="text-sm text-ep-muted mb-7">Log in to your counsellor account.</p>
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                {...register("email")}
+                placeholder="you@example.com"
+              />
+              {errors.email && (
+                <p className="text-xs text-[var(--color-ep-red)]">{errors.email.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password</Label>
+                <span className="text-xs font-medium cursor-default" style={{ color: "var(--color-ep-primary)" }}>
+                  Forgot?
+                </span>
+              </div>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPw ? "text" : "password"}
+                  autoComplete="current-password"
+                  {...register("password")}
+                  placeholder="••••••••"
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPw((p) => !p)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-ep-muted hover:text-[var(--ep-text)]"
+                  tabIndex={-1}
+                >
+                  {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {errors.password && (
+                <p className="text-xs text-[var(--color-ep-red)]">{errors.password.message}</p>
+              )}
+            </div>
+
+            {errors.root && (
+              <p
+                className="text-xs rounded-[8px] px-3 py-2"
+                style={{ color: "var(--color-ep-red-ink)", background: "var(--color-ep-red-tint)" }}
+              >
+                {errors.root.message}
+              </p>
+            )}
+
+            <Button type="submit" disabled={isSubmitting} className="w-full mt-2">
+              {isSubmitting ? "Logging in…" : "Log in"}
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </form>
+
+          <p className="mt-6 text-center text-sm text-ep-muted">
+            No account yet?{" "}
+            <Link href="/signup" className="font-semibold hover:underline" style={{ color: "var(--color-ep-primary)" }}>
+              Create one
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

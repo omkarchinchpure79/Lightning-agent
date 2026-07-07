@@ -1,35 +1,27 @@
 import type { Metadata } from "next";
 import {
-  Instrument_Serif,
-  Newsreader,
-  Public_Sans,
+  Sora,
+  Manrope,
   IBM_Plex_Mono,
 } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 
-// ── "The Path" type system ──────────────────────────────────────
-// Public Sans  → body / UI
-// Newsreader   → serif accents (college names, descriptions)
-// Instrument   → display headings (h1s, hero)
-// IBM Plex Mono → numbers, codes, labels
-const publicSans = Public_Sans({
+// ── Type system, built around the real EduPath mark (blue path / green dot) ──
+// Manrope    → body / UI / entity names (serif role folds into this — see globals.css)
+// Sora       → display headings (its circular counters echo the logo's ring)
+// IBM Plex Mono → percentiles, codes, ranks — tabular figures for data alignment
+// Var names kept as before ("--font-public-sans" etc.) so globals.css / no
+// other file needs to change — only the font family swaps.
+const publicSans = Manrope({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-public-sans",
   display: "swap",
 });
-const newsreader = Newsreader({
+const instrumentSerif = Sora({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  style: ["normal", "italic"],
-  variable: "--font-newsreader",
-  display: "swap",
-});
-const instrumentSerif = Instrument_Serif({
-  subsets: ["latin"],
-  weight: "400",
-  style: ["normal", "italic"],
+  weight: ["600", "700"],
   variable: "--font-instrument",
   display: "swap",
 });
@@ -53,7 +45,7 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const fontVars = `${publicSans.variable} ${newsreader.variable} ${instrumentSerif.variable} ${plexMono.variable}`;
+  const fontVars = `${publicSans.variable} ${instrumentSerif.variable} ${plexMono.variable}`;
   return (
     <html lang="en" suppressHydrationWarning className={fontVars}>
       <body>

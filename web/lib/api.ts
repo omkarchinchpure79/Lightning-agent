@@ -142,6 +142,7 @@ export interface PredictionRow {
   college_name: string;
   branch_name: string;
   branch_code: string | null;
+  affiliated_university: string | null;
   general_intake: number | null;
   tfws_intake: number | null;
   city: string;
@@ -188,6 +189,7 @@ export interface PredictionResult {
 
 export interface ShortlistItem {
   canonical_code: string;
+  college_code?: string | null;
   college_name?: string | null;
   branch_name?: string | null;
   band?: string | null;
@@ -200,6 +202,7 @@ export interface ShortlistItem {
   branch_code?: string | null;
   college_score?: number | null;
   seat_pool?: string | null;
+  affiliated_university?: string | null;
 }
 
 export interface ShortlistResponse {

@@ -205,7 +205,7 @@ function Lightbox({
 // Warm-paper placeholder gradients for broken/empty tiles — alternate cool/warm
 // so a mosaic of placeholders still reads as intentional, not "missing".
 const COOL_GRADIENT = "linear-gradient(135deg, #DCE3EC, #C6D2DF)";
-const WARM_GRADIENT = "linear-gradient(135deg, #E3E0D6, #D4CFC0)";
+const WARM_GRADIENT = "linear-gradient(135deg, #E7ECF3, #D6DFEA)";
 
 function PlaceholderTile({ cool, size = 34 }: { cool: boolean; size?: number }) {
   return (
@@ -214,7 +214,7 @@ function PlaceholderTile({ cool, size = 34 }: { cool: boolean; size?: number }) 
       style={{ background: cool ? COOL_GRADIENT : WARM_GRADIENT }}
     >
       <Building2
-        style={{ width: size, height: size, color: cool ? "#9DAEC0" : "#B3AB98" }}
+        style={{ width: size, height: size, color: cool ? "#9DAEC0" : "#A8B6C7" }}
         strokeWidth={1.2}
       />
     </div>
@@ -292,7 +292,7 @@ function HeroGallery({
               {isLastWithMore && (
                 <div
                   className="absolute inset-0 flex items-center justify-center text-white text-sm font-semibold"
-                  style={{ background: "linear-gradient(135deg, #1E4D8C, #14213A)" }}
+                  style={{ background: "linear-gradient(135deg, var(--color-ep-primary), #0E2A4D)" }}
                 >
                   +{images.length - 4} more
                 </div>
@@ -354,7 +354,7 @@ function AIDescription({ code }: { code: string }) {
           {data?.edited_by_counselor && (
             <span
               className="font-mono text-[10px] px-1.5 py-0.5 rounded font-medium"
-              style={{ background: "#F5EBD3", color: "var(--color-ep-amber-ink)" }}
+              style={{ background: "var(--color-ep-amber-tint)", color: "var(--color-ep-amber-ink)" }}
             >
               Counsellor edited
             </span>
@@ -420,7 +420,7 @@ function AIDescription({ code }: { code: string }) {
       {genError && (
         <div
           className="rounded-[6px] border px-3 py-2 text-xs flex items-start gap-2 mt-2"
-          style={{ borderColor: "#E8BFBD", background: "#F8E7E5", color: "var(--color-ep-red-ink)" }}
+          style={{ borderColor: "var(--color-ep-red-border)", background: "var(--color-ep-red-tint)", color: "var(--color-ep-red-ink)" }}
         >
           <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
           {genError}
@@ -464,7 +464,7 @@ function Sidebar({ profile }: { profile: CollegeProfile }) {
             ? "border-[var(--color-ep-primary)] text-[var(--color-ep-primary)]"
             : "text-white"
         )}
-        style={saved ? { background: "rgba(30,77,140,0.08)" } : { background: "var(--color-ep-primary)", borderColor: "var(--color-ep-primary)" }}
+        style={saved ? { background: "rgba(198,82,47,0.08)" } : { background: "var(--color-ep-primary)", borderColor: "var(--color-ep-primary)" }}
       >
         <Bookmark
           className="h-4 w-4 transition-all"
@@ -658,7 +658,7 @@ function CollegeProfileView({
             >
               <p
                 className="font-mono text-[10px] uppercase mb-1.5"
-                style={{ letterSpacing: "0.08em", color: "#9A968B" }}
+                style={{ letterSpacing: "0.08em", color: "var(--color-ep-muted)" }}
               >
                 {label}
               </p>
@@ -688,7 +688,7 @@ function CollegeProfileView({
                 {!placements.reliable && (
                   <div
                     className="flex items-center gap-2 rounded-[6px] border px-3 py-2 text-xs"
-                    style={{ borderColor: "#E8D6A8", background: "#F8F0DD", color: "var(--color-ep-amber-ink)" }}
+                    style={{ borderColor: "var(--color-ep-amber-border)", background: "var(--color-ep-amber-tint)", color: "var(--color-ep-amber-ink)" }}
                   >
                     <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                     Data may be outdated — verify with the college directly.
@@ -747,7 +747,7 @@ function CollegeProfileView({
                     <div
                       key={cat}
                       className="flex items-center justify-between py-2 border-b last:border-0"
-                      style={{ borderColor: "#EEEAE0" }}
+                      style={{ borderColor: "var(--ep-border)" }}
                     >
                       <span className="text-sm text-[var(--ep-text-secondary)]">
                         {cat}
@@ -887,7 +887,7 @@ function CollegeProfileView({
                     <tr
                       key={b.canonical_code}
                       className="border-t hover:bg-[var(--ep-bg)] transition-colors"
-                      style={{ borderColor: "#EEEAE0" }}
+                      style={{ borderColor: "var(--ep-border)" }}
                     >
                       <td className="py-3 px-5">
                         <Link
@@ -1031,8 +1031,8 @@ function FacilityChip({
         !present && "opacity-60 border-dashed"
       )}
       style={{
-        background: present ? "#F0F8F3" : "transparent",
-        borderColor: present ? "#B7E0C4" : "var(--ep-border)",
+        background: present ? "var(--color-ep-green-tint)" : "transparent",
+        borderColor: present ? "var(--color-ep-green-border)" : "var(--ep-border)",
         color: present ? "var(--ep-text-secondary)" : "var(--ep-muted)",
       }}
       title={present ? undefined : "Not available"}
@@ -1089,7 +1089,7 @@ function MobileShortlistBar({ profile }: { profile: CollegeProfile }) {
             ? "border-[var(--color-ep-primary)] text-[var(--color-ep-primary)]"
             : "border-[var(--ep-border)] text-[var(--ep-text-secondary)] hover:border-[var(--color-ep-primary)] hover:text-[var(--color-ep-primary)]"
         )}
-        style={saved ? { background: "rgba(30,77,140,0.08)" } : { background: "var(--ep-surface)" }}
+        style={saved ? { background: "rgba(198,82,47,0.08)" } : { background: "var(--ep-surface)" }}
       >
         {saved ? (
           <Check className="h-4 w-4" />
@@ -1161,7 +1161,7 @@ export default function CollegePage() {
         {error && (
           <div
             className="rounded-[10px] border px-5 py-4 text-sm flex items-start gap-3"
-            style={{ borderColor: "#E8BFBD", background: "#F8E7E5", color: "var(--color-ep-red-ink)" }}
+            style={{ borderColor: "var(--color-ep-red-border)", background: "var(--color-ep-red-tint)", color: "var(--color-ep-red-ink)" }}
           >
             <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
             <div>

@@ -29,6 +29,7 @@ import {
   type ShortlistItem,
 } from "@/lib/api";
 import { NavHeader } from "@/components/NavHeader";
+import { PathMeter } from "@/components/PathMeter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -41,8 +42,8 @@ const BAND_CONFIG = {
   safe: {
     label: "Safe",
     ink: "var(--color-ep-green-ink)",
-    tintBg: "#EAF6EE",
-    borderColor: "#B7E0C4",
+    tintBg: "var(--color-ep-green-tint)",
+    borderColor: "var(--color-ep-green-border)",
     dot: "var(--color-ep-green)",
     badge: "safe" as const,
     description: "Strong chance of getting a seat — percentile comfortably above cutoff.",
@@ -50,8 +51,8 @@ const BAND_CONFIG = {
   probable: {
     label: "Probable",
     ink: "var(--color-ep-amber-ink)",
-    tintBg: "#F8F0DD",
-    borderColor: "#E8D6A8",
+    tintBg: "var(--color-ep-amber-tint)",
+    borderColor: "var(--color-ep-amber-border)",
     dot: "var(--color-ep-amber)",
     badge: "probable" as const,
     description: "Within reach — cutoff may move up or down by round 3.",
@@ -59,8 +60,8 @@ const BAND_CONFIG = {
   reach: {
     label: "Reach",
     ink: "var(--color-ep-red-ink)",
-    tintBg: "#F8E7E5",
-    borderColor: "#E8BFBD",
+    tintBg: "var(--color-ep-red-tint)",
+    borderColor: "var(--color-ep-red-border)",
     dot: "var(--color-ep-red)",
     badge: "reach" as const,
     description: "Aspirational — include 2–3 for negotiation leverage.",
@@ -132,6 +133,7 @@ function sortedRows(rows: PredictionRow[], key: SortKey, dir: SortDir): Predicti
 function rowToShortlist(row: PredictionRow): ShortlistItem {
   return {
     canonical_code: row.canonical_code,
+    college_code: row.college_code,
     college_name: row.college_name,
     branch_name: row.branch_name,
     band: row.band,
@@ -144,6 +146,7 @@ function rowToShortlist(row: PredictionRow): ShortlistItem {
     branch_code: row.branch_code,
     college_score: row.college_score,
     seat_pool: row.seat_pool ?? null,
+    affiliated_university: row.affiliated_university,
   };
 }
 
@@ -213,7 +216,7 @@ function CollegeCard({
           className="font-mono shrink-0 whitespace-nowrap inline-flex items-center gap-1 text-[11px] font-semibold border rounded-[7px] px-2 py-1 transition-colors disabled:opacity-50"
           style={
             inShortlist
-              ? { color: "var(--color-ep-green-ink)", borderColor: "#B7E0C4", background: "#EAF6EE" }
+              ? { color: "var(--color-ep-green-ink)", borderColor: "var(--color-ep-green-border)", background: "var(--color-ep-green-tint)" }
               : { color: "var(--color-ep-primary)", borderColor: "var(--ep-border-strong)" }
           }
         >
@@ -733,6 +736,16 @@ export default function ResultsPage() {
           )}
         </div>
 
+        {/* At-a-glance shape of this student's shortlist — real counts, not decoration. */}
+        {predictions && totalCount > 0 && (
+          <PathMeter
+            safe={predictions.counts.safe}
+            probable={predictions.counts.probable}
+            reach={predictions.counts.reach}
+            className="mb-6 max-w-md"
+          />
+        )}
+
         {/* CAP round selector — the engine has all four rounds; switching
             re-runs predictions for that round. */}
         <div className="mb-5 flex items-center gap-2 flex-wrap">
@@ -761,7 +774,7 @@ export default function ResultsPage() {
         {(predictions?.counts.over_budget_hidden ?? 0) > 0 && (
           <div
             className="mb-4 rounded-[8px] border px-4 py-2.5 text-sm flex items-center gap-2"
-            style={{ borderColor: "#E8D6A8", background: "#F8F0DD", color: "var(--color-ep-amber-ink)" }}
+            style={{ borderColor: "var(--color-ep-amber-border)", background: "var(--color-ep-amber-tint)", color: "var(--color-ep-amber-ink)" }}
           >
             <AlertTriangle className="h-4 w-4 shrink-0" />
             {predictions!.counts.over_budget_hidden} branches hidden (over fee budget).{" "}
@@ -774,7 +787,7 @@ export default function ResultsPage() {
         {error && (
           <div
             className="rounded-[10px] border px-5 py-4 text-sm flex items-start gap-3"
-            style={{ borderColor: "#E8BFBD", background: "#F8E7E5", color: "var(--color-ep-red-ink)" }}
+            style={{ borderColor: "var(--color-ep-red-border)", background: "var(--color-ep-red-tint)", color: "var(--color-ep-red-ink)" }}
           >
             <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
             <div>

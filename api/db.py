@@ -81,6 +81,7 @@ def init_tables() -> None:
                 student_id      INTEGER NOT NULL
                                 REFERENCES student_profiles(id) ON DELETE CASCADE,
                 canonical_code  TEXT NOT NULL,
+                college_code    TEXT,
                 college_name    TEXT,
                 branch_name     TEXT,
                 band            TEXT,
@@ -93,6 +94,7 @@ def init_tables() -> None:
                 branch_code     TEXT,
                 college_score   REAL,
                 seat_pool       TEXT,
+                affiliated_university TEXT,
                 saved_at        TEXT NOT NULL DEFAULT (datetime('now'))
             );
 
@@ -133,6 +135,8 @@ def init_tables() -> None:
             ("student_shortlists", "branch_code", "TEXT"),
             ("student_shortlists", "college_score", "REAL"),
             ("student_shortlists", "seat_pool", "TEXT"),
+            ("student_shortlists", "college_code", "TEXT"),
+            ("student_shortlists", "affiliated_university", "TEXT"),
         ]
         for table, col, decl in _migrations:
             cols = {r["name"] for r in conn.execute(f"PRAGMA table_info({table})")}

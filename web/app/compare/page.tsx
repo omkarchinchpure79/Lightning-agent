@@ -336,7 +336,7 @@ function CardSkeleton() {
 
 function CardError({ code, onRemove }: { code: string; onRemove: () => void }) {
   return (
-    <div className="relative rounded-[13px] border-2 border-dashed p-4 min-h-[180px] flex flex-col items-center justify-center gap-2 text-center" style={{ borderColor: "#E8BFBD" }}>
+    <div className="relative rounded-[13px] border-2 border-dashed p-4 min-h-[180px] flex flex-col items-center justify-center gap-2 text-center" style={{ borderColor: "var(--color-ep-red-border)" }}>
       <AlertTriangle className="h-5 w-5" style={{ color: "var(--color-ep-red)" }} />
       <p className="text-xs text-ep-muted">Could not load {code}</p>
       <button onClick={onRemove} className="text-xs font-semibold hover:underline" style={{ color: "var(--color-ep-primary)" }}>
@@ -371,7 +371,7 @@ function CompareRow({
   return (
     <div
       className="grid border-b last:border-0"
-      style={{ gridTemplateColumns: `200px repeat(${columnCount}, minmax(180px,1fr))`, borderColor: "#EEEAE0" }}
+      style={{ gridTemplateColumns: `200px repeat(${columnCount}, minmax(180px,1fr))`, borderColor: "var(--ep-border)" }}
     >
       <div className="py-3 px-4 text-[12.5px] font-medium text-[var(--ep-text-secondary)] flex items-center">
         {row.label}
@@ -385,7 +385,7 @@ function CompareRow({
             values[i] == null ? "text-ep-muted italic" : "text-[var(--ep-text)]",
             highlight && !allSame && values[i] != null && "font-semibold"
           )}
-          style={highlight && !allSame && values[i] != null ? { background: "#F5EBD3" } : undefined}
+          style={highlight && !allSame && values[i] != null ? { background: "var(--color-ep-amber-tint)" } : undefined}
         >
           {values[i] ?? "…"}
         </div>

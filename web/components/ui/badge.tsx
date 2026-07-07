@@ -2,7 +2,7 @@ import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-// "The Path" signal system — exact tint/ink pairs, not opacity-modified brand colors.
+// Signal system — exact tint/ink pairs, not opacity-modified brand colors.
 const badgeVariants = cva(
   "font-mono inline-flex items-center rounded-[7px] px-2.5 py-1 text-[11px] font-semibold tracking-tight",
   {
@@ -24,14 +24,14 @@ const badgeVariants = cva(
 );
 
 const bgByVariant: Record<string, string> = {
-  default: "rgba(30,77,140,.08)",
-  safe: "#E7F4EC",
-  probable: "#F5EBD3",
-  reach: "#F8E1DF",
-  high: "#E7F4EC",
-  medium: "#F5EBD3",
-  low: "#F8E1DF",
-  muted: "#EDEAE1",
+  default: "var(--color-ep-primary-tint)",
+  safe: "var(--color-ep-green-tint)",
+  probable: "var(--color-ep-amber-tint)",
+  reach: "var(--color-ep-red-tint)",
+  high: "var(--color-ep-green-tint)",
+  medium: "var(--color-ep-amber-tint)",
+  low: "var(--color-ep-red-tint)",
+  muted: "var(--ep-input)",
   outline: "transparent",
 };
 

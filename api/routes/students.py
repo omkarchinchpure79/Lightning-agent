@@ -66,6 +66,7 @@ def _shortlist_item(row) -> ShortlistItem:
     d = dict(row)
     return ShortlistItem(
         canonical_code=d["canonical_code"],
+        college_code=d.get("college_code"),
         college_name=d.get("college_name"),
         branch_name=d.get("branch_name"),
         band=d.get("band"),
@@ -78,6 +79,7 @@ def _shortlist_item(row) -> ShortlistItem:
         branch_code=d.get("branch_code"),
         college_score=d.get("college_score"),
         seat_pool=d.get("seat_pool"),
+        affiliated_university=d.get("affiliated_university"),
     )
 
 
@@ -262,16 +264,16 @@ async def save_shortlist(
             for item in body.items:
                 conn.execute(
                     """INSERT INTO student_shortlists
-                       (student_id, canonical_code, college_name, branch_name, band,
+                       (student_id, canonical_code, college_code, college_name, branch_name, band,
                         predicted_close, margin, confidence, category_used, seat_type,
-                        fee_text, branch_code, college_score, seat_pool)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                        fee_text, branch_code, college_score, seat_pool, affiliated_university)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                     (
-                        student_id, item.canonical_code, item.college_name,
+                        student_id, item.canonical_code, item.college_code, item.college_name,
                         item.branch_name, item.band, item.predicted_close,
                         item.margin, item.confidence, item.category_used,
                         item.seat_type, item.fee_text, item.branch_code,
-                        item.college_score, item.seat_pool,
+                        item.college_score, item.seat_pool, item.affiliated_university,
                     ),
                 )
             conn.commit()

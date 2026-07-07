@@ -175,7 +175,7 @@ export default function StudentsPage() {
                 >
                   <div
                     className="h-10 w-10 rounded-full flex items-center justify-center shrink-0 font-display text-[15px]"
-                    style={{ background: "#EDEAE1", color: "var(--color-ep-primary)" }}
+                    style={{ background: "var(--ep-input)", color: "var(--color-ep-primary)" }}
                   >
                     {s.name.charAt(0).toUpperCase()}
                   </div>
@@ -235,7 +235,7 @@ export default function StudentsPage() {
                       </button>
                     )}
 
-                    <ChevronRight className="h-4 w-4 ml-1" style={{ color: "#C4BCA9" }} />
+                    <ChevronRight className="h-4 w-4 ml-1" style={{ color: "#98A2B3" }} />
                   </div>
                 </motion.div>
               ))}

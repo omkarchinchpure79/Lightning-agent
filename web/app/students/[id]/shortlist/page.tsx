@@ -17,6 +17,15 @@ import { fmtPercentile, cn } from "@/lib/utils";
 const BAND_COLOR: Record<string, string> = { SAFE: "safe", PROBABLE: "probable", REACH: "reach" };
 const BAND_RANK: Record<string, number> = { SAFE: 0, PROBABLE: 1, REACH: 2 };
 
+// Matches the official CET Cell CAP portal's choice-code list: State/Home/Other
+// university seats are printed as SL/HU/OHU, not the plain-language labels
+// used on-screen.
+const SEAT_TYPE_ABBR: Record<string, string> = { State: "SL", Home: "HU", Other: "OHU" };
+function seatTypeAbbr(seatType?: string | null): string {
+  if (!seatType) return "—";
+  return SEAT_TYPE_ABBR[seatType] ?? seatType;
+}
+
 // Stable per-entry identity: a TFWS entry shares canonical_code with the general
 // seat, so include seat_pool (and category) so reorder keys and removal target
 // exactly one entry.
@@ -114,10 +123,14 @@ export default function ShortlistPage() {
         />
       </div>
 
-      <main className="mx-auto max-w-3xl px-6 py-8">
-        {/* Print-only header */}
+      <main className="mx-auto max-w-3xl px-6 py-8 print:max-w-none print:px-0 print:py-0">
+        {/* Print-only header + official-format choice-code table. Mirrors the
+            columns of the actual CET Cell CAP portal preference list
+            (Preference Number / Institute Code / Institute Name / University
+            Name / SL-HU-OHU / Course Name / Choice Code) so a counsellor can
+            hand this straight to a student filling in the real form. */}
         <div className="hidden print:block mb-4">
-          <h1 className="text-2xl font-semibold">EduPath — Preference List</h1>
+          <h1 className="text-xl font-semibold">EduPath — Preference List</h1>
           {student && (
             <p className="text-sm mt-1">
               {student.name} · {student.percentile} percentile · {student.category_base}
@@ -125,6 +138,33 @@ export default function ShortlistPage() {
             </p>
           )}
         </div>
+
+        {hasItems && (
+          <table className="hidden print:table w-full border-collapse text-[11px]">
+            <thead>
+              <tr>
+                {["Preference Number", "Institute Code", "Institute Name", "University Name", "SL / HU / OHU", "Course Name", "Choice Code"].map((h) => (
+                  <th key={h} className="border border-black/30 bg-black/5 px-2 py-1.5 text-left font-semibold">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item, i) => (
+                <tr key={itemKey(item)} className="break-inside-avoid">
+                  <td className="border border-black/30 px-2 py-1.5 text-center">{i + 1}</td>
+                  <td className="border border-black/30 px-2 py-1.5">{item.college_code ?? "—"}</td>
+                  <td className="border border-black/30 px-2 py-1.5">{item.college_name ?? "—"}</td>
+                  <td className="border border-black/30 px-2 py-1.5">{item.affiliated_university ?? "—"}</td>
+                  <td className="border border-black/30 px-2 py-1.5 text-center">{seatTypeAbbr(item.seat_type)}</td>
+                  <td className="border border-black/30 px-2 py-1.5">{item.branch_name ?? "—"}</td>
+                  <td className="border border-black/30 px-2 py-1.5">{item.branch_code ?? "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
 
         <div className="mb-6 flex items-end justify-between gap-4 flex-wrap print:hidden">
           <div>
@@ -198,7 +238,7 @@ export default function ShortlistPage() {
               setItems(next);
               setSortKey("manual");
             }}
-            className="space-y-[9px]"
+            className="space-y-[9px] print:hidden"
           >
             {items.map((item, i) => (
               <ShortlistRow
@@ -252,7 +292,7 @@ function ShortlistRow({
           <GripVertical className="h-4 w-4" />
         </button>
       )}
-      <span className="font-display text-base w-5 shrink-0 text-center" style={{ color: "#B7B1A2" }}>
+      <span className="font-display text-base w-5 shrink-0 text-center" style={{ color: "#98A2B3" }}>
         {index + 1}
       </span>
       <div className="flex-1 min-w-0">

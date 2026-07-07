@@ -4,8 +4,10 @@ main.py — EduPath FastAPI service entry point.
 Start with:
     uvicorn api.main:app --reload --port 8000
 
-CORS is open to http://localhost:3000 (Next.js dev server). Add additional
-origins here when deploying; the API has no auth in v1.
+CORS defaults to http://localhost:3000 (Next.js dev server). For production,
+set ALLOWED_ORIGINS to a comma-separated list of the deployed frontend
+origin(s) (e.g. "https://edupath.vercel.app") — never wildcard "*" together
+with allow_credentials=True, browsers reject that combination anyway.
 """
 import os
 from contextlib import asynccontextmanager
@@ -44,9 +46,13 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+_allowed_origins = [
+    o.strip() for o in os.environ.get("ALLOWED_ORIGINS", "http://localhost:3000").split(",") if o.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=_allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

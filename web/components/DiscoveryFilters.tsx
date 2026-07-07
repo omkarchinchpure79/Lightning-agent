@@ -95,7 +95,7 @@ export function DiscoveryFilters({ value, onChange, onClose, resultCount }: Disc
       <div>
         <label
           className="font-mono block text-[10px] uppercase mb-2"
-          style={{ letterSpacing: "0.08em", color: "#9A968B" }}
+          style={{ letterSpacing: "0.08em", color: "var(--color-ep-muted)" }}
         >
           Location
         </label>
@@ -116,7 +116,7 @@ export function DiscoveryFilters({ value, onChange, onClose, resultCount }: Disc
       <div>
         <label
           className="font-mono block text-[10px] uppercase mb-2"
-          style={{ letterSpacing: "0.08em", color: "#9A968B" }}
+          style={{ letterSpacing: "0.08em", color: "var(--color-ep-muted)" }}
         >
           Institution type
         </label>
@@ -144,7 +144,7 @@ export function DiscoveryFilters({ value, onChange, onClose, resultCount }: Disc
       <div>
         <label
           className="font-mono block text-[10px] uppercase mb-2"
-          style={{ letterSpacing: "0.08em", color: "#9A968B" }}
+          style={{ letterSpacing: "0.08em", color: "var(--color-ep-muted)" }}
         >
           NAAC grade
         </label>
@@ -165,7 +165,7 @@ export function DiscoveryFilters({ value, onChange, onClose, resultCount }: Disc
       <div>
         <label
           className="font-mono block text-[10px] uppercase mb-2"
-          style={{ letterSpacing: "0.08em", color: "#9A968B" }}
+          style={{ letterSpacing: "0.08em", color: "var(--color-ep-muted)" }}
         >
           Branch / Stream
         </label>
@@ -186,7 +186,7 @@ export function DiscoveryFilters({ value, onChange, onClose, resultCount }: Disc
       <div>
         <label
           className="font-mono block text-[10px] uppercase mb-2"
-          style={{ letterSpacing: "0.08em", color: "#9A968B" }}
+          style={{ letterSpacing: "0.08em", color: "var(--color-ep-muted)" }}
         >
           Score range
         </label>
@@ -221,7 +221,7 @@ export function DiscoveryFilters({ value, onChange, onClose, resultCount }: Disc
       <div>
         <label
           className="font-mono block text-[10px] uppercase mb-2"
-          style={{ letterSpacing: "0.08em", color: "#9A968B" }}
+          style={{ letterSpacing: "0.08em", color: "var(--color-ep-muted)" }}
         >
           Cutoff percentile
         </label>

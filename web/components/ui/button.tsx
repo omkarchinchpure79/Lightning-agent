@@ -19,7 +19,7 @@ const buttonVariants = cva(
         destructive:
           "bg-ep-red text-white hover:bg-ep-red/90",
         success:
-          "bg-ep-green text-[#0E1729] hover:opacity-90",
+          "bg-ep-green text-[#0E2A4D] hover:opacity-90",
       },
       size: {
         default: "h-9 px-4 py-2",
