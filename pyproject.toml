@@ -1,0 +1,16 @@
+# Vercel FastAPI entrypoint. api/index.py unpacks the bundled engine DB to
+# /tmp before exposing the FastAPI `app` (see docs/DEPLOYMENT.md).
+[project]
+name = "edupath-api"
+version = "1.0.0"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.138,<1",
+    "pydantic>=2.13,<3",
+    "bcrypt>=5,<6",
+    "PyJWT>=2.13,<3",
+    "anthropic>=0.113",
+]
+
+[tool.vercel]
+entrypoint = "api.index:app"

@@ -17,7 +17,7 @@ from api.auth_utils import (
     hash_password,
     verify_password,
 )
-from api.db import get_conn
+from api.db import get_app_conn
 
 router = APIRouter()
 
@@ -59,7 +59,7 @@ async def signup(body: SignupRequest):
     email = body.email.strip().lower()
 
     def _create():
-        conn = get_conn()
+        conn = get_app_conn()
         try:
             existing = conn.execute(
                 "SELECT id FROM counselors WHERE LOWER(email) = ?", (email,)
@@ -90,7 +90,7 @@ async def login(body: LoginRequest):
     email = body.email.strip().lower()
 
     def _fetch():
-        conn = get_conn()
+        conn = get_app_conn()
         try:
             return conn.execute(
                 "SELECT id, name, email, password_hash FROM counselors WHERE LOWER(email) = ?",
@@ -110,7 +110,7 @@ async def login(body: LoginRequest):
 @router.get("/me", response_model=CounselorInfo)
 async def get_me(counselor_id: int = Depends(get_current_counselor_id)):
     def _fetch():
-        conn = get_conn()
+        conn = get_app_conn()
         try:
             return conn.execute(
                 "SELECT id, name, email, created_at FROM counselors WHERE id = ?",

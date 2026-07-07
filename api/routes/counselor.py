@@ -15,7 +15,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 from api.auth_utils import get_current_counselor_id
-from api.db import get_conn
+from api.db import get_app_conn
 
 router = APIRouter()
 
@@ -35,7 +35,7 @@ class ShortlistCollegeOut(ShortlistCollegeIn):
 @router.get("/shortlist", response_model=list[ShortlistCollegeOut])
 async def get_shortlist(counselor_id: int = Depends(get_current_counselor_id)):
     def _fetch():
-        conn = get_conn()
+        conn = get_app_conn()
         try:
             rows = conn.execute(
                 """SELECT college_code, college_name, city, score, institution_type, saved_at
@@ -57,7 +57,7 @@ async def add_to_shortlist(
     counselor_id: int = Depends(get_current_counselor_id),
 ):
     def _upsert():
-        conn = get_conn()
+        conn = get_app_conn()
         try:
             conn.execute(
                 """INSERT INTO counselor_shortlists
@@ -92,7 +92,7 @@ async def remove_from_shortlist(
     counselor_id: int = Depends(get_current_counselor_id),
 ):
     def _delete():
-        conn = get_conn()
+        conn = get_app_conn()
         try:
             conn.execute(
                 "DELETE FROM counselor_shortlists WHERE counselor_id = ? AND college_code = ?",
@@ -116,7 +116,7 @@ async def bulk_add_shortlist(
 ):
     """Import multiple colleges at once (used when merging a pre-login localStorage list)."""
     def _bulk():
-        conn = get_conn()
+        conn = get_app_conn()
         try:
             conn.executemany(
                 """INSERT INTO counselor_shortlists

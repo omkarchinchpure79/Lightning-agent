@@ -1,80 +1,108 @@
 # Deploying EduPath
 
-Two pieces, two hosts:
+Everything runs on **Vercel**, free tier, as two projects sharing this repo:
 
-| Piece | Host | Why |
+| Project | What | Root |
 |---|---|---|
-| `web/` (Next.js) | **Vercel** | static + SSR frontend, free Hobby tier |
-| `api/` (FastAPI + SQLite) | **Render** (or any Docker host with a persistent disk) | needs a real process + disk — counsellor/student/shortlist writes go into SQLite, which serverless hosts can't persist |
+| `edupath` | Next.js frontend | `web/` |
+| `edupath-api` | FastAPI backend | repo root, entrypoint `api/index.py` |
 
-The 99MB database ships inside the repo as `deploy/edupath.db.gz` (21MB).
-On first boot `deploy/start.sh` unpacks it onto the persistent disk at
-`EDUPATH_DB_PATH` (default `/data/edupath.db`); after that the disk copy is the
-source of truth and survives every redeploy.
+Writable data (counselor accounts, students, shortlists — 5 tables) lives on
+**Turso** (SQLite-over-HTTP, free tier) via `api/turso.py`, a zero-dependency
+Hrana-v2 client — because Vercel's Python functions are serverless and have
+no persistent disk. Read-only engine data (colleges, cutoffs, 122k
+predictions — everything the pipeline in the main `CLAUDE.md` gate produces)
+ships as `deploy/edupath.db.gz` (21MB gzip of the 99MB DB), unpacked to
+`/tmp` on cold start by `api/_seed_runtime.py`. Every route either reads
+engine data via `get_conn()` or writes/reads the 5 app tables via
+`get_app_conn()` (`api/db.py`) — never mix the two for the same table.
 
-## 1. Backend on Render (~$7/mo, the only recurring cost)
+## Current deployment
 
-1. Push this repo to GitHub (already at `omkarchinchpure79/Lightning-agent`).
-2. In the [Render dashboard](https://dashboard.render.com): **New + → Blueprint**,
-   pick the repo. Render reads `render.yaml` and provisions:
-   - a Docker web service built from `deploy/Dockerfile.api`
-   - a 1GB persistent disk mounted at `/data`
-   - a generated `JWT_SECRET`
-3. Wait for the first deploy, note the URL, e.g. `https://edupath-api.onrender.com`.
-4. Smoke-check: `https://edupath-api.onrender.com/api/health` → `{"status":"ok"}`.
+- Frontend: https://edupath-pied.vercel.app
+- Backend: https://edupath-api-lime.vercel.app (health: `/api/health`)
+- Both on the `edupath` Vercel team, linked via `.vercel/project.json` in
+  each of repo-root (`edupath-api`) and `web/` (`edupath`).
 
-## 2. Frontend on Vercel
+## Redeploying
 
-1. Vercel dashboard → **Add New → Project** → import the GitHub repo.
-2. Set **Root Directory = `web`** (critical — the Next.js app is not at repo root).
-3. Add the environment variable (build-time, all environments):
-   - `NEXT_PUBLIC_API_URL=https://edupath-api.onrender.com`
-4. Deploy. Note the URL, e.g. `https://edupath.vercel.app`.
+```bash
+# Backend (repo root)
+vercel --cwd "." deploy --prod --yes --scope edupath
 
-## 3. Close the CORS loop
+# Frontend
+vercel --cwd "web" deploy --prod --yes --scope edupath
+```
 
-Back in Render → the service → Environment:
+**Gotcha — one vercel.json per git checkout, two projects.** Vercel's CLI
+resolves `vercel.json` by walking up to the nearest `.git` root, not by cwd.
+Both projects share this repo, so:
+- root `vercel.json` declares the backend as a `services` block + a
+  catch-all rewrite (`api/index.py` is a plain FastAPI entrypoint; the
+  `services` framework is what Vercel auto-assigns to Python/FastAPI
+  projects, and it REQUIRES the rewrite or every route 404s).
+- `web/vercel.json` (`{"framework": "nextjs"}`) exists purely to shadow the
+  root one when deploying the frontend — without it, the frontend deploy
+  inherits the backend's `services` config and fails ("no services
+  declared").
+- If a project's Framework Preset ever gets stuck on "Services" after a bad
+  deploy, `vercel project update <name> --framework other` resets it —
+  the stored preset persists across deploys even after vercel.json changes.
+- **Never run a deploy in the background without confirming it actually
+  finished** — an interrupted CLI process can leave a deployment stuck
+  "Building" server-side for the full timeout window, queuing every
+  subsequent deploy behind it. Check `vercel ls --scope edupath` for a
+  stuck `Building`/`Queued` entry and `vercel rm <url> --yes` it if found.
 
-- `CORS_ORIGINS=https://edupath.vercel.app` (comma-separate extras, e.g. a custom domain)
+## Environment variables
 
-Save → Render redeploys. Done.
+**Backend** (`edupath-api` project, Vercel dashboard → Settings → Environment Variables):
+- `JWT_SECRET` — required, signs counselor JWTs
+- `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` — required for durable writes;
+  provisioned via `vercel install tursocloud/database --scope edupath`
+- `CORS_ORIGINS` — set to the frontend's Vercel URL
+- `ANTHROPIC_API_KEY` — optional, only for AI college descriptions
 
-## 4. Post-deploy checklist
+**Frontend** (`edupath` project):
+- `NEXT_PUBLIC_API_URL` — the backend's Vercel URL. Inlined at **build**
+  time — changing it requires a redeploy (`vercel deploy --prod`), not just
+  a dashboard save. Set with `vercel env add NEXT_PUBLIC_API_URL production`.
 
-- [ ] `/api/health` returns ok
-- [ ] Sign up a counsellor on the Vercel URL, log in
-- [ ] Create a student → results show SAFE/PROBABLE/REACH bands
-- [ ] Shortlist an entry, reload — it persists (proves disk writes stick)
-- [ ] Redeploy the API once, log in again — account still exists (proves the
-      disk seed guard works)
+## Post-deploy checklist
+
+Verified live end-to-end (2026-07-08, via real browser automation, not curl):
+- [x] `/api/health` returns `{"status":"ok", ...}` with real college/prediction counts
+- [x] Sign up a counsellor on the Vercel frontend URL
+- [x] Create a student → SAFE/PROBABLE/REACH bands render with real predictions
+- [x] Shortlist a result, reload the page — stays shortlisted (Turso write survives)
+
+Re-run this checklist after any backend redeploy that touches `api/db.py`,
+`api/turso.py`, or any route file.
 
 ## Updating shipped cutoff data later
 
-New CAP round → locally run the pipeline (gate in CLAUDE.md), then:
+New CAP round → run the pipeline gate (see main `CLAUDE.md`), then:
 
 ```bash
-gzip -c db/edupath.db > deploy/edupath.db.gz   # refresh the seed
+gzip -c db/edupath.db > deploy/edupath.db.gz
 git commit -m "data: refresh seed DB (CAP 2026 R2)" deploy/edupath.db.gz
+vercel --cwd "." deploy --prod --yes --scope edupath
 ```
 
-Then either merge live counsellor tables by hand, or — if no real users yet —
-set `RESEED_DB=1` on Render for one deploy (OVERWRITES the disk DB, including
-counsellor accounts) and remove it afterwards.
+This only refreshes the read-only engine snapshot — counselor accounts,
+students, and shortlists live on Turso and are untouched.
 
 ## College photos (optional, 333MB)
 
-Not baked into the image. Zip `data/images/`, host it anywhere durable
-(GitHub release asset works), set `SEED_IMAGES_URL=<zip url>` on Render.
-Without it the frontend falls back to placeholder art — everything else works.
+Not bundled (way over the serverless payload limit). The frontend falls back
+to placeholder art when `/static/images/...` 404s — everything else works
+without them. If needed later, host `data/images/` on a CDN/object store and
+change `web/lib/api.ts`'s image URL builder to point there instead of the
+API's `/static/images`.
 
-## Notes / gotchas
+## Local dev is unaffected
 
-- `NEXT_PUBLIC_API_URL` is inlined at **build** time — changing it in Vercel
-  requires a redeploy, not just a save.
-- Render's free tier has no persistent disk; the starter paid instance is the
-  cheapest safe option. Free-tier + no disk = all counsellor data lost on every
-  restart.
-- The API serves college images at `/static/images`; the frontend builds image
-  URLs from `NEXT_PUBLIC_API_URL`, so no extra config is needed for them.
-- Local dev is unchanged: no env vars needed, defaults still point at
-  `db/edupath.db` and `localhost`.
+No env vars required. `EDUPATH_DB_PATH` and `TURSO_DATABASE_URL` are both
+unset locally, so `api/db.py` falls through to the normal `db/edupath.db`
+file for both engine reads and app-table writes, exactly as before this
+deployment work.

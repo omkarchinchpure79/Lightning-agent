@@ -46,9 +46,33 @@ def get_conn() -> sqlite3.Connection:
     return conn
 
 
+def get_app_conn():
+    """Connection for the five WRITABLE API-owned tables (counselors,
+    student_profiles, student_shortlists, counselor_shortlists,
+    college_descriptions).
+
+    Locally this is the same SQLite file as get_conn(), so dev and tests are
+    unchanged. On serverless hosting — where the engine DB is a read-only
+    bundled snapshot — set TURSO_DATABASE_URL/TURSO_AUTH_TOKEN and writes go
+    to Turso (SQLite-over-HTTP, same dialect) so they survive invocations.
+
+    Engine tables (cutoffs, predictions_2026, colleges, …) do NOT exist on
+    Turso — always read those through get_conn().
+    """
+    url = os.environ.get("TURSO_DATABASE_URL")
+    if url:
+        from api.turso import connect as _turso_connect
+        return _turso_connect(url, os.environ["TURSO_AUTH_TOKEN"])
+    return get_conn()
+
+
 def init_tables() -> None:
-    """Create API-owned tables if they don't already exist. Idempotent."""
-    conn = get_conn()
+    """Create API-owned tables if they don't already exist. Idempotent.
+
+    Runs against the WRITABLE store (get_app_conn) — locally that's the main
+    SQLite file; on serverless it's Turso.
+    """
+    conn = get_app_conn()
     try:
         conn.executescript("""
             CREATE TABLE IF NOT EXISTS student_profiles (
@@ -143,7 +167,9 @@ def init_tables() -> None:
             ("student_shortlists", "seat_pool", "TEXT"),
         ]
         for table, col, decl in _migrations:
-            cols = {r["name"] for r in conn.execute(f"PRAGMA table_info({table})")}
+            # pragma_table_info() (function form) works on both sqlite3 and libSQL
+            cols = {r["name"] for r in conn.execute(
+                f"SELECT name FROM pragma_table_info('{table}')")}
             if col not in cols:
                 conn.execute(f"ALTER TABLE {table} ADD COLUMN {col} {decl}")
 

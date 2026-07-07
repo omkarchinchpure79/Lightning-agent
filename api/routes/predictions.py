@@ -19,7 +19,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException
 
 import engine_adapter as ea
 from api.auth_utils import get_current_counselor_id
-from api.db import get_conn
+from api.db import get_app_conn
 from api.schemas import AdHocPredictionRequest, StudentPredictionRequest
 
 router = APIRouter()
@@ -68,7 +68,7 @@ async def student_prediction(
     round_num = body.round_num if body else 1
 
     def _fetch():
-        conn = get_conn()
+        conn = get_app_conn()
         try:
             row = conn.execute(
                 "SELECT * FROM student_profiles WHERE id = ? AND counsellor_id = ?",

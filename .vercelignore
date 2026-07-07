@@ -1,0 +1,17 @@
+# Backend (edupath-api) deploys from the repo root. Only api/, app/, scripts/
+# and the 21MB DB seed (deploy/edupath.db.gz) are needed at runtime — exclude
+# everything else heavy. web/ has its own vercel.json and deploys separately.
+web
+data
+db
+docs
+tests
+logs
+hearth_design
+edupath_logos
+design_handoff_edupath_the_path
+.claude
+.agents
+.obsidian
+.vscode
+*.zip

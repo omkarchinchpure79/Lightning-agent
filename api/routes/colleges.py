@@ -17,7 +17,7 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 import engine_adapter as ea
-from api.db import get_conn
+from api.db import get_conn, get_app_conn
 from api.schemas import CollegeSearchResult
 from constants import canonical_college_key
 
@@ -392,7 +392,7 @@ def _get_cached_description(conn, college_code: str):
 async def get_description(college_code: str):
     """Return cached AI description; 404 if not yet generated."""
     def _read():
-        conn = get_conn()
+        conn = get_app_conn()
         try:
             return _get_cached_description(conn, college_code)
         finally:
@@ -421,7 +421,7 @@ async def generate_description(college_code: str, force: bool = Query(default=Fa
     """
     # 1 — Check cache (skip if force=true)
     def _read_cache():
-        conn = get_conn()
+        conn = get_app_conn()
         try:
             return _get_cached_description(conn, college_code)
         finally:
@@ -463,7 +463,7 @@ async def generate_description(college_code: str, force: bool = Query(default=Fa
 
     # 4 — Store in DB (upsert)
     def _store(desc: str):
-        conn = get_conn()
+        conn = get_app_conn()
         try:
             conn.execute(
                 """
@@ -495,7 +495,7 @@ async def generate_description(college_code: str, force: bool = Query(default=Fa
 async def edit_description(college_code: str, body: DescriptionEditRequest):
     """Counsellor override — saves edited text and sets edited_by_counselor=1."""
     def _update():
-        conn = get_conn()
+        conn = get_app_conn()
         try:
             conn.execute(
                 """

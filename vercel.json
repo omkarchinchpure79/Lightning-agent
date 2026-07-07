@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "edupath-api": {
+      "root": ".",
+      "framework": "fastapi",
+      "entrypoint": "api/index.py"
+    }
+  },
+  "rewrites": [
+    { "source": "/(.*)", "destination": { "service": "edupath-api" } }
+  ]
+}

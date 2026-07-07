@@ -7,6 +7,8 @@ Start with:
 CORS defaults to http://localhost:3000 (Next.js dev server). When deploying,
 set CORS_ORIGINS to the deployed frontend origin(s), comma-separated.
 """
+import api._seed_runtime  # noqa: F401  MUST be first — sets EDUPATH_DB_PATH on serverless
+
 import os
 from contextlib import asynccontextmanager
 
@@ -29,7 +31,13 @@ from api.routes import (
 
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _IMAGES_DIR = os.path.join(_ROOT, "data", "images")
-os.makedirs(_IMAGES_DIR, exist_ok=True)
+try:
+    os.makedirs(_IMAGES_DIR, exist_ok=True)
+except OSError:
+    # Read-only filesystem (serverless). Images aren't bundled there; serve an
+    # empty dir from /tmp — the frontend falls back to placeholder art.
+    _IMAGES_DIR = "/tmp/images"
+    os.makedirs(_IMAGES_DIR, exist_ok=True)
 
 
 @asynccontextmanager

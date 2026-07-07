@@ -1,9 +1,0 @@
-# API-server runtime dependencies ONLY (the engine scripts it imports are pure
-# stdlib). The data pipeline's heavy deps (pdfplumber, pandas, streamlit, bs4)
-# are NOT needed on a deployed API server — install those locally as needed.
-fastapi>=0.138,<1
-uvicorn[standard]>=0.49,<1
-pydantic>=2.13,<3
-bcrypt>=5,<6
-PyJWT>=2.13,<3
-anthropic>=0.113

@@ -13,7 +13,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 
 from api.auth_utils import get_current_counselor_id
-from api.db import get_conn
+from api.db import get_app_conn
 from api.schemas import (
     ShortlistItem, ShortlistRequest, ShortlistResponse,
     StudentCreate, StudentListItem, StudentResponse, StudentUpdate,
@@ -99,7 +99,7 @@ async def create_student(
         data["counsellor_id"] = str(counselor_id)  # owner from JWT, ignore any client value
         cols = ", ".join(data.keys())
         placeholders = ", ".join("?" * len(data))
-        conn = get_conn()
+        conn = get_app_conn()
         try:
             cur = conn.execute(
                 f"INSERT INTO student_profiles ({cols}) VALUES ({placeholders})",
@@ -120,7 +120,7 @@ async def create_student(
 @router.get("", response_model=list[StudentListItem])
 async def list_students(counselor_id: int = Depends(get_current_counselor_id)):
     def _query():
-        conn = get_conn()
+        conn = get_app_conn()
         try:
             rows = conn.execute(
                 "SELECT id, name, percentile, admission_type, category_base, "
@@ -141,7 +141,7 @@ async def get_student(
     counselor_id: int = Depends(get_current_counselor_id),
 ):
     def _query():
-        conn = get_conn()
+        conn = get_app_conn()
         try:
             row = conn.execute(
                 "SELECT * FROM student_profiles WHERE id = ? AND counsellor_id = ?",
@@ -172,7 +172,7 @@ async def update_student(
     # partial update alone can't tell whether the student ends up valid).
     if "admission_type" in updates or "diploma_pct" in updates or "category_base" in updates:
         def _existing():
-            conn = get_conn()
+            conn = get_app_conn()
             try:
                 row = conn.execute(
                     "SELECT * FROM student_profiles WHERE id = ? AND counsellor_id = ?",
@@ -205,7 +205,7 @@ async def update_student(
     def _update():
         set_clause = ", ".join(f"{k} = ?" for k in db_updates)
         values = list(db_updates.values()) + [student_id, str(counselor_id)]
-        conn = get_conn()
+        conn = get_app_conn()
         try:
             cur = conn.execute(
                 f"UPDATE student_profiles SET {set_clause} "
@@ -233,7 +233,7 @@ async def delete_student(
     counselor_id: int = Depends(get_current_counselor_id),
 ):
     def _delete():
-        conn = get_conn()
+        conn = get_app_conn()
         try:
             cur = conn.execute(
                 "DELETE FROM student_profiles WHERE id = ? AND counsellor_id = ?",
@@ -259,7 +259,7 @@ async def get_shortlist(
     counselor_id: int = Depends(get_current_counselor_id),
 ):
     def _query():
-        conn = get_conn()
+        conn = get_app_conn()
         try:
             if not _owns(conn, student_id, counselor_id):
                 return None
@@ -284,7 +284,7 @@ async def save_shortlist(
     counselor_id: int = Depends(get_current_counselor_id),
 ):
     def _replace():
-        conn = get_conn()
+        conn = get_app_conn()
         try:
             if not _owns(conn, student_id, counselor_id):
                 return None
