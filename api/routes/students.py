@@ -123,7 +123,8 @@ async def list_students(counselor_id: int = Depends(get_current_counselor_id)):
         conn = get_conn()
         try:
             rows = conn.execute(
-                "SELECT id, name, percentile, category_base, home_district, updated_at "
+                "SELECT id, name, percentile, admission_type, category_base, "
+                "home_district, updated_at "
                 "FROM student_profiles WHERE counsellor_id = ? ORDER BY updated_at DESC",
                 (str(counselor_id),),
             ).fetchall()
@@ -166,6 +167,37 @@ async def update_student(
     updates.pop("counsellor_id", None)  # ownership is immutable via PATCH
     if not updates:
         raise HTTPException(400, "No fields provided to update")
+
+    # DSE cross-field consistency must be judged against the MERGED row (a
+    # partial update alone can't tell whether the student ends up valid).
+    if "admission_type" in updates or "diploma_pct" in updates or "category_base" in updates:
+        def _existing():
+            conn = get_conn()
+            try:
+                row = conn.execute(
+                    "SELECT * FROM student_profiles WHERE id = ? AND counsellor_id = ?",
+                    (student_id, str(counselor_id)),
+                ).fetchone()
+                return dict(row) if row else None
+            finally:
+                conn.close()
+
+        current = await asyncio.to_thread(_existing)
+        if current is None:
+            raise HTTPException(404, f"Student {student_id} not found")
+        merged = {**current, **updates}
+        if merged.get("admission_type") == "dse":
+            if merged.get("diploma_pct") is None:
+                raise HTTPException(
+                    422, "diploma_pct is required for direct-second-year (dse) students")
+            from api.schemas import _dse_supported_category
+            if not _dse_supported_category(merged["category_base"]):
+                raise HTTPException(
+                    422, f"Category '{merged['category_base']}' has no seat quota in DSE")
+            # Keep the NOT NULL percentile mirror in sync when the merit mark
+            # changes but the caller didn't send percentile (see api/db.py).
+            if "diploma_pct" in updates and "percentile" not in updates:
+                updates["percentile"] = updates["diploma_pct"]
 
     updates["updated_at"] = _now_utc()
     db_updates = _serialise_for_db(updates)

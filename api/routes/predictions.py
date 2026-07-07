@@ -85,6 +85,25 @@ async def student_prediction(
     branches = _parse_json_list(student.get("preferred_branches"))
     locations = _parse_json_list(student.get("preferred_locations"))
 
+    # DSE (diploma lateral entry) students run against the DSE data plane:
+    # diploma percentage vs dse_predictions, no H/O/S, no reserved pools.
+    if student.get("admission_type") == "dse":
+        if student.get("diploma_pct") is None:
+            raise HTTPException(400, "DSE student has no diploma_pct on record")
+        result = await asyncio.to_thread(
+            ea.dse_preference_list,
+            student["diploma_pct"],
+            student["category_base"],
+            branches,
+            student.get("max_fee"),
+            round_num,
+            None,       # top_per_band (unbounded)
+            locations,
+        )
+        if "error" in result:
+            raise HTTPException(400, result["error"])
+        return result
+
     result = await asyncio.to_thread(
         ea.preference_list,
         student["percentile"],

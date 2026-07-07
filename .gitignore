@@ -3,9 +3,13 @@ db/*.db
 
 # Raw PDFs (large, re-downloadable)
 data/raw/pdfs/*.pdf
+data/raw/pdfs/**/*.pdf
 
-# Intermediate parsed data (large, regenerable via scripts/parse_cutoffs.py)
+# Intermediate parsed data (large, regenerable via scripts/parse_cutoffs.py /
+# scripts/parse_dse_cutoffs.py)
 data/processed/cutoffs.json
+data/processed/dse_cutoffs.json
+data/processed/dse_flagged.json
 
 # College campus photos (large, re-downloadable via scripts/download_college_images.py)
 data/images/
@@ -46,3 +50,9 @@ web/playwright-report/
 
 # Obsidian vault workspace config (local editor state)
 .obsidian/
+
+# Local run logs
+logs/
+
+# Local design reference dumps (extracted handoff, 53MB — not app code)
+hearth_design/

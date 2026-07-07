@@ -120,7 +120,11 @@ export default function ShortlistPage() {
           <h1 className="text-2xl font-semibold">EduPath — Preference List</h1>
           {student && (
             <p className="text-sm mt-1">
-              {student.name} · {student.percentile} percentile · {student.category_base}
+              {student.name} ·{" "}
+              {student.admission_type === "dse"
+                ? `${student.percentile}% diploma (DSE)`
+                : `${student.percentile} percentile`}
+              {" · "}{student.category_base}
               {student.home_district ? ` · ${student.home_district}` : ""}
             </p>
           )}

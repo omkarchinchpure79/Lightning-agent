@@ -689,7 +689,10 @@ export default function ResultsPage() {
           <>
             {student && (
               <span className="font-mono text-sm text-ep-muted">
-                {student.name} · {student.percentile}%ile
+                {student.name} ·{" "}
+                {student.admission_type === "dse"
+                  ? `${student.diploma_pct ?? student.percentile}% diploma`
+                  : `${student.percentile}%ile`}
               </span>
             )}
             <Link
@@ -719,6 +722,7 @@ export default function ResultsPage() {
             <p className="font-mono text-[13px] text-ep-muted flex items-center flex-wrap gap-x-2">
               <span>
                 CAP Round {predictions.round_num} · {predictions.base_category}
+                {predictions.admission_type === "dse" ? " · Direct Second Year (diploma merit)" : ""}
                 {predictions.student_university_name
                   ? ` · Home university: ${predictions.student_university_name}`
                   : ""}
@@ -733,14 +737,15 @@ export default function ResultsPage() {
           )}
         </div>
 
-        {/* CAP round selector — the engine has all four rounds; switching
-            re-runs predictions for that round. */}
+        {/* CAP round selector — FE has all four rounds; DSE cutoffs were only
+            ever published for rounds I-II, so a DSE student gets R1/R2 only
+            (the API rejects R3/R4 for DSE rather than guessing from stale data). */}
         <div className="mb-5 flex items-center gap-2 flex-wrap">
           <span className="font-mono text-[11px] uppercase text-ep-muted" style={{ letterSpacing: "0.08em" }}>
             CAP Round
           </span>
           <div className="inline-flex rounded-[9px] border p-0.5" style={{ borderColor: "var(--ep-border)", background: "var(--ep-surface)" }}>
-            {[1, 2, 3, 4].map((r) => (
+            {(student?.admission_type === "dse" ? [1, 2] : [1, 2, 3, 4]).map((r) => (
               <button
                 key={r}
                 onClick={() => setRoundNum(r)}

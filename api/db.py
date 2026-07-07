@@ -14,9 +14,6 @@ _APP_DIR = os.path.join(_ROOT, "app")
 if _APP_DIR not in sys.path:
     sys.path.insert(0, _APP_DIR)
 
-DB_PATH = os.path.join(_ROOT, "db", "edupath.db")
-
-
 def _load_dotenv() -> None:
     """Load KEY=value from repo-root .env into os.environ (no extra dependencies)."""
     env_path = os.path.join(_ROOT, ".env")
@@ -35,6 +32,10 @@ def _load_dotenv() -> None:
 
 
 _load_dotenv()
+
+# EDUPATH_DB_PATH lets a deployment keep the DB on a persistent disk outside
+# the repo (e.g. /data/edupath.db). Resolved after .env so either source works.
+DB_PATH = os.environ.get("EDUPATH_DB_PATH") or os.path.join(_ROOT, "db", "edupath.db")
 
 
 def get_conn() -> sqlite3.Connection:
@@ -130,6 +131,13 @@ def init_tables() -> None:
         # table). Each ALTER is guarded — SQLite has no ADD COLUMN IF NOT EXISTS.
         _migrations = [
             ("student_profiles", "ews_eligible", "INTEGER NOT NULL DEFAULT 0"),
+            # Session 2 (DSE): 'fe' = first year (MHT-CET percentile), 'dse' =
+            # direct second year (diploma lateral entry). For DSE students the
+            # authoritative merit mark is diploma_pct (a diploma aggregate
+            # percentage); the NOT NULL percentile column mirrors it so list
+            # sorting keeps working, but engine routing reads diploma_pct.
+            ("student_profiles", "admission_type", "TEXT NOT NULL DEFAULT 'fe'"),
+            ("student_profiles", "diploma_pct", "REAL"),
             ("student_shortlists", "branch_code", "TEXT"),
             ("student_shortlists", "college_score", "REAL"),
             ("student_shortlists", "seat_pool", "TEXT"),

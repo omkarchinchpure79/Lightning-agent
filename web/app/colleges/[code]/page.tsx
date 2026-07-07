@@ -857,14 +857,16 @@ function CollegeProfileView({
                     <th
                       className="font-mono py-2.5 px-4 font-semibold text-[11px] uppercase text-ep-muted text-right"
                       style={{ letterSpacing: "0.05em" }}
+                      title="Toughest of the Home/Other/State open-seat variants — a specific student's own eligible variant (shown on their results page) can be a few points lower"
                     >
-                      2025 close
+                      2025 close (H/O/S)
                     </th>
                     <th
                       className="font-mono py-2.5 px-4 font-semibold text-[11px] uppercase text-ep-muted text-right"
                       style={{ letterSpacing: "0.05em" }}
+                      title="Toughest of the Home/Other/State open-seat variants — a specific student's own eligible variant (shown on their results page) can be a few points lower"
                     >
-                      2026 pred. close
+                      2026 pred. close (H/O/S)
                     </th>
                     <th
                       className="font-mono py-2.5 px-4 font-semibold text-[11px] uppercase text-ep-muted text-center"
@@ -943,6 +945,106 @@ function CollegeProfileView({
             </div>
           )}
         </Section>
+
+        {/* Direct Second Year (DSE) cutoffs — only shown when this college has DSE data */}
+        {profile.dse_cutoff_trends.length > 0 && (
+          <Section
+            title="Direct Second Year (diploma) cutoffs"
+            icon={<GraduationCap className="h-4 w-4" />}
+          >
+            <div className="overflow-x-auto -mx-5 -mb-5">
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="text-left" style={{ background: "var(--ep-bg)" }}>
+                    <th
+                      className="font-mono py-2.5 px-5 font-semibold text-[11px] uppercase text-ep-muted w-[42%]"
+                      style={{ letterSpacing: "0.05em" }}
+                    >
+                      Branch
+                    </th>
+                    <th
+                      className="font-mono py-2.5 px-4 font-semibold text-[11px] uppercase text-ep-muted text-right"
+                      style={{ letterSpacing: "0.05em" }}
+                    >
+                      2023
+                    </th>
+                    <th
+                      className="font-mono py-2.5 px-4 font-semibold text-[11px] uppercase text-ep-muted text-right"
+                      style={{ letterSpacing: "0.05em" }}
+                    >
+                      2024
+                    </th>
+                    <th
+                      className="font-mono py-2.5 px-4 font-semibold text-[11px] uppercase text-ep-muted text-right"
+                      style={{ letterSpacing: "0.05em" }}
+                    >
+                      2025
+                    </th>
+                    <th
+                      className="font-mono py-2.5 px-4 font-semibold text-[11px] uppercase text-ep-muted text-right"
+                      style={{ letterSpacing: "0.05em" }}
+                      title="Latest-round carry-forward prediction"
+                    >
+                      Predicted next
+                    </th>
+                    <th className="py-2.5 px-4 w-8" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {profile.dse_cutoff_trends.map((t) => (
+                    <tr
+                      key={t.branch_name}
+                      className="border-t hover:bg-[var(--ep-bg)] transition-colors"
+                      style={{ borderColor: "#EEEAE0" }}
+                    >
+                      <td className="py-3 px-5">
+                        {t.canonical_code ? (
+                          <Link
+                            href={`/branches/dse/${encodeURIComponent(t.canonical_code)}`}
+                            className="font-semibold text-sm hover:underline"
+                            style={{ color: "var(--color-ep-primary)" }}
+                          >
+                            {t.branch_name}
+                          </Link>
+                        ) : (
+                          <span className="font-semibold text-sm">{t.branch_name}</span>
+                        )}
+                      </td>
+                      <td className="font-mono py-3 px-4 text-right text-[var(--ep-text)]">
+                        {t.close_2023 != null ? fmtPercentile(t.close_2023) : "—"}
+                      </td>
+                      <td className="font-mono py-3 px-4 text-right text-[var(--ep-text)]">
+                        {t.close_2024 != null ? fmtPercentile(t.close_2024) : "—"}
+                      </td>
+                      <td className="font-mono py-3 px-4 text-right text-[var(--ep-text)]">
+                        {t.close_2025 != null ? fmtPercentile(t.close_2025) : "—"}
+                      </td>
+                      <td className="font-mono py-3 px-4 text-right text-[var(--ep-text)]">
+                        {t.pred_next != null ? fmtPercentile(t.pred_next) : "—"}
+                      </td>
+                      <td className="py-3 px-4">
+                        {t.canonical_code && (
+                          <Link
+                            href={`/branches/dse/${encodeURIComponent(t.canonical_code)}`}
+                            className="text-ep-muted hover:text-[var(--color-ep-primary)] transition-colors"
+                            aria-label="View DSE branch forecast"
+                          >
+                            <TrendingUp className="h-3.5 w-3.5" />
+                          </Link>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-3 text-xs text-ep-muted">
+              Diploma-holder lateral entry (2nd year), GOPEN category shown. Closing values are
+              diploma aggregate %, not CET percentile — a different merit system, not comparable to
+              the first-year table above even where the numbers look similar.
+            </p>
+          </Section>
+        )}
 
         {/* Contact */}
         <Section title="Contact" icon={<Phone className="h-4 w-4" />}>

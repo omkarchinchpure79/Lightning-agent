@@ -4,8 +4,8 @@ main.py — EduPath FastAPI service entry point.
 Start with:
     uvicorn api.main:app --reload --port 8000
 
-CORS is open to http://localhost:3000 (Next.js dev server). Add additional
-origins here when deploying; the API has no auth in v1.
+CORS defaults to http://localhost:3000 (Next.js dev server). When deploying,
+set CORS_ORIGINS to the deployed frontend origin(s), comma-separated.
 """
 import os
 from contextlib import asynccontextmanager
@@ -20,6 +20,7 @@ from api.routes import (
     branches,
     colleges,
     counselor,
+    dse_branches,
     health,
     lookups,
     predictions,
@@ -44,9 +45,18 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# CORS_ORIGINS: comma-separated allowed frontend origins. Defaults to the local
+# dev server; set to the deployed frontend URL in production
+# (e.g. CORS_ORIGINS=https://edupath.example.com).
+_cors_origins = [
+    o.strip()
+    for o in os.environ.get("CORS_ORIGINS", "http://localhost:3000").split(",")
+    if o.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -59,6 +69,7 @@ app.include_router(students.router,    prefix="/api/students", tags=["students"]
 app.include_router(predictions.router, prefix="/api",          tags=["predictions"])
 app.include_router(colleges.router,    prefix="/api/colleges", tags=["colleges"])
 app.include_router(branches.router,    prefix="/api/branches", tags=["branches"])
+app.include_router(dse_branches.router, prefix="/api/dse-branches", tags=["dse-branches"])
 app.include_router(counselor.router,   prefix="/api/me",       tags=["counselor"])
 
 # Locally-downloaded college campus photos (permanent replacement for hotlinked

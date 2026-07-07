@@ -495,6 +495,124 @@ def ensure_predictions_table(conn):
 
 
 # ---------------------------------------------------------------------------
+# DSE (Direct Second Year Engineering) — Session 2 data plane.
+#
+# DSE merit is the DIPLOMA AGGREGATE PERCENTAGE, not an MHT-CET percentile:
+# same 0-100 range, totally different distribution. DSE data therefore lives
+# in its own tables (dse_cutoffs / dse_predictions) and must never be joined
+# or compared with the FE `cutoffs` / `predictions_2026` tables.
+#
+# DSE cutoff PDFs have NO H/O/S seat-type suffixes (the whole home-university
+# eligibility layer is bypassed) and NO TFWS. NT categories are named by
+# letter (NTA-NTD), mapping to the FE numbered scheme as: NT-A = VJ/DT,
+# NT-B = NT1, NT-C = NT2, NT-D = NT3 (Maharashtra GR nomenclature).
+# See docs/dse_design.md.
+# ---------------------------------------------------------------------------
+
+# Every category token that may appear in a DSE cutoff PDF header row.
+# Frozen from a --discover census over all 7 PDFs (2023-2025, ~87k values,
+# re-run after the column-alignment/stage-label parser fixes); an unknown
+# token flags the block for human review, never guesses.
+# R = "Reserved Common" per the PDFs' own legend line; MI = Minority
+# (MI-MH = Maharashtra-domicile minority); ORP = Orphan; -O = Open.
+DSE_CATEGORY_LEGEND = {
+    "GOPEN", "GSC", "GST", "GOBC", "GSEBC",
+    "GNTA", "GNTB", "GNTC", "GNTD",
+    "LOPEN", "LSC", "LST", "LOBC", "LSEBC",
+    "LNTA", "LNTB", "LNTC", "LNTD",
+    "EWS", "MI", "MI-MH", "ORP",
+    "PWD-O", "PWD-OBC", "PWDR-OBC", "PWDR-SC", "PWDR-SEBC", "PWDR-ST",
+    "DEF-O", "DEF-OBC", "DEFR-NTA", "DEFR-NTB",
+    "DEFR-OBC", "DEFR-SC", "DEFR-SEBC", "DEFR-ST",
+}
+
+# FE base category (what the student profile stores) -> the DSE cutoff
+# category code to look up. One code, no H/O/S chain — DSE has no seat types.
+# Base categories with no DSE equivalent map to None: the engine fails
+# explicit ("no seat quota in DSE"), never silently falls back to open.
+# DSE prints NO TFWS at all. PwD-Open/Defence-Open DO exist in DSE (PWD-O /
+# DEF-O), unlike an earlier census pass suggested — FE's PWDOPEN/DEFOPEN map
+# to them. NT letter mapping: NT-A = VJ/DT, NT-B = NT1, NT-C = NT2,
+# NT-D = NT3 (Maharashtra GR nomenclature).
+DSE_CATEGORY_MAP = {
+    "GOPEN": "GOPEN", "GSC": "GSC", "GST": "GST", "GOBC": "GOBC",
+    "GSEBC": "GSEBC",
+    "GVJ": "GNTA", "GNT1": "GNTB", "GNT2": "GNTC", "GNT3": "GNTD",
+    "LOPEN": "LOPEN", "LSC": "LSC", "LST": "LST", "LOBC": "LOBC",
+    "LSEBC": "LSEBC",
+    "LVJ": "LNTA", "LNT1": "LNTB", "LNT2": "LNTC", "LNT3": "LNTD",
+    "EWS": "EWS",
+    "TFWS": None,           # no TFWS quota in DSE
+    "DEFOPEN": "DEF-O",
+    "ORPHAN": "ORP",
+    "PWDOPEN": "PWD-O",
+    "PWDOBC": "PWD-OBC", "PWDSC": "PWDR-SC", "PWDSEBC": "PWDR-SEBC",
+}
+
+# DSE cutoffs were published for CAP rounds I-III in 2023-24 but only I-II in
+# 2024-25 and 2025-26, so predictions are generated (and accepted by the
+# engine) for rounds 1-2 only. Round 3's newest data is 2023 — carrying a
+# 3-season-old close forward would be presented as fresher than it is.
+DSE_VALID_ROUNDS = (1, 2)
+
+
+def ensure_dse_tables(conn):
+    """
+    dse_cutoffs + dse_predictions schema — SINGLE SOURCE OF TRUTH (same rule
+    as ensure_predictions_table: never inline these CREATE TABLEs anywhere
+    else). merit_pct is a diploma percentage, NOT a percentile. stage is the
+    verbatim allotment-stage LABEL from the PDF ("I", "VII", "MI",
+    "I-Non PWD / DEF", ...) — CET Cell's stage naming is not a closed set.
+    Safe to call repeatedly; drops a stale pre-TEXT-stage schema (the table
+    is fully regenerable from the PDFs).
+    """
+    row = conn.execute(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='dse_cutoffs'"
+    ).fetchone()
+    if row and "stage         TEXT" not in row[0] and "stage TEXT" not in row[0]:
+        conn.execute("DROP TABLE dse_cutoffs")
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS dse_cutoffs (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            year          INTEGER NOT NULL,
+            round         INTEGER NOT NULL,
+            college_code  TEXT NOT NULL,
+            college_name  TEXT NOT NULL,
+            choice_code   TEXT NOT NULL,
+            course_name   TEXT NOT NULL,
+            category      TEXT NOT NULL,
+            stage         TEXT NOT NULL,
+            merit_no      INTEGER,
+            merit_pct     REAL NOT NULL,
+            UNIQUE(year, round, choice_code, category, stage)
+        )
+    """)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_dse_cut ON dse_cutoffs(choice_code, category, round, year)")
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS dse_predictions (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            canonical_code  TEXT NOT NULL,
+            college_code    TEXT NOT NULL,
+            college_name    TEXT NOT NULL,
+            branch_name     TEXT NOT NULL,
+            branch_code     TEXT NOT NULL,
+            category        TEXT NOT NULL,
+            round           INTEGER NOT NULL,
+            predicted_pct   REAL NOT NULL,
+            predicted_low   REAL,
+            predicted_high  REAL,
+            trend_slope     REAL,
+            confidence      TEXT NOT NULL,
+            years_used      INTEGER NOT NULL,
+            generated_at    TEXT NOT NULL,
+            UNIQUE(canonical_code, category, round)
+        )
+    """)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_dse_pred ON dse_predictions(category, round)")
+
+
+# ---------------------------------------------------------------------------
 # Calibrated interval predictions (Phase 5 roadmap item B1)
 #
 # The carry-forward point estimate is at its accuracy ceiling (backtest MAE
@@ -563,6 +681,16 @@ def compute_interval_offsets(conn):
         if yr not in g or pct < g[yr]:
             g[yr] = pct
 
+    return interval_offsets_from_groups(groups)
+
+
+def interval_offsets_from_groups(groups):
+    """
+    Core of compute_interval_offsets, factored out so the DSE plane
+    (generate_dse_predictions.py, which reads dse_cutoffs) can calibrate its
+    intervals with the IDENTICAL method instead of reimplementing the formula.
+    groups: {any_key: {year: closing_value}}.
+    """
     years = sorted({y for g in groups.values() for y in g})
     if len(years) < 2:
         return {}

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 # ---------------------------------------------------------------------------
@@ -35,10 +35,23 @@ def _validate_category_base(v: Optional[str]) -> Optional[str]:
     return code
 
 
+def _dse_supported_category(code: str) -> bool:
+    """True if this base category has a seat quota in DSE (e.g. TFWS does not)."""
+    from api import db as _db  # noqa: F401
+    import engine_adapter  # noqa: F401
+    from constants import DSE_CATEGORY_MAP
+
+    return DSE_CATEGORY_MAP.get(code) is not None
+
+
 class StudentCreate(BaseModel):
     name: str
     gender: Optional[str] = None
-    percentile: float = Field(..., ge=0.0, le=100.0)
+    # Required for admission_type='fe'; for 'dse' it mirrors diploma_pct
+    # (the DB column is NOT NULL and list sorting uses it as the merit mark).
+    percentile: Optional[float] = Field(None, ge=0.0, le=100.0)
+    admission_type: str = "fe"
+    diploma_pct: Optional[float] = Field(None, ge=0.0, le=100.0)
     jee_main_rank: Optional[int] = None
     board_pct: Optional[float] = None
     category_base: str
@@ -69,12 +82,35 @@ class StudentCreate(BaseModel):
     def _valid_category_base(cls, v: str) -> str:
         return _validate_category_base(v)
 
+    @model_validator(mode="after")
+    def _admission_type_consistency(self) -> "StudentCreate":
+        if self.admission_type not in ("fe", "dse"):
+            raise ValueError("admission_type must be 'fe' or 'dse'")
+        if self.admission_type == "fe":
+            if self.percentile is None:
+                raise ValueError("percentile is required for first-year (fe) students")
+        else:
+            if self.diploma_pct is None:
+                raise ValueError("diploma_pct is required for direct-second-year (dse) students")
+            if not _dse_supported_category(self.category_base):
+                raise ValueError(
+                    f"Category '{self.category_base}' has no seat quota in DSE "
+                    f"(e.g. TFWS exists only in first-year CAP)")
+            if self.percentile is None:
+                self.percentile = self.diploma_pct  # NOT NULL mirror, see api/db.py
+        return self
+
 
 class StudentUpdate(BaseModel):
-    """All fields optional — only provided fields are updated (PATCH semantics)."""
+    """All fields optional — only provided fields are updated (PATCH semantics).
+    Cross-field admission-type consistency (a 'dse' student must end up with a
+    diploma_pct, etc.) is enforced in the PATCH route against the MERGED row,
+    since a partial update can't be judged in isolation."""
     name: Optional[str] = None
     gender: Optional[str] = None
     percentile: Optional[float] = Field(None, ge=0.0, le=100.0)
+    admission_type: Optional[str] = None
+    diploma_pct: Optional[float] = Field(None, ge=0.0, le=100.0)
     jee_main_rank: Optional[int] = None
     board_pct: Optional[float] = None
     category_base: Optional[str] = None
@@ -105,11 +141,19 @@ class StudentUpdate(BaseModel):
     def _valid_category_base(cls, v: Optional[str]) -> Optional[str]:
         return _validate_category_base(v)
 
+    @field_validator("admission_type")
+    @classmethod
+    def _valid_admission_type(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in ("fe", "dse"):
+            raise ValueError("admission_type must be 'fe' or 'dse'")
+        return v
+
 
 class StudentListItem(BaseModel):
     id: int
     name: str
     percentile: float
+    admission_type: str = "fe"
     category_base: str
     home_district: Optional[str]
     updated_at: str
@@ -120,6 +164,8 @@ class StudentResponse(BaseModel):
     name: str
     gender: Optional[str]
     percentile: float
+    admission_type: str = "fe"
+    diploma_pct: Optional[float] = None
     jee_main_rank: Optional[int]
     board_pct: Optional[float]
     category_base: str

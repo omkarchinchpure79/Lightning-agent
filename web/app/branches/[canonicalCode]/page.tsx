@@ -384,17 +384,25 @@ function BranchView({ data }: { data: BranchDeepDive }) {
 
       {/* Summary strip ─────────────────────────────────────────────────────── */}
       <div className="rounded-[13px] border grid grid-cols-2 lg:grid-cols-4 overflow-hidden" style={{ background: "var(--ep-surface)", borderColor: "var(--ep-border)" }}>
-        <div className="px-[22px] py-[18px] border-r border-b lg:border-b-0" style={{ borderColor: "var(--ep-border)" }}>
+        <div
+          className="px-[22px] py-[18px] border-r border-b lg:border-b-0"
+          style={{ borderColor: "var(--ep-border)" }}
+          title="Toughest of the GOPENH/GOPENS/GOPENO open-seat variants. A specific student's own eligible variant (see their results page) can read a few points lower."
+        >
           <p className="font-mono text-[10px] uppercase mb-1.5" style={{ letterSpacing: "0.08em", color: "#9A968B" }}>
-            2026 predicted close
+            2026 predicted close (H/O/S)
           </p>
           <p className="font-mono text-[20px] font-semibold text-[var(--ep-text)]">
             {primaryPred ? predictedText(primaryPred.predicted_pct, primaryPred.predicted_low, primaryPred.predicted_high) : "—"}
           </p>
         </div>
-        <div className="px-[22px] py-[18px] border-b lg:border-b-0 lg:border-r" style={{ borderColor: "var(--ep-border)" }}>
+        <div
+          className="px-[22px] py-[18px] border-b lg:border-b-0 lg:border-r"
+          style={{ borderColor: "var(--ep-border)" }}
+          title="Toughest of the GOPENH/GOPENS/GOPENO open-seat variants. A specific student's own eligible variant (see their results page) can read a few points lower."
+        >
           <p className="font-mono text-[10px] uppercase mb-1.5" style={{ letterSpacing: "0.08em", color: "#9A968B" }}>
-            2025 actual close
+            2025 actual close (H/O/S)
           </p>
           <p className="font-mono text-[20px] font-semibold text-[var(--ep-text)]">
             {close2025 != null ? fmtPercentile(close2025, 2) : "—"}

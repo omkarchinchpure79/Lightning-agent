@@ -5,19 +5,49 @@
 
 /* ── Design tokens ─────────────────────────────────────────── */
 @theme {
-  /* Brand — constant in both modes */
-  --color-ep-primary:      #1E4D8C;
-  --color-ep-primary-dark: #163A6B;
+  /* Brand — constant in both modes (NEVER move these into :root/.dark —
+     the logo mark binds to --color-ep-primary/--color-ep-green and must
+     stay fixed regardless of light/dark theme). */
+  --color-ep-primary:      #C6522F;
+  --color-ep-primary-dark: #A9401F;
   --color-ep-green:        #2EB870;
-  --color-ep-green-ink:    #1E7A46;   /* text on green tints */
-  --color-ep-amber:        #D9A441;
-  --color-ep-amber-ink:    #B0952E;   /* text on amber tints */
-  --color-ep-red:          #C75450;
-  --color-ep-red-ink:      #B23F3B;   /* text on red tints */
-  --color-ep-muted:        #8A867B;   /* warm muted, was #6B7280 */
+  --color-ep-green-ink:    #1F7A46;   /* text on green tints */
+  --color-ep-amber:        #C6902B;
+  --color-ep-amber-ink:    #8A5A2E;   /* text on amber tints */
+  --color-ep-red:          #C24A3F;
+  --color-ep-red-ink:      #A6463C;   /* text on red tints */
+  --color-ep-muted:        #8A7D6B;   /* warm muted */
 
   /* Radius */
-  --radius-card: 0.8125rem;           /* 13px — the new card radius */
+  --radius-card: 1.375rem;            /* 22px — Hearth's card radius */
+  --radius: 0.625rem;
+
+  /* shadcn/ui semantic layer — wired to the Hearth --ep-* tokens so every
+     installed primitive (Input, Button, Dialog, Tabs, …) matches the brand
+     without per-screen inline styles. */
+  --color-background:            var(--ep-bg);
+  --color-foreground:            var(--ep-text);
+  --color-card:                  var(--ep-surface);
+  --color-card-foreground:       var(--ep-text);
+  --color-popover:                var(--ep-surface);
+  --color-popover-foreground:    var(--ep-text);
+  --color-primary:                var(--color-ep-primary);
+  --color-primary-foreground:    #FFFDF8;
+  --color-secondary:              var(--ep-input);
+  --color-secondary-foreground:  var(--ep-text);
+  --color-muted:                  var(--ep-input);
+  --color-muted-foreground:      var(--ep-text-secondary);
+  --color-accent:                 var(--color-ep-amber);
+  --color-accent-foreground:     #241C15;
+  --color-destructive:            var(--color-ep-red);
+  --color-destructive-foreground: #FFFDF8;
+  --color-border:                 var(--ep-border);
+  --color-input:                  var(--ep-border-strong);
+  --color-ring:                    var(--color-ep-primary);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 
   /* Typography — "The Path" system.
      These map to next/font CSS variables set on <html> in layout.tsx. */
@@ -28,24 +58,40 @@
 }
 
 /* ── Semantic surface tokens ─────────────────────────────────
-   LIGHT = warm paper ("The Path"). Dark left intact for a future pass. */
+   LIGHT = warm cream ("Hearth"). */
 :root {
-  --ep-bg:             #F4F1EA;   /* warm paper */
-  --ep-surface:        #FBFAF6;   /* raised card */
-  --ep-text:           #14213A;   /* deep navy ink */
-  --ep-text-secondary: #3E4757;
-  --ep-border:         #E4DFD2;   /* warm hairline */
-  --ep-border-strong:  #DCD6C8;
-  --ep-input:          #F4F1EA;
+  --ep-bg:             #FAF4E9;   /* warm cream */
+  --ep-surface:        #FFFDF8;   /* raised card */
+  --ep-text:           #241C15;   /* deep espresso ink */
+  --ep-text-secondary: #5F5346;
+  --ep-border:         #ECE0CC;   /* warm hairline */
+  --ep-border-strong:  #DCD0B4;
+  --ep-input:          #F3ECDD;
+  --sidebar:      hsl(0 0% 98%);
+  --sidebar-foreground:      hsl(240 5.3% 26.1%);
+  --sidebar-primary:      hsl(240 5.9% 10%);
+  --sidebar-primary-foreground:      hsl(0 0% 98%);
+  --sidebar-accent:      hsl(240 4.8% 95.9%);
+  --sidebar-accent-foreground:      hsl(240 5.9% 10%);
+  --sidebar-border:      hsl(220 13% 91%);
+  --sidebar-ring:      hsl(217.2 91.2% 59.8%);
 }
 .dark {
-  --ep-bg:             #0E1729;
-  --ep-surface:        #16213A;
-  --ep-text:           #F9FAFB;
-  --ep-text-secondary: #D1D5DB;
-  --ep-border:         #2D3748;
-  --ep-border-strong:  #3A4A63;
-  --ep-input:          #1E2F4D;
+  --ep-bg:             #1B140D;
+  --ep-surface:        #241C15;
+  --ep-text:           #F6EFE0;
+  --ep-text-secondary: #DDD3C2;
+  --ep-border:         #3A2F23;
+  --ep-border-strong:  #4A3C2C;
+  --ep-input:          #2A2118;
+  --sidebar:      hsl(240 5.9% 10%);
+  --sidebar-foreground:      hsl(240 4.8% 95.9%);
+  --sidebar-primary:      hsl(224.3 76.3% 48%);
+  --sidebar-primary-foreground:      hsl(0 0% 100%);
+  --sidebar-accent:      hsl(240 3.7% 15.9%);
+  --sidebar-accent-foreground:      hsl(240 4.8% 95.9%);
+  --sidebar-border:      hsl(240 3.7% 15.9%);
+  --sidebar-ring:      hsl(217.2 91.2% 59.8%);
 }
 
 /* ── Base ───────────────────────────────────────────────────── */
@@ -87,4 +133,15 @@ textarea,
   [role="combobox"] {
     transition: none;
   }
+}
+
+@theme inline {
+  --color-sidebar:      var(--sidebar);
+  --color-sidebar-foreground:      var(--sidebar-foreground);
+  --color-sidebar-primary:      var(--sidebar-primary);
+  --color-sidebar-primary-foreground:      var(--sidebar-primary-foreground);
+  --color-sidebar-accent:      var(--sidebar-accent);
+  --color-sidebar-accent-foreground:      var(--sidebar-accent-foreground);
+  --color-sidebar-border:      var(--sidebar-border);
+  --color-sidebar-ring:      var(--sidebar-ring);
 }

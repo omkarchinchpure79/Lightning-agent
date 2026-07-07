@@ -55,7 +55,7 @@ It is <em>not</em> used anywhere in the prediction, ranking, or eligibility logi
 
 <h2>🚀 Getting Started</h2>
 
-<pre><code>python scripts/download_pdfs.py          # Download official CET Cell cutoff PDFs
+<pre><code>python scripts/download_all_pdfs.py          # Download official CET Cell cutoff PDFs
 python scripts/parse_cutoffs.py          # Parse PDFs → structured, validated data
 python scripts/load_db.py                # Load validated data into SQLite
 python scripts/predict.py --percentile 88.0 --category GOPENS
