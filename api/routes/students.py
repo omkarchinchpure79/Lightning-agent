@@ -13,7 +13,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 
 from api.auth_utils import get_current_counselor_id
-from api.db import get_app_conn
+from api.db import get_app_conn, get_conn
 from api.schemas import (
     ShortlistItem, ShortlistRequest, ShortlistResponse,
     StudentCreate, StudentListItem, StudentResponse, StudentUpdate,
@@ -64,6 +64,15 @@ def _row_to_student(row) -> dict:
 
 def _shortlist_item(row) -> ShortlistItem:
     d = dict(row)
+    # institute_code/choice_code are pure zero-padding of the already-stored
+    # branch_code (college_code[5] + branch_suffix[5] = the exact official
+    # CET Cell CAP "Choice Code", per predictions_2026.college_code always
+    # being 5-digit padded) — a stable identity field, not a prediction, so
+    # there's no staleness risk in deriving it here. Legacy rows saved before
+    # the branch_code column existed get None, never a guessed code.
+    branch_code = d.get("branch_code")
+    choice_code = branch_code.rjust(10, "0") if branch_code else None
+    institute_code = choice_code[:5] if choice_code else None
     return ShortlistItem(
         canonical_code=d["canonical_code"],
         college_name=d.get("college_name"),
@@ -78,7 +87,39 @@ def _shortlist_item(row) -> ShortlistItem:
         branch_code=d.get("branch_code"),
         college_score=d.get("college_score"),
         seat_pool=d.get("seat_pool"),
+        institute_code=institute_code,
+        choice_code=choice_code,
     )
+
+
+def _attach_university_names(items: list[ShortlistItem]) -> list[ShortlistItem]:
+    """
+    Fill in university_name via a live join against the engine DB (colleges'
+    university_code -> home_university_map's canonical name) — always current,
+    unlike a client-supplied snapshot. Engine tables live on a separate
+    connection from the app tables (get_conn vs get_app_conn — see api/db.py),
+    so this can't be a single SQL JOIN with the student_shortlists query.
+    """
+    codes = {i.institute_code for i in items if i.institute_code}
+    if not codes:
+        return items
+    conn = get_conn()
+    try:
+        placeholders = ",".join("?" * len(codes))
+        rows = conn.execute(
+            f"""SELECT DISTINCT cd.college_code, h.university_name
+                FROM college_details cd
+                JOIN home_university_map h ON h.university_code = cd.university_code
+                WHERE cd.college_code IN ({placeholders})""",
+            list(codes),
+        ).fetchall()
+        name_by_code = {r["college_code"]: r["university_name"] for r in rows}
+    finally:
+        conn.close()
+    for item in items:
+        if item.institute_code:
+            item.university_name = name_by_code.get(item.institute_code)
+    return items
 
 
 def _now_utc() -> str:
@@ -274,6 +315,7 @@ async def get_shortlist(
     items = await asyncio.to_thread(_query)
     if items is None:
         raise HTTPException(404, f"Student {student_id} not found")
+    items = await asyncio.to_thread(_attach_university_names, items)
     return ShortlistResponse(student_id=student_id, items=items)
 
 
@@ -318,4 +360,5 @@ async def save_shortlist(
     items = await asyncio.to_thread(_replace)
     if items is None:
         raise HTTPException(404, f"Student {student_id} not found")
+    items = await asyncio.to_thread(_attach_university_names, items)
     return ShortlistResponse(student_id=student_id, items=items)

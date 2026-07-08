@@ -205,6 +205,15 @@ class ShortlistItem(BaseModel):
     branch_code: Optional[str] = None
     college_score: Optional[float] = None
     seat_pool: Optional[str] = None
+    # Response-only, computed fresh on every GET (never sent by the client on
+    # save, never stored) — the official CET Cell CAP option-form identity for
+    # this entry: institute_code/choice_code are pure zero-padding of the
+    # already-stored branch_code (stable college identity, not a prediction —
+    # no staleness risk); university_name is a live join so it can't go stale
+    # either. See api/routes/students.py::_attach_choice_code_fields.
+    institute_code: Optional[str] = None
+    choice_code: Optional[str] = None
+    university_name: Optional[str] = None
 
 
 class ShortlistRequest(BaseModel):

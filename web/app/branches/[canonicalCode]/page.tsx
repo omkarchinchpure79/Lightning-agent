@@ -36,6 +36,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const OPEN_CATS = new Set(["GOPENH", "GOPENS", "GOPENO"]);
+// State-level (GOPENS) is the standard published "general" cutoff — the number
+// CET Cell itself and most colleges quote, and the fallback every non-Home-
+// university student's own prediction resolves to (see resolve_seat_category
+// in constants.py). Home-university seats (GOPENH) are a narrower reserved
+// pool with a materially easier cutoff; silently preferring whichever of
+// H/O/S was numerically lowest (the prior behavior) could show a Home-only
+// floor as if it were the general cutoff — a 30+ percentile-point gap on
+// some branches, and the source of a real counsellor-reported mismatch
+// between this page and a student's Results page (audit 2026-07-08).
+const REPRESENTATIVE_SEAT_PRIORITY = ["GOPENS", "GOPENH", "GOPENO"];
 const HIST_YEARS = [2023, 2024, 2025];
 
 interface PredCell {
@@ -54,25 +64,31 @@ interface ChartPoint {
 
 /** Round-1-style open-category trend for whichever CAP round is selected. */
 function buildChartData(data: BranchDeepDive, round: number): ChartPoint[] {
-  const histByYear: Record<number, number> = {};
+  const histByYearByCat: Record<number, Record<string, number>> = {};
   for (const row of data.cutoff_trends) {
     if (row.round !== round || !OPEN_CATS.has(row.category)) continue;
-    if (histByYear[row.year] == null || row.percentile < histByYear[row.year]) {
-      histByYear[row.year] = row.percentile;
-    }
+    (histByYearByCat[row.year] ??= {})[row.category] = row.percentile;
   }
-
-  let pred2026: number | null = null;
+  const predByCat: Record<string, number> = {};
   for (const row of data.predictions_2026) {
     if (row.round !== round || !OPEN_CATS.has(row.category)) continue;
-    if (pred2026 == null || row.predicted_pct < pred2026) pred2026 = row.predicted_pct;
+    predByCat[row.category] = row.predicted_pct;
   }
+
+  const pickRepresentative = (byCategory: Record<string, number>): number | undefined => {
+    for (const cat of REPRESENTATIVE_SEAT_PRIORITY) {
+      if (byCategory[cat] != null) return byCategory[cat];
+    }
+    const vals = Object.values(byCategory);
+    return vals.length ? Math.min(...vals) : undefined;
+  };
 
   const points: ChartPoint[] = [];
   for (const yr of HIST_YEARS) {
-    if (histByYear[yr] != null) points.push({ year: String(yr), close: histByYear[yr], predicted: false });
+    const close = histByYearByCat[yr] ? pickRepresentative(histByYearByCat[yr]) : undefined;
+    if (close != null) points.push({ year: String(yr), close, predicted: false });
   }
-  points.push({ year: "2026*", close: pred2026, predicted: true });
+  points.push({ year: "2026*", close: pickRepresentative(predByCat) ?? null, predicted: true });
   return points;
 }
 
@@ -98,6 +114,7 @@ interface VariantRow {
   label: string;
   order: number;
   audience: string;
+  seat: string | null;
   hist: Record<number, number>;
   pred: PredCell | null;
 }
@@ -144,6 +161,7 @@ function buildCategoryTree(data: BranchDeepDive, round: number): FamilyGroup[] {
       label: p.variantLabel,
       order: p.variantOrder,
       audience: p.audience,
+      seat: p.seat,
       hist: histByCat[cat] ?? {},
       pred: predByCat[cat] ?? null,
     });
@@ -152,16 +170,33 @@ function buildCategoryTree(data: BranchDeepDive, round: number): FamilyGroup[] {
   const families = Object.values(famMap);
   for (const fam of families) {
     fam.variants.sort((a, b) => a.order - b.order || a.raw.localeCompare(b.raw));
-    // Representative row = the "general merit" seats (min = closing floor), so
-    // the collapsed row shows the number counsellors quote for that category.
+    // Representative row = the "general merit" seats, so the collapsed row
+    // shows the number counsellors quote for that category. Among those,
+    // prefer the State-level (seat "S") variant — the standard published
+    // cutoff and what any non-Home-university student's own prediction
+    // resolves to — over Home (seat "H"), which is a narrower reserved pool
+    // with a materially easier cutoff. Silently taking the min across H/O/S
+    // could show a Home-only floor as if it were the general cutoff (a 30+
+    // percentile-point gap on some branches) — the source of a real
+    // counsellor-reported mismatch with the Results page (audit 2026-07-08).
     const general = fam.variants.filter((v) => v.audience === "General" || v.audience === "Open");
     const src = general.length ? general : fam.variants;
+    const stateVariant = src.find((v) => v.seat === "S");
     for (const yr of HIST_YEARS) {
+      const stateVal = stateVariant?.hist[yr];
+      if (stateVal != null) {
+        fam.repHist[yr] = stateVal;
+        continue;
+      }
       const vals = src.map((v) => v.hist[yr]).filter((x): x is number => x != null);
       fam.repHist[yr] = vals.length ? Math.min(...vals) : undefined;
     }
-    const preds = src.map((v) => v.pred).filter((p): p is PredCell => p != null);
-    fam.repPred = preds.length ? preds.reduce((m, p) => (p.pct < m.pct ? p : m)) : null;
+    if (stateVariant?.pred) {
+      fam.repPred = stateVariant.pred;
+    } else {
+      const preds = src.map((v) => v.pred).filter((p): p is PredCell => p != null);
+      fam.repPred = preds.length ? preds.reduce((m, p) => (p.pct < m.pct ? p : m)) : null;
+    }
   }
   families.sort((a, b) => a.order - b.order);
   return families;

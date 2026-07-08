@@ -208,6 +208,11 @@ export interface ShortlistItem {
   branch_code?: string | null;
   college_score?: number | null;
   seat_pool?: string | null;
+  // Response-only, computed fresh server-side on every fetch — the official
+  // CET Cell CAP option-form identity for this entry (see api/schemas.py).
+  institute_code?: string | null;
+  choice_code?: string | null;
+  university_name?: string | null;
 }
 
 export interface ShortlistResponse {
