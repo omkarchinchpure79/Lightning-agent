@@ -24,8 +24,21 @@ DB_PATH = "db/edupath.db"
 FEE_CATEGORIES = ["GOPEN", "GOBC", "GSC", "TFWS"]
 # Representative categories for the cutoff trend line (open seats).
 TREND_CATEGORIES = OPEN_CATEGORIES
-# Base URL the frontend can reach the API's own static image mount at.
+# Base URL the frontend can reach the API's own static image mount at (local
+# dev / anywhere the images live on the API's own disk).
 API_PUBLIC_BASE = os.environ.get("API_PUBLIC_BASE", "http://localhost:8000")
+
+# In production the API server is serverless with no persistent disk, so
+# college photos (333MB) are committed to the repo and served for free
+# straight from GitHub's raw-content CDN instead of proxying through the API.
+# Unset (local dev) -> falls back to API_PUBLIC_BASE + /static/images below.
+IMAGE_CDN_BASE = os.environ.get("IMAGE_CDN_BASE", "").rstrip("/")
+
+
+def _image_url(path: str) -> str:
+    if IMAGE_CDN_BASE:
+        return f"{IMAGE_CDN_BASE}/{path}"
+    return f"{API_PUBLIC_BASE}/static/images/{path}"
 
 
 def _paired_codes(conn, college_code):
@@ -224,7 +237,7 @@ def get_college_profile(college_code):
             try:
                 local_paths = json.loads(p["local_image_paths"])
                 images = [
-                    {"url": f"{API_PUBLIC_BASE}/static/images/{path}", "type": "campus"}
+                    {"url": _image_url(path), "type": "campus"}
                     for path in local_paths
                 ]
             except Exception:

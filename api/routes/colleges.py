@@ -27,6 +27,18 @@ router = APIRouter()
 # Local dev default matches NEXT_PUBLIC_API_URL's default in web/lib/api.ts.
 _API_PUBLIC_BASE = os.environ.get("API_PUBLIC_BASE", "http://localhost:8000")
 
+# Production has no persistent disk, so college photos are committed to the
+# repo and served free from GitHub's raw-content CDN (see college_card_api.py
+# for the full rationale). Unset (local dev) -> falls back to the API's own
+# /static/images mount above.
+_IMAGE_CDN_BASE = os.environ.get("IMAGE_CDN_BASE", "").rstrip("/")
+
+
+def _image_url(path: str) -> str:
+    if _IMAGE_CDN_BASE:
+        return f"{_IMAGE_CDN_BASE}/{path}"
+    return f"{_API_PUBLIC_BASE}/static/images/{path}"
+
 
 def _canonical_groups(conn):
     """
@@ -204,7 +216,7 @@ async def search_colleges(
                     try:
                         local_paths = _json.loads(raw_local)
                         if local_paths:
-                            thumbnail_url = f"{_API_PUBLIC_BASE}/static/images/{local_paths[0]}"
+                            thumbnail_url = _image_url(local_paths[0])
                     except Exception:
                         pass
 

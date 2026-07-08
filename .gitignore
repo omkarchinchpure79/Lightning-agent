@@ -11,8 +11,10 @@ data/processed/cutoffs.json
 data/processed/dse_cutoffs.json
 data/processed/dse_flagged.json
 
-# College campus photos (large, re-downloadable via scripts/download_college_images.py)
-data/images/
+# College campus photos: committed (333MB, ~2600 small JPGs, none over 1MB) so
+# they can be served for free via raw.githubusercontent.com in production —
+# see IMAGE_CDN_BASE in scripts/college_card_api.py. Re-downloadable via
+# scripts/download_college_images.py if this history is ever squashed.
 
 # Python
 __pycache__/
